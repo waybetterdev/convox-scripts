@@ -171,8 +171,8 @@ fi
 
 
 echo "copying secrets"
-cp -rf ~/Work/docs/install/secrets/.aws ~/.aws
-cp -rf ~/Work/docs/install/secrets/.ssh ~/.ssh
+cp -rf ~/Work/docs/secrets/.aws ~/.aws
+#cp -rf ~/Work/docs/secrets/.ssh ~/.ssh
 
 
 echo "Finished script. Please reboot."

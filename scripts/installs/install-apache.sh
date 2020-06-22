@@ -108,7 +108,7 @@ if ! test -d "/var/www/phpmyadmin"; then
 	sudo cp -vr ~/Work/phpMyAdmin-5.0.2-all-languages /var/www/phpmyadmin
 
 	echo "Fixing permissions"
-	sudo chmod +x -R /var/www/phpmyadmin
+	sudo chmod 777 -R /var/www/phpmyadmin
 else
   echo 'phpmyadmin is already installed. Skipping.'
 fi
@@ -117,9 +117,12 @@ if ! test -f "/etc/apache2/sites-enabled/wb-proxy-ssl.conf"; then
 	echo "Installing apache conf files"
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
+
+	echo "Generating apache conf." 
+	php ~/Work/docs/scripts/installs/apache-conf/print-wbproxy-ssl-config.php
 	sudo rm /etc/apache2/sites-enabled/000-default.conf 
-	sudo cp -v ~/Work/docs/configs/apache-proxy/wb-proxy.conf /etc/apache2/sites-enabled/wb-proxy.conf
-	sudo cp -v ~/Work/docs/configs/apache-proxy/wb-proxy-ssl.conf /etc/apache2/sites-enabled/wb-proxy-ssl.conf
+	sudo mv -v wb-proxy.conf /etc/apache2/sites-enabled/wb-proxy.conf
+	sudo mv -v wb-proxy-ssl.conf /etc/apache2/sites-enabled/wb-proxy-ssl.conf
 	sudo systemctl restart apache2.service
 else
   echo 'Apache conf file is already installed. Skipping.'

@@ -43,7 +43,7 @@ class Wbtmux
   }
   ALL_SERVICES = SERVICE_MAP.keys
   def initialize()
-    @path = "/home/mihai/Work/wb-services"
+    @path = "$HOME/Work/wb-services"
     @apps_to_open = []
     @apps_to_run = [] 
   end
