@@ -5,6 +5,7 @@
 
 alias rb='source ~/.bashrc'
 alias be='bundle exec'
+alias kk='kmd-local'
 
 
 

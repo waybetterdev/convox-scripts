@@ -23,8 +23,8 @@ class OpDeploy
 
   attr_accessor :app, :option_parser, :commit, :debug
 
-  TEMP_PATH = "/home/mihai/Work/deploy/_files"
-  STAGING_KEY = '/home/mihai/Work/deploy/keys/dietbet-dev-aws/dietbet-dev-aws.pem'
+  TEMP_PATH = "~/Work/deploy/_files"
+  STAGING_KEY = '~/Work/deploy/keys/dietbet-dev-aws/dietbet-dev-aws.pem'
   SITES_CONFIG = {
     'stepbet_dev' => {
       :user => 'centos', :key => STAGING_KEY,
@@ -32,7 +32,7 @@ class OpDeploy
       :src => '/var/www/stepbet_dev', :dst => '/var/www/dev.stepbet',
     },
     'stepbet_prod' => {
-      :user => 'centos', :key => '/home/mihai/Work/deploy/keys/stepbet-prod-aws/stepbet-prod-2019.pem',
+      :user => 'centos', :key => '~/Work/deploy/keys/stepbet-prod-aws/stepbet-prod-2019.pem',
       :hostname => ["ec2-54-213-60-213.us-west-2.compute.amazonaws.com","ec2-34-212-240-147.us-west-2.compute.amazonaws.com"],
       :src => '/var/www/stepbet_prod', :dst => '/srv/stepbet/current',
     },

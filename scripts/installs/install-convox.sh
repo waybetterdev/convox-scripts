@@ -58,8 +58,11 @@ if ! [ -x "$(command -v ruby)" ]; then
 	gem install bundler
 	gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo'
 
-	echo "Also installing ruby 2.6.3 for kraekn scripts"
+	echo "Also installing ruby 2.6.3 for kraken scripts"
 	rbenv install 2.6.2
+
+	gem install bundler
+	gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo'
 
 else
   echo 'Ruby 2.6.2 is already installed. Skipping.'

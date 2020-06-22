@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-
 # exit when any command fails
 set -e
 
@@ -88,9 +87,28 @@ if ! test -d "/var/www/wb-proxy"; then
 	echo "Creating /var/www path"
 	sudo mkdir /var/www/wb-proxy
 	sudo mkdir /var/www/wb-proxy/logs
-	echo "Installing phpmyadmin"
-	sudo cp -vr ~/Work/docs/apps/phpmyadmin /var/www/phpmyadmin
+
+	# TODO: 777 is a a bad solution. Need to fix apache user
+	echo "Fixing permissions"
 	sudo chmod 777 -R /var/www
+else
+  echo 'phpmyadmin is already installed. Skipping.'
+fi
+
+
+if ! test -d "/var/www/phpmyadmin"; then
+	echo "Installing https-proxy and phpmyadmin"
+	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+	sleep 10s
+
+	echo "Installing phpmyadmin"
+	wget -O ~/Work/phpmyadmin.zip https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-all-languages.zip
+	unzip ~/Work/phpmyadmin.zip -d ~/Work/
+	rm ~/Work/phpmyadmin.zip
+	sudo cp -vr ~/Work/phpMyAdmin-5.0.2-all-languages /var/www/phpmyadmin
+
+	echo "Fixing permissions"
+	sudo chmod +x -R /var/www/phpmyadmin
 else
   echo 'phpmyadmin is already installed. Skipping.'
 fi
