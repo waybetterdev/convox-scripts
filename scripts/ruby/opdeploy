@@ -1,0 +1,270 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+class OpDeploy
+
+  attr_accessor :app, :option_parser, :commit, :debug
+
+  TEMP_PATH = "/home/mihai/Work/deploy/_files"
+  STAGING_KEY = '/home/mihai/Work/deploy/keys/dietbet-dev-aws/dietbet-dev-aws.pem'
+  SITES_CONFIG = {
+    'stepbet_dev' => {
+      :user => 'centos', :key => STAGING_KEY,
+      :hostname => ['dev.stepbet.com'],
+      :src => '/var/www/stepbet_dev', :dst => '/var/www/dev.stepbet',
+    },
+    'stepbet_prod' => {
+      :user => 'centos', :key => '/home/mihai/Work/deploy/keys/stepbet-prod-aws/stepbet-prod-2019.pem',
+      :hostname => ["ec2-54-213-60-213.us-west-2.compute.amazonaws.com","ec2-34-212-240-147.us-west-2.compute.amazonaws.com"],
+      :src => '/var/www/stepbet_prod', :dst => '/srv/stepbet/current',
+    },
+    'dietbet_dev' => {
+      :user => 'centos', :key => STAGING_KEY,
+      :hostname => ['dev.dietbet.com'],
+      :src => '/var/www/dietbet_dev', :dst => '/var/www/dev.dietbet',
+    }
+  }
+
+
+  def initialize
+    @rack = `convox switch`.strip
+    @app = nil
+    @file = 'convox.yml'
+    @service_filter = /.*/
+    @any = false
+  end
+
+  def go
+    parse_opts
+
+    deploy_changes_since_commit(self.app, self.commit)
+  end
+
+
+  def export_from_git(commit_hash, source_path, export_path)
+    # git -C /var/www/stepbet diff --name-only --diff-filter=ACdMRTub --diff-algorithm=myers --relative 16961e04f886e5da42350771acf4333560b14d20
+    git = "git -C #{source_path}"
+    cmd = "#{git} diff --name-only --diff-filter=ACdMRTub --diff-algorithm=myers --relative #{commit_hash}"
+    zip_path = "#{source_path}/archive.zip"
+    files = exec_command(cmd)
+
+    puts "You are about to deploy to #{self.app.red}"
+    puts "Files modified:"
+    puts files.green
+    puts "Continue? y/n"
+    exit unless STDIN.getc == "y"
+
+
+    exec_command("rm -f #{zip_path}")
+    exec_command("#{git} archive -o #{zip_path} HEAD " + files.gsub(/\n/, ' '))
+
+    prepare_export_path(export_path);
+    unzip(zip_path, export_path)
+    exec_command("rm -f #{zip_path}")
+  end
+
+  def prepare_export_path(export_path)
+    exec_command("rm -rf #{export_path} && mkdir #{export_path}")
+  end
+
+  def unzip(zipfile, dir)
+    cmd = "unzip #{zipfile} -d #{dir}"
+    exec_command(cmd)
+  end
+
+  def zip(dir, zipfile)
+    cwd = exec_command("pwd")
+    exec_command("cd #{dir} && rm -f #{zipfile}")
+    exec_command("cd #{dir} && zip -r #{zipfile} *")
+    exec_command("cd #{cwd}")
+  end
+
+  def exec_command(cmd)
+    puts "Running command: '#{cmd}'"  if self.debug 
+    cmd.gsub("'", "\\\\'")
+    %x[ #{cmd} ]
+  end
+
+  def remove_unwanted_files(export_path)
+    # cleanup important files
+    deleted_files = [
+      'system/data/settings.php',
+      'less',
+      'features',
+      'grunt',
+      'jsdev',
+      'tests'
+    ]
+    deleted_files.each do |file|
+      exec_command("rm -rfv #{export_path}/#{file}")
+    end
+  
+    # remove all .htaccess
+    exec_command("find #{export_path} -name '.htaccess' -delete")
+  end
+
+  def compress_css(export_path)
+    yui = "yuicompressor-2.4.7.jar"
+    paths = [
+      'css',
+      'admin/css',
+      'mobile/css',
+      #'files/emails/templates', # don't compress email styles (yui generated 3 digit HEX colors that are not supported by all email clients)
+      'js',
+      'mobile/js'
+    ]
+  
+    paths.each do |subfolder|
+      result = exec_command("test -e #{export_path}/#{subfolder} && find #{export_path}/#{subfolder} -name '*.css'")
+      next unless result.match(/\.css/)
+
+      result.split("\n").each do |file|
+        print exec_command("java -jar #{yui} #{file} --type css -o #{file} --charset utf-8")
+      end
+    end
+  end
+
+  def compress_js(export_path)
+    yui = "yuicompressor-2.4.7.jar"
+    paths = [
+      'js',
+      'admin/js'
+    ]
+  
+    paths.each do |subfolder|
+      result = exec_command("test -e #{export_path}/#{subfolder} && find #{export_path}/#{subfolder} -name '*.js'")
+      next unless result.match(/\.js/)
+
+      result.split("\n").each do |file|
+        print exec_command("java -jar #{yui} #{file} --type js -o #{file} --charset utf-8")
+      end
+    end
+  end
+
+  def deploy_changes_since_commit(site_name, commit)
+    
+    config = SITES_CONFIG[site_name]
+  
+    temp_path = "#{TEMP_PATH}/#{site_name}"
+
+    zip_name = "#{site_name}.zip"
+    zip_path = "#{temp_path}/#{zip_name}"
+    src_path = config[:src]
+
+    export_from_git(commit, src_path, temp_path)
+    remove_unwanted_files(temp_path)
+    compress_css(temp_path)
+    compress_js(temp_path)
+    zip(temp_path, zip_path)
+
+    user = config[:user]
+    hostnames = config[:hostname]
+    unless hostnames.kind_of?(Array)
+      hostnames = [hostnames]
+    end
+
+    key = config[:key]
+    dst_path = config[:dst]
+
+    hostnames.each do |hostname|
+      upload_file_via_scp(user, hostname, key, zip_path, dst_path)
+
+      run_ssh_command(user, hostname, key, "unzip -o #{dst_path}/#{zip_name} -d #{dst_path}")
+      run_ssh_command(user, hostname, key, "rm -f #{dst_path}/#{zip_name}")
+    end
+  end
+
+  def upload_file_via_scp(user, host, key, src_path, dst_path)
+    response = exec_command("scp -v -i #{key} #{src_path} #{user}@#{host}:#{dst_path}")
+    print response.green
+  end
+
+  def run_ssh_command(user, host, key, command)
+    response = exec_command("ssh -i #{key} #{user}@#{host} -t '#{command}'")
+    print response.green
+  end
+
+  HELP = <<-BAN
+
+  A deploy script for old platform websites
+  
+  Ex:
+        opdeploy -a stepbet-dev
+  
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      opts.on("-z", "--debug", "Optional: load pry") do |x|
+        require 'pry'
+        self.debug = true
+      end
+
+      opts.on("-a", "--app=A", "Required, the website to release") do |x|
+        self.app = x
+      end
+
+      opts.on("-c", "--commit=C", "Required, last commit released before") do |x|
+        self.commit = x
+      end
+
+      opts.on("-h", "--help", "Prints this help") do
+        puts opts
+        exit
+      end
+
+    end
+    self.option_parser.parse!(ARGV)
+
+    if self.app.nil? 
+      exit_with_error("app parameter is required")
+    end
+
+    puts self.app
+    puts SITES_CONFIG
+    if SITES_CONFIG[self.app].nil?
+      exit_with_error("app not found")
+    end
+
+    if self.commit.nil?
+      exit_with_error("commit parameter is required")
+    end
+
+  end
+
+  def exit_with_error(msg)
+    show_help
+    puts msg
+    exit(1)
+  end
+
+  def show_help
+    puts self.option_parser.nil? ? HELP : self.option_parser
+  end
+end
+
+OpDeploy.new.go

@@ -1,0 +1,274 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+# CLI script which will start tmux
+class Wbtmux
+   attr_accessor :option_parser, :apps_to_run, :apps_to_open, :opt_exit_tmux, :opts_fix_dns, :opts_wait_convox
+
+  DEFAULT_SERVICES = ['mysql', 'user']
+  SERVICE_MAP = {
+    "mysql"       => 'kraken/superlocal',
+    "user"        => 'wb-user-service',
+    "auth"        => 'wb-auth-service',
+    "bill"        => 'wb-billing-service',
+    "graphql"     => 'wb-graphql-service',
+    "dietbet"     => 'dietbet-game-service',
+    "hub"         => 'wb-hub',
+    "admin-auth"  => 'wb-admin-auth-service',
+    "admin-web"   => 'wb-admin-web',
+    "metric"      => 'wb-metric-service',
+    "notify"      => 'wb-notify-service',
+    "member"      => 'wb-membership-service',
+    "falkor"      => 'falkor-game-service',
+    "runbet"      => 'runbet-game-service',
+    "social"      => 'wb-social-service',
+  }
+  ALL_SERVICES = SERVICE_MAP.keys
+  def initialize()
+    @path = "/home/mihai/Work/wb-services"
+    @apps_to_open = []
+    @apps_to_run = [] 
+  end
+
+  def go
+
+    parse_opts
+
+    run_tmux_session()
+  end
+
+  def service_data(name)
+    SERVICE_MAP[name]
+  end
+
+  def run_tmux_session()
+
+    if self.opts_wait_convox && !convox_ready?
+      exec_command("sleep 60")
+    end
+
+    exit_with_error("Convox not ready. Aborting.") unless convox_ready?
+
+    session_name = 'lconvox'
+
+    if (self.opts_fix_dns)
+
+      convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
+      convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
+
+      exec_command(convoxawsfix)
+      exec_command(convoxdnsfix)
+    end
+
+    if (self.opt_exit_tmux)
+      exit_tmux_session(session_name);
+      return
+    end
+
+    prepare_session(session_name);
+
+    open_apps(session_name, (self.apps_to_open + self.apps_to_run).uniq)
+    run_apps(session_name, self.apps_to_run)
+
+    enter_tmux_session(session_name)
+  end
+
+  def prepare_session(session_name)
+    has_session = session_exists(session_name)
+
+    if has_session
+      exit_tmux_session(session_name)
+    end
+
+    cmds = []
+    if has_session
+      cmds.push("attach-session -t #{session_name}")
+    else
+      cmds.push("new-session -c #{@path} -n \"info\" -s #{session_name}")
+    end
+
+    run_tmux_commands(session_name, cmds)
+  end
+
+  def open_apps(session_name, apps)
+
+    return if apps.nil?
+
+    active_windows = list_windows(session_name)
+
+    cmds = []
+    cmds.push("attach-session -t #{session_name}")
+
+    apps.each do |app|
+      next if active_windows.include?(app)
+
+      path = get_app_path(app)
+      cmds.push("new-window -c #{path} -n \"#{app}\"")
+      cmds.push("split-window -v -c #{path}")
+    end
+
+    run_tmux_commands(session_name, cmds)
+  end
+
+  def run_apps(session_name, apps)
+    return if apps.nil?
+
+    # reload window list
+    active_windows = list_windows(session_name)
+
+    apps.each do |app|
+      next unless active_windows.include?(app)
+
+      if app == 'mysql'
+        app_command = 'docker-compose up'
+      else
+        app_command = "kk start -- local #{app}"
+      end
+
+      cmds = []
+      cmds.push("attach-session -t #{session_name}")
+      cmds.push("select-window -t #{app}")
+      cmds.push("send-keys -t 1 C-z '#{app_command}' Enter")
+      run_tmux_commands(session_name, cmds)
+    end
+  end
+
+  def exit_tmux_session(session_name)
+    exec_command("tmux send-keys -t \"0\" C-z 'tmux detach-client -s #{session_name}' Enter")
+  end
+
+  def enter_tmux_session(session_name)
+    exec_command("tmux attach-session -t #{session_name}")
+  end
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      opts.on("-z", "--debug", "Optional: load pry") do |x|
+        require 'pry'
+      end
+
+      opts.on("-r", "--run=S", "Optional, the apps to run") do |x|
+        self.apps_to_run = x.split(",").collect(&:strip)
+      end
+
+      opts.on("-o", "--open=O", "Optional, the apps to open") do |x|
+        self.apps_to_open = x.split(",").collect(&:strip)
+      end
+
+      opts.on("-x", "--exit", "Optional, exit current tmux session without killing it") do |x|
+        self.opt_exit_tmux = true
+      end
+
+      opts.on("-f", "--fixdns", "Optional, Fix convox dns") do |x|
+        self.opts_fix_dns = true
+      end
+
+      opts.on("-w", "--wait", "Optional, wait for convox") do |x|
+        self.opts_wait_convox = true
+      end
+
+      opts.on("-h", "--help", "Prints this help") do
+        puts opts
+        exit
+      end
+
+    end
+    self.option_parser.parse!(ARGV)
+
+    validate_service_names(self.apps_to_run)
+    validate_service_names(self.apps_to_open)
+  end
+
+  def validate_service_names(services)
+    return if services.nil?
+
+    services.each do |s|
+      exit_with_error "Service '#{s} 'not found" unless ALL_SERVICES.include?(s)
+    end
+  end
+
+
+  def exit_with_error(msg)
+    puts msg
+    puts "See help:"
+    show_help
+    exit(1)
+  end
+
+  def list_windows(session_name)
+    # lconvox:0: mysql (2 panes) [203x53] 
+    # lconvox:1: falkor (2 panes) [203x53] 
+    # lconvox:2: graphql- (2 panes) [203x53] 
+    # lconvox:3: ninja* (2 panes) [203x53] 
+    res = exec_command("tmux list-windows -t #{session_name} -a")
+    res.scan(/([a-zA-Z]+)\:([0-9]+)\: ([a-zA-Z]+)([*]?)/).collect do |match|
+      match[0] == session_name ? match[2] : nil
+    end.compact
+  end
+
+  def session_exists(name)
+    system("tmux has-session -t #{name} 2>/dev/null") == true
+  end
+
+  def get_app_path(app)
+    "#{@path}/#{SERVICE_MAP[app]}"
+  end
+
+  def run_tmux_commands(session_name, cmds)
+    cmds.push("send-keys -t \"0\" C-z 'tmux detach-client -s #{session_name}' Enter")
+    exec_command("tmux " + cmds.join(" \\; \\\n") + "\\;")
+  end
+
+  def exec_command(cmd)
+    puts "Running Command:"
+    puts cmd.blue
+    cmd.gsub("'", "\\\\'")
+    %x[ #{cmd} ]
+  end
+
+  def convox_ready?
+    exec_command("cd #{@path} && convox apps").match(/RELEASE/)
+  end
+
+  HELP = <<-END
+wbtmux
+  Wrapper script for tmux. Can run any of the following services #{SERVICE_MAP.keys.join(",")}
+  Ex:
+    
+    or 
+    wbtmux -r mysql,user -o auth,falkor
+  
+  END
+
+  def show_help
+    puts HELP
+  end
+end
+
+Wbtmux.new.go
+
+

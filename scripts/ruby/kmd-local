@@ -1,0 +1,420 @@
+#!/usr/bin/env ruby
+
+require "pry"
+require "highline"
+require "colored"
+
+# Expansions for rack names.
+#
+# The keys are used to match against user args, the values are what the match
+# is expanded to.
+#
+# Usually the key and value can be the same, because regex is used to match.
+# But if there is a name conflict that causes > 1 match on part of the name
+# (eg. 'auth' would match both 'wb-auth-service' and
+# 'wb-admin-auth-service'), you can add an extra shorthand entry (eg. 'auth'
+# -> 'wb-auth-service').
+RACKS = {
+  "local" => "local/convox",
+}.freeze
+
+# expansions for apps. See comment on RACKS.
+APPS = {
+  "dietbet" => "dietbet",
+  "kraken" => "kraken",
+  "ktest" => "kraken-test",
+  "stepbet" => "stepbet",
+  "wb-auth-service" => "wb-auth-service",
+  "auth" => "wb-auth-service",
+  "admin-auth-service" => "wb-admin-auth-service",
+  "wb-admin-web" => "wb-admin-web",
+  "ninja" => "wb-admin-web",
+  "wb-billing-service" => "wb-billing-service",
+  "wb-graphql-service" => "wb-graphql-service",
+  "wb-hub" => "wb-hub",
+  "wb-membership-service" => "wb-membership-service",
+  "wb-metric-service" => "wb-metric-service",
+  "wb-notify-service" => "wb-notify-service",
+  "wb-social-service" => "wb-social-service",
+  "wb-user-service" => "wb-user-service",
+  "runbet-game-service" => "runbet-game-service",
+  "falkor-game-service" => "falkor-game-service",
+  "quitbet-game-service" => "quitbet-game-service",
+  "dietbet-game-service" => "dietbet-game-service",
+  "stepbet-game-service" => "stepbet-game-service",
+}.freeze
+
+# Commands that expand to match any of these regexes will be confirmed by
+# user before performing them (unless the no-confirm flag was passed)
+CONFIRMS = [
+  /convox env set/,
+  /convox deploy/,
+  /convox apps cancel/,
+  /convox apps create/,
+  /convox releases promote/,
+  /convox scale.*--count/,
+  /convox scale.*--memory/,
+  /convox run/,
+].freeze
+
+KMDS = {
+  "apps" =>          { expanded: "convox apps", args: [:rack] },
+  "services" =>      { expanded: "convox services", args: [:rack, :app] },
+  "refresh-env" =>   { expanded: "cat .env.local | convox env set", args: [:rack, :app] },
+  "cancel" =>        { expanded: "convox apps cancel", args: %i[rack app] },
+  "resources" =>     { expanded: "convox resources", args: [:rack] },
+  "info" =>          { expanded: "convox apps info", args: %i[rack app] },
+  "start" =>         { expanded: "DEBUG_CONVOX=true convox start -m ${config_file}", args: %i[rack app convox_config_file] },
+  "env" =>           { expanded: "convox env", args: %i[rack app] },
+  "promote" =>       { expanded: "convox releases promote", args: %i[rack app wait] },
+  "builds" =>        { expanded: "convox builds", args: %i[rack app] },
+  "releases" =>      { expanded: "convox releases", args: %i[rack app] },
+  "logs" =>          { expanded: "convox logs", args: %i[rack app] },
+  "ps" =>            { expanded: "convox ps", args: %i[rack app] },
+  "deploy" =>        { expanded: "convox deploy", args: %i[rack app] },
+  "scale" =>         { expanded: "convox scale", args: %i[rack app] },
+  "konnect" =>       { expanded: "konnect-local", args: %i[rack app service_from_ps] },
+  "watch-release" => { expanded: "watch-release", args: %i[rack app] },
+  "kwake" =>         { expanded: "kwake", args: [] },
+  "pt" =>            { expanded: 'papertrail -f -j --min-time="1 minutes ago"', args: %i[pt_group pt_query pt_klog] },
+  "ptdump" =>        { expanded: 'papertrail -j', args: %i[pt_group pt_time pt_app pt_dump_file] },
+  "one-off" =>       { expanded: 'convox run ${service} "/usr/bin/env bash"', args: %i[rack app release service_from_ps] },
+  "krubocop" =>      { expanded: "krubocop", args: %i[rack app service_from_ps] },
+}.freeze
+
+PAPERTRAIL_GROUPS = {
+  "staging" => "staging-west",
+  "production" => "prod-west",
+}.freeze
+
+class Kmd
+  def initialize(confirm: true)
+    @production = false
+    @confirm = confirm
+    cmd_and_args = ARGV.join(" ").split(" -- ")
+
+    return if cmd_and_args.empty?
+
+    if cmd_and_args.size.eql?(1)
+      self.command = cmd_and_args.first
+    else
+      self.command = cmd_and_args[0..-2].map(&:strip).join(" -- ")
+      args = cmd_and_args.last.split
+      return if args.empty?
+      self.rack_filter = args.first
+      self.app_filter = args[1] if args.size > 1
+      self.service_filter = args[2] if args.size > 2
+      self.additional_arg = args[3] if args.size > 3
+    end
+  end
+
+  def go(command:, args:)
+    command_info, command_args = choose_command
+    expanded_command = [command_info[:expanded]]
+    expanded_command << command_args.join(" ") unless command_args.nil?
+
+    command_info[:args].each do |arg|
+      send("add_#{arg}", expanded_command)
+    end
+
+    expanded_command = expanded_command.join(" ").gsub(/\s+/, " ")
+
+    if ok_to_launch?(expanded_command)
+      exec expanded_command
+    else
+      puts "Cancelled"
+    end
+  end
+
+  def show_help
+    puts HELP
+  end
+
+  protected
+
+  attr_accessor :command, :rack_filter, :app_filter, :confirm, :service_filter,
+                :app, :rack, :additional_arg
+
+  def add_rack(expanded_command)
+    if (self.rack = choose_rack).nil?
+      exit_with_error "Could not determine rack"
+    else
+      expanded_command << "--rack #{rack}"
+      @production = %w[waybetter/production waybetter/prd-west].include?(rack)
+    end
+  end
+
+  def add_app(expanded_command)
+    if (self.app = choose_app).nil?
+      exit_with_error "Could not determine app"
+    else
+      expanded_command << "--app #{app}"
+    end
+  end
+
+  def add_pt_app(expanded_command)
+    if (self.app = choose_app).nil?
+      exit_with_error "Could not determine app"
+    else
+      expanded_command << "-- '#{app}'"
+    end
+  end
+
+  def add_pt_dump_file(expanded_command)
+    fn = "/tmp/pt_#{self.app.gsub('-', '_')}.log"
+    expanded_command << " | klog -s papertrail > #{fn}"
+  end
+
+  def add_wait(expanded_command)
+    if service_filter && "wait" =~ /#{service_filter}/
+      expanded_command << "--wait"
+    else
+      expanded_command
+    end
+  end
+
+  def add_pt_query(expanded_command)
+    query = cli.ask "#{'Paper trail query: '.yellow} (default: blank)"
+    expanded_command << "-- '#{query}'" unless query.strip.empty?
+  end
+
+  def add_pt_group(expanded_command)
+    if (ptgroup = choose_papertrail_group).nil?
+      exit_with_error "Could not determine ptgroup"
+    else
+      expanded_command << "-g #{ptgroup}"
+    end
+  end
+
+  def add_pt_time(expanded_command)
+    t = cli.ask("How many hours?".yellow).to_s.strip.to_i
+    if t.between?(1,100)
+      expanded_command << "--min-time=\"#{t}\ hours ago\""
+    else
+      exit_with_error "Could not determine how many hours"
+    end
+  end
+
+  def add_service_from_ps(expanded_command)
+    if (service = choose_service_from_ps).nil?
+      exit_with_error "Could not determine service"
+    else
+      if expanded_command.include?("konnect")
+        expanded_command << "--service #{service}"
+      elsif "one-off".include?(command)
+        expanded_command.map! { |str| str.gsub(/\$\{service\}/, service) }
+      else
+        expanded_command << service
+      end
+    end
+  end
+
+  def add_convox_config_file(expanded_command)
+    if (config_file = find_config_file).nil?
+      exit_with_error "Could not find convox configuration file"
+    else
+      expanded_command.map! do |str|
+        str.gsub(/\$\{config_file\}/, config_file)
+      end
+    end
+  end
+
+  def add_pt_klog(expanded_command)
+    expanded_command << "| klog -s papertrail"
+  end
+
+  def add_release(expanded_command)
+    if (release = choose_release).nil?
+      exit_with_error "Could not determine release"
+    else
+      expanded_command << "--release #{release}"
+    end
+  end
+
+  def find_config_file
+    if File.file?("convox.local.yml")
+      "convox.local.yml"
+    elsif File.file?("convox.yml")
+      "convox.yml"
+    end
+  end
+
+  def choose_command
+    filter = command&.split&.first
+    args = command&.split&.[](1..-1)
+    cmd = KMDS[filter] if filter
+
+    if cmd.nil?
+      all_cmds = KMDS.keys.sort
+      choices = all_cmds.grep Regexp.new(filter || ".*")
+      choices = all_cmds if choices.empty?
+      cmd = KMDS[choose(msg: "Command", field: :command, choices: choices)]
+    end
+
+    [cmd, args]
+  end
+
+  def choose_rack
+    default = `convox switch`.strip
+    default = "local" if default =~ /local/
+    default = default.split("/").last if default["/"]
+    choices = RACKS.keys.grep Regexp.new(rack_filter || ".*")
+    choices = RACKS.keys if choices.empty?
+    rack = choose(msg: "Rack (default: #{default})", field: :command, choices: choices, default: default)
+    RACKS[rack]
+  end
+
+  def choose_app
+    dir = File.basename Dir.pwd
+    default = (dir if APPS.include?(dir))
+
+    return APPS[app_filter] if APPS.key?(app_filter)
+    choices = APPS.keys.grep Regexp.new(app_filter || ".*")
+    choices = APPS.keys if choices.empty?
+    msg = "App"
+    msg << " (default: #{dir})" if default
+    app = choose(msg: msg, field: :command, choices: choices, default: default)
+    APPS[app]
+  end
+
+  def choose_papertrail_group
+    default = "prod-west"
+
+    return PAPERTRAIL_GROUPS[app_filter] if PAPERTRAIL_GROUPS.key?(app_filter)
+    choices = PAPERTRAIL_GROUPS.keys.grep Regexp.new(rack_filter || ".*")
+    choices = PAPERTRAIL_GROUPS.keys if choices.empty?
+
+    msg = "Papertrail Group"
+    msg << " (default: #{default})" if default
+    app = choose(msg: msg, field: :command, choices: choices, default: default)
+    PAPERTRAIL_GROUPS[app]
+  end
+
+  def choose_service_from_ps
+    return service_filter if service_filter
+
+    ps_info = `convox ps --app #{app} --rack #{rack}`
+    processes = ps_info.lines[1..-1].map { |l| l.split[0..1].reverse.join(" ") }
+    process = choose(msg: "Process", field: :command, choices: processes).split
+    if "one-off".include?(command)
+      process.first
+    else
+      process.last
+    end
+  end
+
+  def choose_release
+    return additional_arg if additional_arg
+
+    release_info = `convox releases --rack #{rack} --app #{app}`
+    releases = release_info.lines[1..9].map(&:strip)
+    release = choose(msg: "   Release ID   Status  Build ID     Created", field: :command, choices: releases)
+    release.split[0]
+  end
+
+  def choose(msg: "Which?", field:, choices:, default: nil)
+    return choices.first if choices.size.eql?(1)
+    puts "\n#{msg.yellow}"
+    cli.choose do |menu|
+      menu.readline = true
+      choices.each do |name|
+        menu.choice(name) { return name }
+      end
+      menu.choice("quit") { exit 0 }
+      menu.default = default if default
+    end
+  end
+
+  def ok_to_launch?(command)
+    return true unless confirm
+
+    needs_a_confirm = !!CONFIRMS.detect { |r| !!(command =~ r) }
+
+    if needs_a_confirm
+      msg = production? ? command.bold.red : command.green
+      answer = cli.ask "#{msg} (enter 'y' to execute)"
+      go_ahead = answer =~ /^y/
+    else
+      puts command.yellow
+      go_ahead = true
+    end
+  end
+
+  def production?
+    @production
+  end
+
+  def cli
+    @_cli = HighLine.new
+  end
+
+  HELP = <<-HELP
+      kmd is a util for helping you quickly type out convox and kraken commands. Think of it as a bash alias on steriods.
+
+      kmd will extrapolate the names of your convox or kraken command, along with the rack and app, based on partial values.
+
+      If it cannot figure out the command/rack/app, it will present a menu asking you to choose.
+
+      When menus for rack or app are shown, it tries to be smart about defaults so you can just press enter if it guesses right.
+
+      When menus are used, you can type partial answers to select an item, or use tab auto completion.
+
+      Pass 'no-confirm' to override command-specific confirmation requirements.
+
+      Here are some example kmd commad
+
+         kmd
+           # -> menus used to choose command, rack, and app as appropriate
+
+         kmd apps
+           # -> 'convox apps' assumed, menus used to choose rack
+
+         kmd apps -- pr
+           # -> 'convox apps --rack production' assumed, no menus
+
+         kmd logs -- s kr
+           # -> 'convox logs --rack staging --app kraken'
+
+         kmd start -- l runbet web
+           # -> 'convox start web --rack local --app runbet-game-service
+
+         kmd apps -- sta
+           # => convox apps --rack waybetter/staging
+
+         kmd kon -s web -- s user
+           # => konnect -s web --rack staging --app wb-user-service
+
+         kmd deploy -s web -- s user no-confirm
+           # => convox deploy --rack staging --app wb-user-service
+           # the 'deploy' command normally requires confirmation. Adding the
+           # no-confirm arg overrides that.
+
+         kmd promote ABCDEFGHIJ -- stg run wait
+           # => convox releases promote ABCDEFGHIJ --rack stg-west --app runbet-game-service --wait
+           # the 'promote' command normally requires confirmation. Adding the
+           # no-confirm arg overrides that.
+           # the 'wait' argument is optional, and will be skipped if not provided
+
+         kmd one-off -- prd run web ABCDEFGHIJ
+           # => convox run web "/usr/bin/env bash" --rack prd-west --app runbet-game-service --release ABCDEFGHIJ
+           # the 'one-off' command normally requires confirmation. Adding the
+           # no-confirm arg overrides that.
+      Sending the rack and app filters is optional. If they are not provided, or if the filter doesnt match anything (or too many things), a menu will be presented to specify them.
+
+      Supported commands: \n\t#{KMDS.sort_by { |k, v| v[:expanded] + k }.map { |k, v| "#{k} (#{v[:expanded]})" }.join("\n\t")}
+  HELP
+
+  def exit_with_error(msg)
+    show_help
+    puts msg
+    exit(1)
+  end
+end
+
+if ["-h", "--help"].include?(ARGV.first)
+  Kmd.new.show_help
+else
+  no_confirm = ARGV.delete("no-confirm")
+  confirm = no_confirm.nil?
+  Kmd.new(confirm: confirm).go(command: ARGV[0], args: ARGV[1..-1])
+end
