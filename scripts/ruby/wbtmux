@@ -61,23 +61,19 @@ class Wbtmux
 
   def run_tmux_session()
 
-    if self.opts_wait_convox && !convox_ready?
-      exec_command("sleep 60")
+    unless kubernetes_ready?
+      puts "Kubernetes (microk8s) not running. Starting it"
+      start_kubernetes 
     end
 
+    wait_for_convox if self.opts_wait_convox 
     exit_with_error("Convox not ready. Aborting.") unless convox_ready?
+
+    fix_dns_and_aws if self.opts_fix_dns
 
     session_name = 'lconvox'
 
-    if (self.opts_fix_dns)
-
-      convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
-      convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
-
-      exec_command(convoxawsfix)
-      exec_command(convoxdnsfix)
-    end
-
+  
     if (self.opt_exit_tmux)
       exit_tmux_session(session_name);
       return
@@ -85,7 +81,7 @@ class Wbtmux
 
     prepare_session(session_name);
 
-    open_apps(session_name, (self.apps_to_open + self.apps_to_run).uniq)
+    open_apps(session_name, (self.apps_to_run + self.apps_to_open).uniq)
     run_apps(session_name, self.apps_to_run)
 
     enter_tmux_session(session_name)
@@ -235,7 +231,7 @@ class Wbtmux
   end
 
   def get_app_path(app)
-    "#{@path}/#{SERVICE_MAP[app]}"
+    "#{@path}/#{service_data(app)}"
   end
 
   def run_tmux_commands(session_name, cmds)
@@ -250,10 +246,36 @@ class Wbtmux
     %x[ #{cmd} ]
   end
 
+  def wait_for_convox
+    12.times do 
+      break if convox_ready?
+
+      puts "Convox not ready. Waiting 10 seconds"
+      exec_command("sleep 10")
+    end
+  end
+
   def convox_ready?
     exec_command("cd #{@path} && convox apps").match(/RELEASE/)
   end
 
+  def kubernetes_ready?
+    exec_command("microk8s.status").match(/microk8s is running/)
+  end
+
+  def start_kubernetes
+    exec_command("microk8s.start && microk8s.status --wait-ready")
+  end
+
+  def fix_dns_and_aws
+    puts 'Fixing iptables'
+    exec_command("sudo iptables -P FORWARD ACCEPT")
+
+    puts 'Fixing aws'
+    pass = exec_command("aws ecr get-login-password --region us-west-2 --profile prod")
+    exec_command("convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS #{pass}")
+  end
+  
   HELP = <<-END
 wbtmux
   Wrapper script for tmux. Can run any of the following services #{SERVICE_MAP.keys.join(",")}
