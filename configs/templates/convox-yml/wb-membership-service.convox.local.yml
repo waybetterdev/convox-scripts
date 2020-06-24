@@ -1,0 +1,81 @@
+---
+environment:
+  ####################
+  #                  #
+  # General Settings #
+  #                  #
+  ####################
+  - ALLOW_UNCONFIGURED_SERVICES=true
+  - SKIP_SIMPLECOV=true
+  - WAIT_FOR_REDIS=true
+  - WB_ENV
+  - WB_INTERNAL_URL_SCHEME=https
+  - VERIFY_CERTS=false
+  - API_CLIENT_JWT_SECRET
+  - GEN2=true
+  - DISABLE_SPRING=1
+  - LOG_LEVEL=
+  - RUBYOPT=
+  - WEB_CONCURRENCY=1
+
+  ###########################
+  #                         #
+  # Service Linking         #
+  #                         #
+  ###########################
+  - REDIS_HOST
+  - WB_BILLING_SERVICE_HOST
+  - WB_BILLING_SERVICE_PORT=80
+  - WB_USER_SERVICE_HOST
+  - WB_USER_SERVICE_PORT=80
+
+  ##############################
+  #
+  #  HTTP config
+  #
+  ##############################
+  - PORT=3009
+  - WB_MEMBERSHIP_SERVICE_MAX_HTTP_THREADS=2
+
+  #####################
+  #                   #
+  # Database Settings #
+  #                   #
+  #####################
+  - WB_MEMBERSHIP_SERVICE_DB_HOST
+  - WB_MEMBERSHIP_SERVICE_DB_PASSWORD
+  - WB_MEMBERSHIP_SERVICE_DB_PORT
+  - WB_MEMBERSHIP_SERVICE_DB_USERNAME
+
+  ################
+  #              #
+  # Gem Settings #
+  #              #
+  ################
+  - WB_EVENT_LOG_GEM_PATH=
+  - WB_SERVICE_GEM_PATH=
+  - WB_SEARCH_GEM_PATH=
+  - WB_RUBOCOP_GEM_PATH=
+  - WEBSPRAY_GEM_PATH=
+  - RACK_JWT_GEM_PATH=
+  - GEMFURY_SECRET
+
+  #############
+  #           #
+  # Profiling #
+  #           #
+  #############
+  - DATADOG_APM_ENABLED=false
+  - DD_APM_IGNORE_RESOURCES=
+
+services:
+  web:
+    #command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+    command: ./bin/start_web_server.sh
+    health:
+      grace: 15
+      path: /ping/lb
+      interval: 60
+      timeout: 3
+    port: 3009
+    internal: true

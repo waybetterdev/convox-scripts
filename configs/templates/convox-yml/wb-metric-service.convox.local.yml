@@ -1,0 +1,119 @@
+environment:
+
+  ##############################
+  #
+  #  HTTP Config
+  #
+  ##############################
+  - PORT=3002
+  - WB_METRIC_SERVICE_SECRET_KEY_BASE
+  - WB_METRIC_SERVICE_WEB_THREADS=2
+  - WB_METRIC_SERVICE_WEB_WORKERS=1
+
+  ##############################
+  #
+  #  Daemon Config
+  #
+  ##############################
+  - WB_METRIC_SERVICE_DAEMON_THREADS=1
+  - WB_METRIC_SERVICE_SOURCE_UPDATE_REQUEST_DAEMON_IDLE_SLEEP_TIME=30
+  - WB_METRIC_SERVICE_DAEMON_RESTART_FREQUENCY=7200
+
+  ##############################
+  #
+  #  Pub sub, Qs
+  #
+  ##############################
+  - PUBSUB_CHANNEL_CLIENT_ALERTS=pub_sub_channel_client_alerts
+  - PUBSUB_CHANNEL_EMAILS_SENT=pub_sub_channel_emails_sent
+  - PUBSUB_CHANNEL_NOTIFICATIONS_SENT=pub_sub_channel_notifications_sent
+  - PUBSUB_CHANNEL_UPDATE_CLIENT_RUNS=pub_sub_channel_update_client_runs
+  - PUBSUB_CHANNEL_UPDATE_CLIENT_STEPS=pub_sub_channel_update_client_steps
+  - QUEUE_NAME_REQUEST_GAME_SERVICE_RUNS_UPDATE=game_service_run_update_requests
+  - QUEUE_NAME_REQUEST_GAME_SERVICE_STEPS_UPDATE=game_service_step_update_requests
+  - QUEUE_NAME_REQUEST_METRIC_SERVICE_RUNS_UPDATE=metric_service_run_update_requests
+  - QUEUE_NAME_REQUEST_METRIC_SERVICE_STEPS_UPDATE=metric_service_step_update_requests
+  - QUEUE_NAME_SEND_MAIL=notify_service_send_mail_queue
+  - QUEUE_NAME_REQUEST_GAME_SERVICE_WORKOUTS_UPDATE=game_service_workout_update_requests
+
+  ##############################
+  #
+  # WB Service Linking/config
+  #
+  ##############################
+  - GEN2=true
+  - WB_ENV
+  - WB_INTERNAL_URL_SCHEME=http
+  - API_CLIENT_JWT_SECRET
+  - ALLOW_UNCONFIGURED_SERVICES=false
+  - WB_USER_SERVICE_HOST
+  - WB_USER_SERVICE_PORT=80
+  - WB_METRIC_SERVICE_DB_HOST
+  - WB_METRIC_SERVICE_DB_INTERNAL_PORT
+  - WB_METRIC_SERVICE_DB_PASSWORD
+  - WB_METRIC_SERVICE_DB_USERNAME
+  - REDIS_HOST
+  - WB_METRIC_SERVICE_DOMAIN
+
+  ##############################
+  #
+  # External Service Linking/config
+  #
+  ##############################
+  - FITBIT_ACTIVITIES_SUBSCRIBER_ID
+  - FITBIT_ACTIVITIES_SUBSCRIPTION_ID
+  - FITBIT_ACTIVITIES_SUBSCRIPTION_VERIFICATION_CODE
+  - FITBIT_API_URL=https://api.fitbit.com
+  - FITBIT_CLIENT_ID
+  - FITBIT_CLIENT_SECRET
+  - STRAVA_CLIENT_ID
+  - STRAVA_CLIENT_SECRET
+  - STRAVA_ACTIVITIES_SUBSCRIPTION_VERIFICATION_CODE
+  - GARMIN_CLIENT_ID=SECRET
+  - GARMIN_CLIENT_SECRET=SECRET
+  - GEMFURY_SECRET
+
+  ##############################
+  #
+  # Debug, dev
+  #
+  ##############################
+  # eg.
+  # convox env set A_GEM_PATH_VAR /app/vendor/gems/dev/wb-service
+  - METRIC_WB_SERVICE_GEM_PATH=
+  - METRIC_WB_MESSAGING_GEM_PATH=
+  - WEBSPRAY_GEM_PATH=
+  - SKIP_SIMPLECOV=true
+
+  ##############################
+  #
+  # Misc
+  #
+  ##############################
+  - INIT_AND_SEED=false
+  - WAIT_FOR_REDIS=false
+  - DISABLE_SPRING=1
+  - DISABLE_FILEWATCHER=true
+
+services:
+  #  messaging:
+  #    memory: 512
+  #    command: ./bin/start_message_api_daemon.sh
+  #    #command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+  #
+  #  daemons:
+  #    memory: 512
+  #    command: ./bin/start_daemons.sh
+  #    #command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+
+  web:
+    domain: ${WB_METRIC_SERVICE_DOMAIN}
+    memory: 256
+    #command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+    command: bash -c 'wget https://dev.dietbet.com/files/convox/office-dev-convox-local-rack.crt -O "/usr/share/ca-certificates/convox.crt" && echo "convox.crt" >> "/etc/ca-certificates.conf" && update-ca-certificates && cat "/usr/share/ca-certificates/convox.crt" && export NODE_EXTRA_CA_CERTS="/usr/share/ca-certificates/convox.crt" && ./bin/start_web_server.sh'
+    health:
+      grace: 15
+      path: /ping/lb
+      interval: 60
+      timeout: 3
+    port: 3002

@@ -1,0 +1,110 @@
+---
+environment:
+  ####################
+  #                  #
+  # General Settings #
+  #                  #
+  ####################
+  - ALLOW_UNCONFIGURED_SERVICES=false
+  - INIT_AND_SEED=false
+  - SKIP_SIMPLECOV=true
+  - WAIT_FOR_REDIS=true
+  - WB_ENV
+  - WB_INTERNAL_URL_SCHEME=http
+  - API_CLIENT_JWT_SECRET
+  - REDIS_HOST
+  - GEN2=true
+  - DISABLE_SPRING=1
+  ###########################
+  #                         #
+  # Service to Service URLs #
+  #                         #
+  ###########################
+  - DIETBET_GAME_SERVICE_HOST
+  - DIETBET_GAME_SERVICE_PORT=443
+  - DIETBET_GAME_SERVICE_SCHEME=https
+  - WB_METRIC_SERVICE_HOST
+  - WB_NOTIFY_SERVICE_HOST
+  - WB_SOCIAL_SERVICE_HOST
+  - WB_BILLING_SERVICE_HOST
+  - WB_USER_SERVICE_HOST
+  - MEMBERSHIP_SERVICE_HOST
+  - MEMBERSHIP_SERVICE_PORT=443
+  #####################
+  #                   #
+  # Database Settings #
+  #                   #
+  #####################
+  - FALKOR_GAME_SERVICE_DB_HOST
+  - FALKOR_GAME_SERVICE_DB_PASSWORD
+  - FALKOR_GAME_SERVICE_DB_PORT
+  - FALKOR_GAME_SERVICE_DB_USERNAME
+  - FALKOR_GAME_SERVICE_MAX_HTTP_THREADS
+  #############################
+  #                           #
+  # wb-game Database Settings #
+  #                           #
+  #############################
+  - WB_GAME_DB_HOST=
+  - WB_GAME_DB_PASSWORD=
+  - WB_GAME_DB_PORT=
+  - WB_GAME_DB_USERNAME=
+  ################
+  #              #
+  # Gem Settings #
+  #              #
+  ################
+  - GEMFURY_SECRET
+  - WB_GAME_GEM_PATH=
+  - WB_MESSAGING_GEM_PATH=
+  - WB_SERVICE_GEM_PATH=
+  - WEBSPRAY_GEM_PATH=
+  - RACK_JWT_GEM_PATH=
+  #############
+  #           #
+  # Profiling #
+  #           #
+  #############
+  - DATADOG_APM_ENABLED=false
+  - DD_APM_IGNORE_RESOURCES=
+  ####################
+  #                  #
+  # Ruby GC settings #
+  #                  #
+  ####################
+  - MALLOC_ARENA_MAX=3  # default: none
+  - RUBY_GC_HEAP_FREE_SLOTS=4096  # default 4096   Must be > 0
+  - RUBY_GC_HEAP_GROWTH_FACTOR=1.2  # default 1.8   Must be > 1.0
+  - RUBY_GC_HEAP_GROWTH_MAX_SLOTS=3096  # default 0 (disabled);Must be > 0
+  - RUBY_GC_HEAP_INIT_SLOTS=10000  # default 10000  Must be > 0
+  - RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR=1.2  # default 2.0   Must be > 0
+  - RUBY_GC_MALLOC_LIMIT=8500000  # default 16777216  Must be > 0
+  - RUBY_GC_MALLOC_LIMIT_GROWTH_FACTOR=1.2  # default 1.4   Must be > 1.0
+  - RUBY_GC_MALLOC_LIMIT_MAX=15000000  # default 33554432   Must be > 0
+services:
+  #engine:
+  #  # command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+  #  command: ./bin/start_daemon.sh
+  #  scale:
+  #    cpu: 512
+  #    memory: 512
+  #  internal: true
+  web:
+    # command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+    command: bash -c 'wget https://dev.dietbet.com/files/convox/office-selfsigned-rootCA.crt -O "/usr/share/ca-certificates/office-selfsigned-rootCA.crt" && echo "office-selfsigned-rootCA.crt" >> "/etc/ca-certificates.conf" && update-ca-certificates && cat "/usr/share/ca-certificates/office-selfsigned-rootCA.crt" && echo "188.244.27.49 wb-user-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 wb-billing-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 wb-metric-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 wb-notify-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 wb-social-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 web.dietbet-game-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 web.falkor-game-service.convox.office" >> "/etc/hosts" && echo "188.244.27.49 wb-membership-service.convox.office" >> "/etc/hosts"  && echo "188.244.27.49 wb-user-service.convox.office" >> "/etc/hosts"  && ./bin/start_web_server.sh'
+    health:
+      path: /ping/lb
+      interval: 60
+      timeout: 3
+    scale:
+      count: 1
+    port: 3004
+    internal: true
+    environment:
+      - PORT=3004
+  #messaging:
+  #  # command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+  #  command: ./bin/start_message_api_daemon.sh
+  #  scale:
+  #    memory: 512
+  #  internal: true

@@ -9,7 +9,7 @@ $docsPath = realpath("$path/../../../");
 if (file_exists("$docsPath/local-settings/apache-sites.php"))
   require_once("$docsPath/local-settings/apache-sites.php");
 else
-  require_once("apache-sites.template.php");
+  require_once("$docsPath/configs/templates/apache-sites.template.php");
 
 
 $httpsOutConfigPath = "$docsPath/local-settings/wb-proxy-ssl.conf";

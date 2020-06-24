@@ -1,0 +1,147 @@
+environment:
+  ##############################
+  #
+  #  Debug, dev
+  #
+  ##############################
+  # eg.
+  # convox env set A_GEM_PATH_VAR /app/vendor/gems/dev/wb-service
+  - NOTIFY_WB_SERVICE_GEM_PATH=
+  - NOTIFY_WB_MESSAGING_GEM_PATH=
+  - SKIP_SIMPLECOV=true
+
+  ##############################
+  #
+  #  Daemon Config
+  #
+  #  (leave in shared stanza, useful to have these vars available on all
+  #  containers for debugging)
+  #
+  ##############################
+  - WB_NOTIFY_SERVICE_DAEMON_MONITOR_FREQUENCY=120
+  - WB_NOTIFY_SERVICE_DAEMON_IDLE_SLEEP_TIME=60
+  - WB_NOTIFY_SERVICE_DAEMON_MIN_SLEEP_TIME=1
+  - WB_NOTIFY_SERVICE_EMAIL_DAEMON_THREADS=2
+  - WB_NOTIFY_SERVICE_PUSH_DAEMON_THREADS=2
+  - WB_NOTIFY_SERVICE_DAEMON_DB_POOL_SIZE=10
+  - WB_NOTIFY_SERVICE_ANALYTICS_DAEMON_THREADS=2
+  - WB_NOTIFY_SERVICE_DAEMON_RESTART_FREQUENCY=86400
+
+  ##############################
+  #
+  #  Http Config
+  #
+  #  (leave in shared stanza, useful to have these vars available on all
+  #  containers for debugging)
+  #
+  ##############################
+  - PORT=3007
+  - WB_NOTIFY_SERVICE_MAX_HTTP_THREADS=2
+
+  ##############################
+  #
+  #  Service linking, config
+  #
+  ##############################
+  - WB_ENV=_set_me_
+  - GEN2=true
+  - WB_INTERNAL_URL_SCHEME=http
+  - API_CLIENT_JWT_SECRET=_set_me_
+  - REDIS_HOST=_set_me_
+  - ALLOW_UNCONFIGURED_SERVICES=
+  - WB_BILLING_SERVICE_HOST
+  - WB_BILLING_SERVICE_PORT=80
+  - WB_NOTIFY_SERVICE_DB_HOST=_set_me_
+  - WB_NOTIFY_SERVICE_DB_USERNAME=_set_me_
+  - WB_NOTIFY_SERVICE_DB_PASSWORD=_set_me_
+  - WB_NOTIFY_SERVICE_DB_PORT=3306
+  - WB_USER_SERVICE_HOST=_set_me_
+  - WB_USER_SERVICE_PORT=80
+  - RUNBET_GAME_SERVICE_HOST
+  - FALKOR_GAME_SERVICE_HOST
+  - FALKOR_GAME_SERVICE_PORT
+
+  ##############################
+  #
+  #  External services config
+  #  SNS, SES config
+  #
+  ##############################
+  - ANALYTICS_JWT_EXPIRATION_HOURS=24
+  - GEMFURY_SECRET=_set_me
+  - AWS_NOTIFY_USER_ACCESS_ID=_set_me_
+  - AWS_NOTIFY_USER_ACCESS_SECRET=_set_me_
+  - AWS_EMAIL_SOURCE=_set_me_
+  - AWS_EMAIL_SOURCE_ARN=_set_me_
+  - AWS_EMAIL_RETURN_PATH=_set_me_
+  - AWS_EMAIL_RETURN_PATH_ARN=_set_me_
+  - RUNBET_PLATFORM_APP_ARN_IOS=_set_me_
+  - RUNBET_PLATFORM_APP_ARN_ANDROID=_set_me_
+  - SEGMENT_API_KEY
+  - SEGMENT_BATCH_SIZE
+  - BRAZE_AUTH_USERNAME
+  - BRAZE_AUTH_PASSWORD
+  - WB_HUB_HOST
+
+  ##############################
+  #
+  #  Pub sub, Qs
+  #
+  ##############################
+  - QUEUE_NAME_REQUEST_METRIC_SERVICE_STEPS_UPDATE=metric_service_step_update_requests
+  - QUEUE_NAME_REQUEST_GAME_SERVICE_STEPS_UPDATE=game_service_step_update_requests
+  - QUEUE_NAME_REQUEST_METRIC_SERVICE_RUNS_UPDATE=metric_service_run_update_requests
+  - QUEUE_NAME_REQUEST_GAME_SERVICE_RUNS_UPDATE=game_service_run_update_requests
+  - PUBSUB_CHANNEL_UPDATE_CLIENT_STEPS=pub_sub_channel_update_client_steps
+  - PUBSUB_CHANNEL_UPDATE_CLIENT_RUNS=pub_sub_channel_update_client_runs
+  - PUBSUB_CHANNEL_CLIENT_ALERTS=pub_sub_channel_client_alerts
+  - QUEUE_NAME_SEND_MAIL=notify_service_send_mail_queue
+  - PUBSUB_CHANNEL_NOTIFICATIONS_SENT=pub_sub_channel_notifications_sent
+  - PUBSUB_CHANNEL_EMAILS_SENT=pub_sub_channel_emails_sent
+
+  ##############################
+  #
+  #  Ruby GC
+  #
+  ##############################
+  - MALLOC_ARENA_MAX=3
+  - RUBY_GC_HEAP_FREE_SLOTS=4096
+  - RUBY_GC_HEAP_INIT_SLOTS=10000
+  - RUBY_GC_HEAP_GROWTH_FACTOR=1.2
+  - RUBY_GC_HEAP_GROWTH_MAX_SLOTS=3096
+  - RUBY_GC_HEAP_OLDOBJECT_LIMIT_FACTOR=1.2
+  - RUBY_GC_MALLOC_LIMIT=8500000
+  - RUBY_GC_MALLOC_LIMIT_MAX=15000000
+  - RUBY_GC_MALLOC_LIMIT_GROWTH_FACTOR=1.2
+
+  ##############################
+  #
+  #  Misc
+  #
+  ##############################
+  - DISABLE_SPRING=1
+
+
+services:
+  web:
+    memory: 512
+    # command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+    command: ./bin/start_web_server.sh
+    health:
+      grace: 15
+      path: /ping/lb
+      interval: 60
+      timeout: 3
+    port: 3007
+    internal: true
+
+  #braze-web:
+  #  memory: 512
+  #  # command: "bash -c \"while [ true ]; do echo 'hi'; sleep 5; done\""
+  #  command: ./bin/start_web_server.sh
+  #  health:
+  #    grace: 15
+  #    path: /ping/lb
+  #    interval: 5
+  #    timeout: 3
+  #  port: 3007

@@ -1,0 +1,43 @@
+environment:
+  - GEN2=true
+  - NPM_CONFIG_REGISTRY
+services:
+  web:
+    domain: ${WB_ADMIN_AUTH_SERVICE_DOMAIN}
+    command: bash -c 'wget https://dev.dietbet.com/files/convox/office-dev-convox-local-rack.crt -O "/usr/share/ca-certificates/convox.crt" && echo "convox.crt" >> "/etc/ca-certificates.conf" && update-ca-certificates && cat "/usr/share/ca-certificates/convox.crt" && export NODE_EXTRA_CA_CERTS="/usr/share/ca-certificates/convox.crt" && npm start'
+    port: 8020
+    health:
+      path: /ping/lb
+    environment:
+      - PORT=8020
+      - API_CLIENT_JWT_SECRET
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - GOOGLE_PROFILE_URL
+      - NODE_ENV
+      - REDIS_HOST
+      - WB_ADMIN_AUTH_CALLBACK_ROUTE
+      - WB_ADMIN_AUTH_LOGIN_ROUTE
+      - WB_ADMIN_AUTH_LOGOUT_ROUTE
+      - WB_ADMIN_AUTH_PING_ROUTE
+      - WB_ADMIN_AUTH_SERVICE_DOMAIN
+      - WB_ADMIN_AUTH_SERVICE_EXTERNAL_URI
+      - WB_ADMIN_AUTH_SERVICE_GOOGLE_DOMAIN
+      - WB_ADMIN_AUTH_CALLBACK_ROUTE
+      - WB_ADMIN_AUTH_LOGIN_ROUTE
+      - WB_ADMIN_AUTH_SERVICE_ADMIN_GOOGLE_GROUP_ID
+      - WB_ADMIN_AUTH_SERVICE_GOOGLE_DOMAIN
+      - WB_ADMIN_AUTH_SERVICE_FORCE_SECURE_COOKIES
+      - WB_ADMIN_AUTH_SERVICE_KEYS
+      - WB_ADMIN_AUTH_SERVICE_LOG_LEVEL
+      - WB_ADMIN_AUTH_SERVICE_MOCK_GOOGLE_LOGIN
+      - WB_ADMIN_AUTH_SERVICE_SESSION_COOKIE
+      - WB_ADMIN_AUTH_SERVICE_SESSION_COOKIE_EXPIRES_MINUTES
+      - WB_ADMIN_AUTH_SERVICE_JWT_EXPIRES_MINUTES
+      - WB_ADMIN_DOMAIN
+      - WB_ADMIN_JWT_COOKIE
+      - WB_DEBUG_X_FORWARDED_HEADERS=false
+      - WB_INTERNAL_URL_SCHEME=http
+      - WB_SECURE_COOKIES
+      - WB_USER_SERVICE_HOST
+      - WB_USER_SERVICE_PORT
