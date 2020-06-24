@@ -61,6 +61,7 @@ KMDS = {
   "apps" =>          { expanded: "convox apps", args: [:rack] },
   "services" =>      { expanded: "convox services", args: [:rack, :app] },
   "refresh-env" =>   { expanded: "cat ${env_file} | convox env set", args: [:rack, :app, :convox_env_file] },
+  "refresh-yml" =>   { expanded: "cp -fv ${yml_file} convox.local.yml && convox ps", args: [:rack, :app, :convox_yml_file] },
   "cancel" =>        { expanded: "convox apps cancel", args: %i[rack app] },
   "resources" =>     { expanded: "convox resources", args: [:rack] },
   "info" =>          { expanded: "convox apps info", args: %i[rack app] },
@@ -219,6 +220,16 @@ class Kmd
     end
   end
 
+  def add_convox_yml_file(expanded_command)
+    if (yml_file = find_yml_file).nil?
+      exit_with_error "Could not find convox yml file"
+    else
+      expanded_command.map! do |str|
+        str.gsub(/\$\{yml_file\}/, yml_file)
+      end
+    end
+  end
+
   def add_convox_env_file(expanded_command)
     if (env_file = find_env_file).nil?
       exit_with_error "Could not find convox env file"
@@ -242,6 +253,19 @@ class Kmd
   end
 
   def find_config_file
+    if File.file?("convox.local.yml")
+      "convox.local.yml"
+    elsif File.file?("convox.yml")
+      "convox.yml"
+    end
+  end
+
+  def exec_command(cmd)
+    cmd.gsub("'", "\\\\'")
+    %x[ #{cmd} ]
+  end
+
+  def find_yml_file
     if File.file?("#{Dir.home}/Work/docs/local-settings/convox-yml/#{self.app}.convox.local.yml")
       "#{Dir.home}/Work/docs/local-settings/convox-yml/#{self.app}.convox.local.yml"
     elsif File.file?("#{Dir.home}/Work/docs/configs/templates/convox-yml/#{self.app}.convox.local.yml")
@@ -252,7 +276,6 @@ class Kmd
       "convox.yml"
     end
   end
-
 
   def find_env_file
     if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local")
