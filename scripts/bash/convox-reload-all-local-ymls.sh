@@ -1,14 +1,22 @@
 #!/bin/bash
 
 
+# TODO: why is the alias not working?
+kk='~/Work/docs/scripts/ruby/kmd-local'
+
+bash -c "$kk refresh-yml -- local falkor"
+bash -c "$kk refresh-yml -- local metric"
+bash -c "$kk refresh-yml -- local admin-web"
+bash -c "$kk refresh-yml -- local graphql"
+
 # cp -f -v ~/Work/docs/configs/convox-yml/dietbet-game-service.convox.local.yml ~/Work/wb-services/dietbet-game-service/convox.local.yml
-cp -f -v ~/Work/docs/configs/convox-yml/falkor-game-service.convox.local.yml ~/Work/wb-services/falkor-game-service/convox.local.yml
+#cp -f -v ~/Work/docs/configs/convox-yml/falkor-game-service.convox.local.yml ~/Work/wb-services/falkor-game-service/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/runbet-game-service.convox.local.yml ~/Work/wb-services/runbet-game-service/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/wb-admin-auth-service.convox.local.yml ~/Work/wb-services/wb-admin-auth-service/convox.local.yml
-cp -f -v ~/Work/docs/configs/convox-yml/wb-admin-web.convox.local.yml ~/Work/wb-services/wb-admin-web/convox.local.yml
+#cp -f -v ~/Work/docs/configs/convox-yml/wb-admin-web.convox.local.yml ~/Work/wb-services/wb-admin-web/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/wb-auth-service.convox.local.yml ~/Work/wb-services/wb-auth-service/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/wb-billing-service.convox.local.yml ~/Work/wb-services/wb-billing-service/convox.local.yml
- cp -f -v ~/Work/docs/configs/convox-yml/wb-graphql-service.convox.local.yml ~/Work/wb-services/wb-graphql-service/convox.local.yml
+# cp -f -v ~/Work/docs/configs/convox-yml/wb-graphql-service.convox.local.yml ~/Work/wb-services/wb-graphql-service/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/wb-hub.convox.local.yml ~/Work/wb-services/wb-hub/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/wb-membership-service.convox.local.yml ~/Work/wb-services/wb-membership-service/convox.local.yml
 # cp -f -v ~/Work/docs/configs/convox-yml/wb-metric-service.convox.local.yml ~/Work/wb-services/wb-metric-service/convox.local.yml
