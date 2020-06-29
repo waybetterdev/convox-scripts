@@ -80,7 +80,7 @@ KMDS = {
   "pt" =>            { expanded: 'papertrail -f -j --min-time="1 minutes ago"', args: %i[pt_group pt_query pt_klog] },
   "ptdump" =>        { expanded: 'papertrail -j', args: %i[pt_group pt_time pt_app pt_dump_file] },
   "one-off" =>       { expanded: 'convox run ${service} "/usr/bin/env bash"', args: %i[rack app release service_from_ps] },
-  "krubocop" =>      { expanded: "krubocop", args: %i[rack app service_from_ps] },
+  "rubocop" =>      { expanded: "krubocop", args: %i[rack app service_from_ps] },
 }.freeze
 
 PAPERTRAIL_GROUPS = {

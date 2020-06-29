@@ -84,10 +84,12 @@ class KRubocop
     end
     zip_config_file.close
 
-    cmd = 'zip rubocop_chaged_files.zip -@ < files_to_zip.txt'
+    zip_file = 'rubocop_chaged_files.zip'
+    cmd = "zip #{zip_file} -@ < #{zip_config_path}"
     info "Creating a zip with all modified files"
     if exec_command(cmd)
-      File.delete(zip_config_path)
+      exec_command("rm -fv #{zip_config_path}")
+      exec_command("rm -fv #{zip_file}")
       info "Success. "
     end
   end
