@@ -2,11 +2,22 @@
 
 /bin/bash ~/Work/docs/secrets/bash-secrets.sh
 
+#awscli
+export PATH="${PATH}:$HOME/.local/bin"
+PATH="${PATH}:$HOME/.local/bin"
+
+#utils
+export PATH="${PATH}:$HOME/Work/docs/scripts/ruby"
+PATH="${PATH}:$HOME/Work/docs/scripts/ruby"
+
+#wb-service paths
+export PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
+PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
+
 
 alias rb='source ~/.bashrc'
 alias be='bundle exec'
 alias kk='kmd-local'
-
 
 
 #utils
