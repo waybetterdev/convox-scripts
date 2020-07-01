@@ -19,7 +19,8 @@ XXX
   exit(1)
 end
 
-class OpDeploy
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+class OpDeploy < OpBase
 
   attr_accessor :app, :option_parser, :commit, :debug
 
@@ -40,16 +41,17 @@ class OpDeploy
       :user => 'centos', :key => STAGING_KEY,
       :hostname => ['dev.dietbet.com'],
       :src => '/var/www/dietbet_dev', :dst => '/var/www/dev.dietbet',
+    },
+    'dietbet_dev2' => {
+      :user => 'centos', :key => '~/Work/deploy/keys/dietbet-prod-aws/dietbet-prod-2019.pem',
+      :hostname => ['dev2.dietbet.com'],
+      :src => '/var/www/dietbet_dev', :dst => '/var/www/dev.dietbet',
     }
   }
 
 
   def initialize
-    @rack = `convox switch`.strip
-    @app = nil
-    @file = 'convox.yml'
-    @service_filter = /.*/
-    @any = false
+    load_settings
   end
 
   def go
@@ -161,8 +163,8 @@ class OpDeploy
 
   def deploy_changes_since_commit(site_name, commit)
     
-    config = SITES_CONFIG[site_name]
-  
+    config = deploy_config(site_name)
+
     temp_path = "#{TEMP_PATH}/#{site_name}"
 
     zip_name = "#{site_name}.zip"
@@ -176,7 +178,7 @@ class OpDeploy
     zip(temp_path, zip_path)
 
     user = config[:user]
-    hostnames = config[:hostname]
+    hostnames = config[:hostnames]
     unless hostnames.kind_of?(Array)
       hostnames = [hostnames]
     end
@@ -205,10 +207,8 @@ class OpDeploy
   HELP = <<-BAN
 
   A deploy script for old platform websites
-  
   Ex:
-        opdeploy -a stepbet-dev
-  
+    opdeploy -a stepbet-dev
   BAN
 
   def parse_opts
@@ -219,10 +219,7 @@ class OpDeploy
       opts.separator ""
       opts.separator "Specific options:"
 
-      opts.on("-z", "--debug", "Optional: load pry") do |x|
-        require 'pry'
-        self.debug = true
-      end
+      add_debug_option(opts)
 
       opts.on("-a", "--app=A", "Required, the website to release") do |x|
         self.app = x
@@ -232,11 +229,7 @@ class OpDeploy
         self.commit = x
       end
 
-      opts.on("-h", "--help", "Prints this help") do
-        puts opts
-        exit
-      end
-
+      add_help_option(opts)
     end
     self.option_parser.parse!(ARGV)
 
@@ -244,9 +237,10 @@ class OpDeploy
       exit_with_error("app parameter is required")
     end
 
-    puts self.app
-    puts SITES_CONFIG
-    if SITES_CONFIG[self.app].nil?
+
+    @deploy_config = deploy_config(self.app)
+    @deploy_config = deploy_config(self.app)
+    if @deploy_config.nil?
       exit_with_error("app not found")
     end
 
@@ -257,8 +251,8 @@ class OpDeploy
   end
 
   def exit_with_error(msg)
+    puts "Error: #{msg}".red
     show_help
-    puts msg
     exit(1)
   end
 

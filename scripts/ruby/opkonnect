@@ -1,0 +1,112 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+
+class OpKonnect < OpBase
+
+  attr_accessor :server, :command, :option_parser, :debug
+
+  TEMP_PATH = "~/Work/deploy/_files"
+
+  def initialize
+    load_settings
+  end
+
+  def go
+    parse_opts
+
+    if @command.nil?
+      run_ssh_connect(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key])
+    else
+      run_ssh_command(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], @command)
+    end
+  end
+
+  HELP = <<-BAN
+  A ssh connect script for old platform websites
+  Ex:
+    opkonnect -s stepbet-dev
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      self.add_debug_option(opts)
+
+      opts.on("-s", "--server=S", "Required, the server to connect") do |x|
+        self.server = x
+      end
+
+      opts.on("-c", "--command=S", "Optional, command to run") do |x|
+        self.command = x
+      end
+
+      add_help_option(opts)
+    end
+    self.option_parser.parse!(ARGV)
+
+    if self.server.nil? 
+      exit_with_error("server parameter is required")
+    end
+
+    @ssh_config = ssh_config(self.server)
+    if @ssh_config.nil?
+      exit_with_error("Server not found")
+    end
+
+  end
+
+  def exec_command(cmd)
+    puts "Running command: '#{cmd}'"  if self.debug 
+    cmd.gsub("'", "\\\\'")
+    # %x[ #{cmd} ]
+    exec(cmd)
+  end
+
+  def run_ssh_connect(user, host, key)
+    puts "Connecting to #{user}@#{host}".green
+    exec_command("ssh -i #{key} #{user}@#{host}")
+  end
+
+  def run_ssh_command(user, host, key, command)
+    puts "Connecting to #{user}@#{host}".green
+    response = exec_command("ssh -i #{key} #{user}@#{host} -t '#{command}'")
+    print response.green
+  end
+
+  def exit_with_error(msg)
+    show_help
+    puts msg
+    exit(1)
+  end
+
+  def show_help
+    puts self.option_parser.nil? ? HELP : self.option_parser
+  end
+end
+
+OpKonnect.new.go
