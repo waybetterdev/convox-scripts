@@ -74,19 +74,20 @@ class Wbtmux
 
     session_name = 'lconvox'
 
-    apps = self.apps_to_run + self.apps_to_open
-    if apps.count > 0 do
-      prepare_session(session_name);
+    all_apps = self.apps_to_run + self.apps_to_open.uniq
+    if all_apps.count > 0 
+      prepare_session(session_name)
 
-      open_apps(session_name, (self.apps_to_run + self.apps_to_open).uniq)
+      open_apps(session_name, all_apps)
       run_apps(session_name, self.apps_to_run)
 
-      enter_tmux_session(session_name)
+      unless self.opt_exit_tmux
+        enter_tmux_session(session_name)
+      end
     end
 
-    if (self.opt_exit_tmux)
-      exit_tmux_session(session_name);
-      return
+    if self.opt_exit_tmux
+      exit_tmux_session(session_name)
     end
   end
 
