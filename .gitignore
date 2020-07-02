@@ -2,5 +2,4 @@
 secrets/*
 configs/convox-env/*
 configs/convox-yml/*
-certs/*
 /local-settings
