@@ -19,6 +19,31 @@ alias rb='source ~/.bashrc'
 alias be='bundle exec'
 alias kk='kmd-local'
 
+#diretory utils
+#list directory and show path
+alias lcd='ls -a; echo "      ";echo "          ***" $PWD  "***";'
+
+# move to local app and list files
+alias cddocs='cd ~/Work/docs;lcd'
+alias cdservices='cd ~/Work/wb-services;lcd'
+alias cdsuperlocal='cd ~/Work/wb-services/kraken/superlocal;lcd'
+alias cduser='cd ~/Work/wb-services/wb-user-service;lcd'
+alias cdnotify='cd ~/Work/wb-services/wb-notify-service;lcd'
+alias cdbilling='cd ~/Work/wb-services/wb-billing-service;lcd'
+alias cdmetric='cd ~/Work/wb-services/wb-metric-service;lcd'
+alias cdmember='cd ~/Work/wb-services/wb-membership-service;lcd'
+alias cdfalkor='cd ~/Work/wb-services/falkor-game-service;lcd'
+alias cdhub='cd ~/Work/wb-services/wb-hub;lcd'
+alias cdauth='cd ~/Work/wb-services/wb-auth-service;lcd'
+alias cdadminauth='cd ~/Work/wb-services/wb-admin-auth-service;lcd'
+alias cdgraphql='cd ~/Work/wb-services/wb-graphql-service;lcd'
+alias cdadminweb='cd ~/Work/wb-services/wb-admin-web;lcd'
+alias cddietbet='cd /www/dietbet;lcd'
+alias cddietbetdev='cd /www/dietbet_dev;lcd'
+alias cddietbetprod='cd /www/dietbet_prod;lcd'
+alias cdstepbet='cd /www/stepbet;lcd'
+alias cdstepbetdev='cd /www/stepbet;lcd'
+alias cdstepbetprod='cd /www/stepbet;lcd'
 
 #utils
 alias notepad=sublime-text.subl
