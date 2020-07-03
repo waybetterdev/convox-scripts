@@ -47,8 +47,8 @@ class OpBase
     name = name.to_s.gsub(/[ -]+/, "_").downcase.to_sym
     @__ssh_config ||= {}
     @__ssh_config[name] ||= begin
-      conf = servers.map{ |k, v| v[:hostnames].include?(name) ? v : nil }
-      .compact.first
+      conf = servers.map{ |k, v| v[:hostnames].include?(name) ? v : nil }.compact.first
+
       throw "Config for #{name} not found" if conf.nil?
       conf.merge({hostname: hostnames[name]})
           .slice(:user, :key, :hostname, :dst)

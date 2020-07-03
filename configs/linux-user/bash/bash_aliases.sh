@@ -38,12 +38,12 @@ alias cdauth='cd ~/Work/wb-services/wb-auth-service;lcd'
 alias cdadminauth='cd ~/Work/wb-services/wb-admin-auth-service;lcd'
 alias cdgraphql='cd ~/Work/wb-services/wb-graphql-service;lcd'
 alias cdadminweb='cd ~/Work/wb-services/wb-admin-web;lcd'
-alias cddietbet='cd /www/dietbet;lcd'
-alias cddietbetdev='cd /www/dietbet_dev;lcd'
-alias cddietbetprod='cd /www/dietbet_prod;lcd'
-alias cdstepbet='cd /www/stepbet;lcd'
-alias cdstepbetdev='cd /www/stepbet;lcd'
-alias cdstepbetprod='cd /www/stepbet;lcd'
+alias cddietbet='cd /var/www/dietbet;lcd'
+alias cddietbetdev='cd /var/www/dietbet_dev;lcd'
+alias cddietbetprod='cd /var/www/dietbet_prod;lcd'
+alias cdstepbet='cd /var/www/stepbet;lcd'
+alias cdstepbetdev='cd /var/www/stepbet;lcd'
+alias cdstepbetprod='cd /var/www/stepbet;lcd'
 
 #utils
 alias notepad=sublime-text.subl
@@ -51,6 +51,7 @@ alias notepad=sublime-text.subl
 
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user-configs folder'"
 
+alias restartapache='sudo systemctl restart apache2.service'
 
 
 alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
