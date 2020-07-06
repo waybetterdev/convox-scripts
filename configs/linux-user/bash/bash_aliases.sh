@@ -42,8 +42,8 @@ alias cddietbet='cd /var/www/dietbet;lcd'
 alias cddietbetdev='cd /var/www/dietbet_dev;lcd'
 alias cddietbetprod='cd /var/www/dietbet_prod;lcd'
 alias cdstepbet='cd /var/www/stepbet;lcd'
-alias cdstepbetdev='cd /var/www/stepbet;lcd'
-alias cdstepbetprod='cd /var/www/stepbet;lcd'
+alias cdstepbetdev='cd /var/www/stepbet_dev;lcd'
+alias cdstepbetprod='cd /var/www/stepbet_prod;lcd'
 
 #utils
 alias notepad=sublime-text.subl
