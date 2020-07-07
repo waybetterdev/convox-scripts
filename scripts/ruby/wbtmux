@@ -21,7 +21,7 @@ end
 
 # CLI script which will start tmux
 class Wbtmux
-   attr_accessor :option_parser, :apps_to_run, :apps_to_open, :opt_exit_tmux, :opts_fix_dns, :opts_wait_convox
+  attr_accessor :option_parser, :apps_to_run, :apps_to_open, :opt_exit_tmux, :opts_fix_dns, :opts_wait_convox
 
   DEFAULT_SERVICES = ['mysql', 'user']
   SERVICE_MAP = {
@@ -75,6 +75,7 @@ class Wbtmux
     session_name = 'lconvox'
 
     all_apps = self.apps_to_run + self.apps_to_open.uniq
+
     if all_apps.count > 0 
       prepare_session(session_name)
 
@@ -92,20 +93,14 @@ class Wbtmux
   end
 
   def prepare_session(session_name)
-    has_session = session_exists?(session_name)
 
-    if has_session
+    if session_exists?(session_name)
       exit_tmux_session(session_name)
-    end
-
-    cmds = []
-    if has_session
-      cmds.push("attach-session -t #{session_name}")
     else
-      cmds.push("new-session -c #{@path} -n \"info\" -s #{session_name}")
+      queue = CommandQueue.new(session_name)
+      queue.create_session("info", @path)
+      queue.run
     end
-
-    run_tmux_commands(session_name, cmds)
   end
 
   def open_apps(session_name, apps)
@@ -114,18 +109,17 @@ class Wbtmux
 
     active_windows = list_windows(session_name)
 
-    cmds = []
-    cmds.push("attach-session -t #{session_name}")
+    queue = CommandQueue.new(session_name)
+    queue.attach_session()
 
     apps.each do |app|
       next if active_windows.include?(app)
       convox_app = app_full_name(app)
       path = convox_app_path(convox_app)
-      cmds.push("new-window -c #{path} -n \"#{app}\"")
-      cmds.push("split-window -v -c #{path}")
+      queue.new_window(app, path)
     end
 
-    run_tmux_commands(session_name, cmds)
+    queue.run
   end
 
   def run_apps(session_name, apps)
@@ -151,11 +145,11 @@ class Wbtmux
         app_command = "kk start -- local #{convox_app}"
       end
 
-      cmds = []
-      cmds.push("attach-session -t #{session_name}")
-      cmds.push("select-window -t #{app}")
-      cmds.push("send-keys -t 1 C-z '#{app_command}' Enter")
-      run_tmux_commands(session_name, cmds)
+      queue = CommandQueue.new(session_name)
+      queue.attach_session
+      queue.exec_command_inside_screen(app, 1, app_command)
+      queue.swap_panes(0, 1)
+      queue.run
     end
   end
 
@@ -228,23 +222,12 @@ class Wbtmux
   end
 
   def list_windows(session_name)
-    # lconvox:0: mysql (2 panes) [203x53] 
-    # lconvox:1: falkor (2 panes) [203x53] 
-    # lconvox:2: graphql- (2 panes) [203x53] 
-    # lconvox:3: ninja* (2 panes) [203x53] 
-    res = exec_command("tmux list-windows -t #{session_name} -a")
-    res.scan(/([a-zA-Z]+)\:([0-9]+)\: ([a-zA-Z]+)([*]?)/).collect do |match|
-      match[0] == session_name ? match[2] : nil
-    end.compact
+    res = exec_command("tmux list-windows -t '#{session_name}' " + '-F \'#{window_name}\'')
+    res.split("\n")
   end
 
   def session_exists?(name)
     system("tmux has-session -t #{name} 2>/dev/null") == true
-  end
-
-  def run_tmux_commands(session_name, cmds)
-    cmds.push("send-keys -t \"0\" C-z 'tmux detach-client -s #{session_name}' Enter")
-    exec_command("tmux " + cmds.join(" \\; \\\n") + "\\;")
   end
 
   def exec_command(cmd)
@@ -320,6 +303,59 @@ wbtmux
   def show_help
     puts HELP
   end
+
+  class CommandQueue
+    attr_accessor :commands, :session_name
+    def initialize(session_name)
+      @commands = []
+      @session_name = session_name
+    end
+
+    def create_session(screen_name, path)
+      _add "new-session -c '#{path}' -n \"#{screen_name}\" -s '#{session_name}'"
+    end
+
+    def attach_session
+      _add "attach-session -t #{session_name}"
+    end
+
+    def new_window(name, path)
+      _add "new-window -c #{path} -n \"#{name}\""
+      _add "split-window -v -c #{path}"
+    end
+
+    def exec_command_inside_screen(screen, pane, command)
+      _add "select-window -t #{screen}"
+      _add "send-keys -t #{pane} C-z '#{command}' Enter"
+    end
+
+    def swap_panes(src, dst)
+      _add "swap-pane -s #{src} -t #{dst}"
+    end
+
+    def exit_session
+      _add "select-window -t 'info'"
+      _add "send-keys -t \"0\" C-z 'tmux detach-client -s #{session_name}' Enter"
+    end
+
+    def run
+      exit_session
+      exec_command("tmux " + commands.join(" \\; \\\n    ") + "\\;")
+    end
+
+    def exec_command(cmd)
+      puts "Running Command:"
+      puts cmd.blue
+      cmd.gsub("'", "\\\\'")
+      %x[ #{cmd} ]
+    end
+
+    private
+    def _add(cmd)
+      commands.push(cmd)
+    end
+  end
+
 end
 
 Wbtmux.new.go
