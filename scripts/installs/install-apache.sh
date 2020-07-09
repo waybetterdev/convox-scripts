@@ -74,6 +74,7 @@ if ! [ -x "$(command -v php)" ]; then
 	sudo apt-get install -y php-mbstring php7.4-curl
 	sudo a2enmod php7.4 
 	sudo apt-get install -y php7.4-mysqli
+	sudo apt-get install -y php7.0-pgsql
 else
   echo 'php is already installed. Skipping.'
 fi
