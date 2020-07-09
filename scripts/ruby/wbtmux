@@ -142,7 +142,7 @@ class Wbtmux
         end 
 
         path = convox_app_path(convox_app)
-        app_command = "kk start -- local #{convox_app}"
+        app_command = "kk start -- local #{app}"
       end
 
       queue = CommandQueue.new(session_name)
