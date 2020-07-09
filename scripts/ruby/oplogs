@@ -22,7 +22,7 @@ end
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 class OpDeploy < OpBase
 
-  attr_accessor :app, :option_parser, :file, :debug, :open_files
+  attr_accessor :app, :option_parser, :file, :debug, :open_files, :join_files
 
   def initialize
     load_settings
@@ -46,10 +46,27 @@ class OpDeploy < OpBase
     server_count = deploy_config[:hostnames].count
     downloaded_files = []
     deploy_config[:hostnames].each_with_index do |hostname, index|
-      prefix = server_count > 1 ? "FT-#{index}-" : ''
+      prefix = server_count > 1 ? "FT-#{index + 1}-" : ''
       dst_file = "#{dst_dir}/#{prefix}#{File.basename(file)}"
       copy_file_via_ssh(deploy_config[:user], hostname, deploy_config[:key], src_file, dst_file)
       downloaded_files.push(dst_file)
+    end
+
+    if self.join_files
+      dst_file = "#{dst_dir}/#{File.basename(file)}"
+      exec_command("rm -f #{dst_file}")
+      downloaded_files.each_with_index do |downloaded_file, index|
+      separator = <<-END
+\n\n
+################################################################################################################################################################################
+##                                                                             SERVER #{index + 1}                                                                                       ##
+################################################################################################################################################################################
+\n\n
+END
+        exec_command("echo '#{separator}' >> #{dst_file}")
+        exec_command("cat '#{downloaded_file}' >> #{dst_file}")
+      end
+      downloaded_files = [dst_file]
     end
 
     if self.open_files
@@ -86,6 +103,10 @@ class OpDeploy < OpBase
         self.open_files = true
       end
 
+      opts.on("-j", "--join", "Optional, join multiple files in one file") do |x|
+        self.join_files = true
+      end
+
       add_help_option(opts)
     end
     self.option_parser.parse!(ARGV)
@@ -105,7 +126,11 @@ class OpDeploy < OpBase
 
   def copy_file_via_ssh(user, host, key, src_file, dst_file)
     puts "Copying '#{src_file}' to '#{dst_file}' from '#{user}@#{host}'".green
-    response = exec_command("ssh -i #{key} #{user}@#{host} -t 'cat #{src_file}' > #{dst_file}")
+    # scp command (faster)
+    command = "scp -i '#{key}' #{user}@#{host}:'#{src_file}' '#{dst_file}'"
+    # ssh command (slower) 
+    # command = "ssh -i #{key} #{user}@#{host} -t 'cat #{src_file}' > #{dst_file}"
+    response = exec_command(command)
     print response.green
   end
 end
