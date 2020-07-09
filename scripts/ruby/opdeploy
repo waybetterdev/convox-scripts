@@ -23,32 +23,7 @@ require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 class OpDeploy < OpBase
 
   attr_accessor :app, :option_parser, :commit, :debug
-
   TEMP_PATH = "~/Work/deploy/_files"
-  STAGING_KEY = '~/Work/deploy/keys/dietbet-dev-aws/dietbet-dev-aws.pem'
-  SITES_CONFIG = {
-    'stepbet_dev' => {
-      :user => 'centos', :key => STAGING_KEY,
-      :hostname => ['dev.stepbet.com'],
-      :src => '/var/www/stepbet_dev', :dst => '/var/www/dev.stepbet',
-    },
-    'stepbet_prod' => {
-      :user => 'centos', :key => '~/Work/deploy/keys/stepbet-prod-aws/stepbet-prod-2019.pem',
-      :hostname => ["ec2-54-213-60-213.us-west-2.compute.amazonaws.com","ec2-34-212-240-147.us-west-2.compute.amazonaws.com"],
-      :src => '/var/www/stepbet_prod', :dst => '/srv/stepbet/current',
-    },
-    'dietbet_dev' => {
-      :user => 'centos', :key => STAGING_KEY,
-      :hostname => ['dev.dietbet.com'],
-      :src => '/var/www/dietbet_dev', :dst => '/var/www/dev.dietbet',
-    },
-    'dietbet_dev2' => {
-      :user => 'centos', :key => '~/Work/deploy/keys/dietbet-prod-aws/dietbet-prod-2019.pem',
-      :hostname => ['dev2.dietbet.com'],
-      :src => '/var/www/dietbet_dev', :dst => '/var/www/dev.dietbet',
-    }
-  }
-
 
   def initialize
     load_settings
@@ -97,12 +72,6 @@ class OpDeploy < OpBase
     exec_command("cd #{dir} && rm -f #{zipfile}")
     exec_command("cd #{dir} && zip -r #{zipfile} *")
     exec_command("cd #{cwd}")
-  end
-
-  def exec_command(cmd)
-    puts "Running command: '#{cmd}'"  if self.debug 
-    cmd.gsub("'", "\\\\'")
-    %x[ #{cmd} ]
   end
 
   def remove_unwanted_files(export_path)
@@ -221,9 +190,7 @@ class OpDeploy < OpBase
 
       add_debug_option(opts)
 
-      opts.on("-a", "--app=A", "Required, the website to release") do |x|
-        self.app = x
-      end
+      add_op_app_option(opts)
 
       opts.on("-c", "--commit=C", "Required, last commit released before") do |x|
         self.commit = x
@@ -248,16 +215,6 @@ class OpDeploy < OpBase
       exit_with_error("commit parameter is required")
     end
 
-  end
-
-  def exit_with_error(msg)
-    puts "Error: #{msg}".red
-    show_help
-    exit(1)
-  end
-
-  def show_help
-    puts self.option_parser.nil? ? HELP : self.option_parser
   end
 end
 

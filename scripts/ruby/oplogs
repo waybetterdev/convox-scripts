@@ -1,0 +1,113 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+class OpDeploy < OpBase
+
+  attr_accessor :app, :option_parser, :file, :debug, :open_files
+
+  def initialize
+    load_settings
+  end
+
+  def go
+    parse_opts
+
+    download_log_file(self.app, self.file)
+  end
+
+  def download_log_file(app, file)
+    deploy_config = deploy_config(app)
+    src_file = "#{deploy_config[:dst]}/system/logs/#{file}"
+    
+    dst_dir = "#{Dir.home}/Work/deploy/logs/#{app}"
+    unless Dir.exist?(dst_dir)
+      exit_with_error "Destination directory `#{dst_dir}` not found. Please create it."
+    end
+
+    server_count = deploy_config[:hostnames].count
+    downloaded_files = []
+    deploy_config[:hostnames].each_with_index do |hostname, index|
+      prefix = server_count > 1 ? "FT-#{index}-" : ''
+      dst_file = "#{dst_dir}/#{prefix}#{File.basename(file)}"
+      copy_file_via_ssh(deploy_config[:user], hostname, deploy_config[:key], src_file, dst_file)
+      downloaded_files.push(dst_file)
+    end
+
+    if self.open_files
+      exec_command("gedit " + downloaded_files.join(" "))
+    end
+
+  end
+
+
+  HELP = <<-BAN
+
+  A deploy script for old platform websites
+  Ex:
+    opdeploy -a stepbet-dev
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      add_debug_option(opts)
+
+      add_op_app_option(opts)
+
+      opts.on("-f", "--file=F", "Log file to download") do |x|
+        self.file = x
+      end
+
+      opts.on("-o", "--open", "Optional, open the downloaded files on exit") do |x|
+        self.open_files = true
+      end
+
+      add_help_option(opts)
+    end
+    self.option_parser.parse!(ARGV)
+
+    if self.app.nil? 
+      exit_with_error("app parameter is required")
+    end
+    deploy_config = deploy_config(self.app)
+    if deploy_config.nil?
+      exit_with_error("app not found")
+    end
+
+    if self.file.nil?
+      exit_with_error("file parameter is required")
+    end
+  end
+
+  def copy_file_via_ssh(user, host, key, src_file, dst_file)
+    puts "Copying '#{src_file}' to '#{dst_file}' from '#{user}@#{host}'".green
+    response = exec_command("ssh -i #{key} #{user}@#{host} -t 'cat #{src_file}' > #{dst_file}")
+    print response.green
+  end
+end
+
+OpDeploy.new.go

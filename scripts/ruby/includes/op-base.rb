@@ -74,4 +74,26 @@ class OpBase
       exit
     end
   end
+
+  def add_op_app_option(opts)
+    opts.on("-a", "--app=A", "Required, application (website name)") do |x|
+      self.app = x
+    end
+  end
+
+  def exec_command(cmd)
+    puts "Running command: '#{cmd}'"  if self.debug 
+    cmd.gsub("'", "\\\\'")
+    %x[ #{cmd} ]
+  end
+
+  def exit_with_error(msg)
+    puts "Error: #{msg}".red
+    show_help
+    exit(1)
+  end
+
+  def show_help
+    puts self.option_parser.nil? ? HELP : self.option_parser
+  end
 end
