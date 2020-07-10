@@ -80,6 +80,12 @@ class OpKonnect < OpBase
 
   end
 
+  def exec_command(cmd)
+    puts "Running command: '#{cmd}'"  if self.debug 
+    cmd.gsub("'", "\\\\'")
+    # %x[ #{cmd} ]
+    exec(cmd)
+  end
 
   def run_ssh_connect(user, host, key)
     puts "Connecting to #{user}@#{host}".green
