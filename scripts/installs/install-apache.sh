@@ -76,6 +76,7 @@ if ! [ -x "$(command -v php)" ]; then
 	sudo apt-get install -y php7.4-mysqli
 	sudo apt-get install -y php7.0-pgsql
 	sudo apt-get install php-dom
+	sudo apt-get install php7.4-gd
 else
   echo 'php is already installed. Skipping.'
 fi
