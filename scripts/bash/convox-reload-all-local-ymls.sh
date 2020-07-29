@@ -7,6 +7,7 @@ kk='~/Work/docs/scripts/ruby/kmd-local'
 bash -c "$kk refresh-yml -- local dietbet-game-service"
 bash -c "$kk refresh-yml -- local falkor"
 bash -c "$kk refresh-yml -- local runbet"
+bash -c "$kk refresh-yml -- local quitbet"
 bash -c "$kk refresh-yml -- local admin-auth"
 bash -c "$kk refresh-yml -- local admin-web"
 bash -c "$kk refresh-yml -- local billing"
