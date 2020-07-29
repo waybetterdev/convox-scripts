@@ -4,10 +4,19 @@
 # TODO: why is the alias not working?
 kk='~/Work/docs/scripts/ruby/kmd-local'
 
+bash -c "$kk refresh-yml -- local dietbet-game-service"
 bash -c "$kk refresh-yml -- local falkor"
-bash -c "$kk refresh-yml -- local metric"
+bash -c "$kk refresh-yml -- local runbet"
+bash -c "$kk refresh-yml -- local admin-auth"
 bash -c "$kk refresh-yml -- local admin-web"
+bash -c "$kk refresh-yml -- local billing"
 bash -c "$kk refresh-yml -- local graphql"
+bash -c "$kk refresh-yml -- local hub"
+bash -c "$kk refresh-yml -- local membership"
+bash -c "$kk refresh-yml -- local metric"
+bash -c "$kk refresh-yml -- local notify"
+bash -c "$kk refresh-yml -- local social"
+bash -c "$kk refresh-yml -- local user"
 
 # cp -f -v ~/Work/docs/configs/convox-yml/dietbet-game-service.convox.local.yml ~/Work/wb-services/dietbet-game-service/convox.local.yml
 #cp -f -v ~/Work/docs/configs/convox-yml/falkor-game-service.convox.local.yml ~/Work/wb-services/falkor-game-service/convox.local.yml

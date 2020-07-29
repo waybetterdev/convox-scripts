@@ -6,9 +6,17 @@
 kk='~/Work/docs/scripts/ruby/kmd-local'
 
 bash -c "$kk refresh-env -- local falkor no-confirm"
-bash -c "$kk refresh-env -- local metric no-confirm"
+bash -c "$kk refresh-env -- local runbet no-confirm"
+bash -c "$kk refresh-env -- local admin-auth no-confirm"
 bash -c "$kk refresh-env -- local admin-web no-confirm"
+bash -c "$kk refresh-env -- local auth no-confirm"
+bash -c "$kk refresh-env -- local billing no-confirm"
 bash -c "$kk refresh-env -- local graphql no-confirm"
+bash -c "$kk refresh-env -- local membership no-confirm"
+bash -c "$kk refresh-env -- local metric no-confirm"
+bash -c "$kk refresh-env -- local notify no-confirm"
+bash -c "$kk refresh-env -- local social no-confirm"
+bash -c "$kk refresh-env -- local user no-confirm"
 
 
 # cat ~/Work/docs/configs/convox-env/dietbet-game-service.txt | convox env set --app=dietbet-game-service
