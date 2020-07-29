@@ -39,6 +39,7 @@ class Wbtmux
     "member"      => 'wb-membership-service',
     "falkor"      => 'falkor-game-service',
     "runbet"      => 'runbet-game-service',
+    "quitbet"     => 'quitbet-game-service',
     "social"      => 'wb-social-service',
   }
   ALL_SERVICES = SERVICE_MAP.keys

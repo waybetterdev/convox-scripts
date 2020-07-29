@@ -53,6 +53,7 @@ if ! [ -x "$(command -v ruby)" ]; then
 	sudo apt-get install -y libssl-dev libreadline-dev
 	rbenv install 2.6.2
 	rbenv global 2.6.2
+	rbenv shell 2.6.2
 	ruby -v
 
 	gem install bundler

@@ -17,6 +17,7 @@ $HTTPS_SERVICES = array(
   'wb-hub.convox.local'                => array('service' => 'https://web.wb-hub.convox/',               'cert' => 'apache-local-selfsigned'),
   'wb-social-service.convox.local'     => array('service' => 'https://web.wb-social-service.convox/',    'cert' => 'apache-local-selfsigned'),
   'runbet-game-service.convox.local'   => array('service' => 'https://web.runbet-game-service.convox/',  'cert' => 'apache-local-selfsigned'),
+  'quitbet-game-service.convox.local'   => array('service' => 'https://web.quitbet-game-service.convox/', 'cert' => 'apache-local-selfsigned'),
   'falkor-game-service.convox.local'   => array('service' => 'https://web.falkor-game-service.convox/',  'cert' => 'apache-local-selfsigned'),
   'wb-graphql-service.convox.local'    => array('service' => 'https://web.wb-graphql-service.convox/',   'cert' => 'apache-local-selfsigned'),
   'dietbet-game-service.convox.local'  => array('service' => 'https://web.dietbet-game-service.convox/', 'cert' => 'apache-local-selfsigned'),

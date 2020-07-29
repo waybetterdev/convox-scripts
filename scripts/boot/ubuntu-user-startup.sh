@@ -36,28 +36,9 @@ echo $(date) + "Fixing DNS: "  >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod) >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
 echo $(date) + ": running wbtmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
-ruby /home/dev/Work/docs/scripts/ruby/wbtmux -r mysql,user,auth,bill,falkor,graphql,admin-auth,admin-web,metric,notify,member,runbet,social -o dietbet,hub -w >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
+ruby /home/dev/Work/docs/scripts/ruby/wbtmux -r mysql,user,auth,bill,falkor,graphql,admin-auth,admin-web,metric,notify,member,runbet,quitbet,social -o dietbet,hub -w >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
 #echo $(date) + ": opening tmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 #tmux attach -t lconvox >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
-
-
-
-#    "mysql"       => 'kraken/superlocal',
-#    "user"        => 'wb-user-service',
-#    "auth"        => 'wb-auth-service',
-#    "bill"        => 'wb-billing-service',
-#    "graphql"     => 'wb-graphql-service',
-#    "dietbet"     => 'dietbet-game-service',
-#    "hub"         => 'wb-hub',
-#    "admin-auth"  => 'wb-admin-auth-service',
-#    "admin-web"   => 'wb-admin-web',
-#    "metric"      => 'wb-metric-service',
-#    "notify"      => 'wb-notify-service',
-#    "member"      => 'wb-membership-service',
-#    "falkor"      => 'falkor-game-service',
-#    "runbet"      => 'runbet-game-service',
-#    "social"      => 'wb-social-service',
-
 
 
