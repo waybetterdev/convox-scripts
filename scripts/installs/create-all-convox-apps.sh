@@ -29,6 +29,7 @@ if test -d "${HOME}/Work/wb-services/falkor-game-service"; then
 		convox apps create falkor-game-service
 		cd "${HOME}/Work/wb-services/falkor-game-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local falkor
 		$kk refresh-env -- local falkor no-confirm
@@ -49,6 +50,7 @@ if test -d "${HOME}/Work/wb-services/wb-membership-service"; then
 
 		cd "${HOME}/Work/wb-services/wb-membership-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local membership
 		$kk refresh-env -- local membership no-confirm
@@ -69,6 +71,7 @@ if test -d "${HOME}/Work/wb-services/wb-user-service"; then
 
 		cd "${HOME}/Work/wb-services/wb-user-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local user
 		$kk refresh-env -- local user no-confirm
@@ -89,6 +92,7 @@ if test -d "${HOME}/Work/wb-services/wb-auth-service"; then
 
 		cd "${HOME}/Work/wb-services/wb-auth-service"
 		git reset --hard
+		git clean -f
 		git pull
 
 		$kk refresh-yml -- local auth
@@ -110,6 +114,7 @@ if test -d "${HOME}/Work/wb-services/wb-admin-auth-service"; then
 
 		cd "${HOME}/Work/wb-services/wb-admin-auth-service"
 		git reset --hard
+		git clean -f
 		git pull
 
 		$kk refresh-yml -- local admin-auth
@@ -130,6 +135,7 @@ if test -d "${HOME}/Work/wb-services/wb-billing-service"; then
 		convox apps create wb-billing-service
 		cd  "${HOME}/Work/wb-services/wb-billing-service"
 		git reset --hard
+		git clean -f
 		git pull
 
 		$kk refresh-yml -- local billing
@@ -151,6 +157,7 @@ if test -d "${HOME}/Work/wb-services/wb-notify-service"; then
 
 		cd "${HOME}/Work/wb-services/wb-notify-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local notify
 		$kk refresh-env -- local notify no-confirm
@@ -171,6 +178,7 @@ if test -d "${HOME}/Work/wb-services/wb-social-service"; then
 
 		cd "${HOME}/Work/wb-services/wb-social-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local social
 		$kk refresh-env -- local social no-confirm
@@ -190,6 +198,7 @@ if test -d "${HOME}/Work/wb-services/wb-metric-service"; then
 		convox apps create wb-metric-service
 		cd "${HOME}/Work/wb-services/wb-metric-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local metric
 		$kk refresh-env -- local metric no-confirm
@@ -209,6 +218,7 @@ if test -d "${HOME}/Work/wb-services/wb-admin-web"; then
 		convox apps create wb-admin-web
 		cd "${HOME}/Work/wb-services/wb-admin-web"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local ninja
 		$kk refresh-env -- local ninja no-confirm
@@ -228,6 +238,7 @@ if test -d "${HOME}/Work/wb-services/wb-graphql-service"; then
 		convox apps create wb-graphql-service
 		cd "${HOME}/Work/wb-services/wb-graphql-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local graphql
 		$kk refresh-env -- local graphql no-confirm
@@ -249,6 +260,7 @@ if test -d "${HOME}/Work/wb-services/runbet-game-service"; then
 
 		cd "${HOME}/Work/wb-services/runbet-game-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local runbet
 		$kk refresh-env -- local runbet no-confirm
@@ -269,6 +281,7 @@ if test -d "${HOME}/Work/wb-services/quitbet-game-service"; then
 		convox apps create quitbet-game-service
 		cd "${HOME}/Work/wb-services/quitbet-game-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local quitbet
 		$kk refresh-env -- local quitbet no-confirm
@@ -289,6 +302,7 @@ if test -d "${HOME}/Work/wb-services/wb-hub"; then
 		convox apps create wb-hub
 		cd "${HOME}/Work/wb-services/wb-hub"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local hub
 		$kk refresh-env -- local hub no-confirm
@@ -309,6 +323,7 @@ if test -d "${HOME}/Work/wb-services/dietbet-game-service"; then
 		convox apps create dietbet-game-service
 		cd "${HOME}/Work/wb-services/dietbet-game-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local dietbet-game-service
 		$kk refresh-env -- local dietbet-game-service no-confirm
@@ -329,6 +344,7 @@ if test -d "${HOME}/Work/wb-services/stepbet-game-service"; then
 		convox apps create stepbet-game-service
 		cd "${HOME}/Work/wb-services/stepbet-game-service"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local stepbet-game-service
 		$kk refresh-env -- local stepbet-game-service no-confirm
@@ -349,6 +365,7 @@ if test -d "${HOME}/Work/wb-services/stepbet"; then
 		convox apps create stepbet
 		cd "${HOME}/Work/wb-services/stepbet"
 		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local stepbet
 		$kk refresh-env -- local stepbet no-confirm
@@ -368,6 +385,8 @@ if test -d "${HOME}/Work/wb-services/dietbet"; then
 		cd ~/Work/wb-services/dietbet
 		convox apps create dietbet
 		cd "${HOME}/Work/wb-services/dietbet"
+		git reset --hard
+		git clean -f
 		git pull
 		$kk refresh-yml -- local dietbet 
 		$kk refresh-env -- local dietbet no-confirm
