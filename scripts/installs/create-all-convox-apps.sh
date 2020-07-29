@@ -16,6 +16,7 @@ trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
 kk='/home/dev/Work/docs/scripts/ruby/kmd-local'
 
 # TODO : why is this setting always off?
+rbenv init
 rbenv shell 2.6.2
 
 sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'
