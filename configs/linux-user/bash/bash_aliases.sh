@@ -14,6 +14,10 @@ PATH="${PATH}:$HOME/Work/docs/scripts/ruby"
 export PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
 PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
 
+#mikrok8s
+# export PATH="${PATH}:/snap/bin"
+# PATH="${PATH}:/snap/bin"
+
 
 alias rb='source ~/.bashrc'
 alias be='bundle exec'

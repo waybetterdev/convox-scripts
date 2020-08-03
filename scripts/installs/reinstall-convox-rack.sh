@@ -20,7 +20,7 @@ if [ -x "$(command -v kubectl)" ]; then
 	echo 'Purging all kubernetes data.'
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
-
+ 
 	sudo snap remove microk8s --purge
 else
   echo 'Kubernetes not installed. Exiting.'

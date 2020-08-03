@@ -30,6 +30,7 @@ if [ -x "$(command -v kubectl)" ]; then
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
+	
 	sudo snap remove microk8s --purge
 else
   echo 'Kubernetes not installed. Exiting.'
@@ -44,6 +45,12 @@ if ! [ -x "$(command -v kubectl)" ]; then
 	sudo snap install microk8s --classic --channel=1.13/stable
 	echo "Enabling DNS on Kubernetes. Sleeping for 30 seconds. Click ctrl+C to abort script." 
 	sleep 30s
+	sudo usermod -a -G microk8s ${USER}
+	su ${USER}
+
+	export PATH="${PATH}:/snap/bin"
+	PATH="${PATH}:/snap/bin"
+
 	microk8s.enable dns storage
 	echo "Sleeping for another 30 seconds. Click ctrl+C to abort script." 
 	sleep 30s

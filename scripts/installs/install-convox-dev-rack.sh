@@ -95,12 +95,13 @@ if ! [ -x "$(command -v terraform)" ]; then
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
+
 	cd
 	sudo apt install unzip
-	wget https://releases.hashicorp.com/terraform/0.12.24/terraform_0.12.24_linux_amd64.zip
-	unzip terraform_0.12.24_linux_amd64.zip
+	wget https://releases.hashicorp.com/terraform/0.12.29/terraform_0.12.29_linux_amd64.zip
+	unzip terraform_0.12.29_linux_amd64.zip
 	sudo mv terraform /usr/local/bin/
-	rm terraform_0.12.24_linux_amd64.zip
+	rm terraform_0.12.29_linux_amd64.zip
 	terraform -v
 
 else
@@ -137,6 +138,9 @@ if ! [ -x "$(command -v kubectl)" ]; then
 	echo "Sleeping for another 30 seconds. Click ctrl+C to abort script." 
 	sleep 30s
 
+	export PATH="${PATH}:/snap/bin"
+	PATH="${PATH}:/snap/bin"
+
 	microk8s.status --wait-ready
 	mkdir -p ~/.kube
 	microk8s.config > ~/.kube/config
@@ -156,6 +160,12 @@ if ! [[ "$(convox racks)" =~ .*local.* ]]; then
 
 	sudo convox rack install local dev
 	convox switch local
+
+	sudo mkdir -p /usr/lib/systemd/resolved.conf.d
+	sudo bash -c "printf '[Resolve]\nDNS=$(kubectl get service/resolver-external -n dev-system -o jsonpath="{.spec.clusterIP}")\nDomains=~convox' > /usr/lib/systemd/resolved.conf.d/convox.conf"
+	systemctl daemon-reload
+	systemctl restart systemd-networkd systemd-resolved
+
 else
   echo 'Local rack is already installed. Skipping.'
 fi
@@ -167,13 +177,14 @@ if ! test -f "/usr/share/ca-certificates/convox/convox.crt"; then
 	sleep 10s
 
 
-	kubectl get secret/ca -n convox-system -o jsonpath="{.data.tls\.crt}" | base64 -d > /tmp/ca
+	kubectl get secret/ca -n dev-system -o jsonpath="{.data.tls\.crt}" | base64 -d > /tmp/ca
 	sudo mkdir /usr/share/ca-certificates/convox
 	sudo mv /tmp/ca /usr/share/ca-certificates/convox/convox.crt
 	sudo bash -c 'echo "convox/convox.crt" >> /etc/ca-certificates.conf'
 	sudo update-ca-certificates
 	sudo snap restart microk8s
 	sudo service docker restart
+
 else
   echo 'Convox cert already installed. Skipping.'
 fi
