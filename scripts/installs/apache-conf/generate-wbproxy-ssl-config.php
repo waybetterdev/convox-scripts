@@ -21,6 +21,8 @@ $red = "\033[31m";
 $green = "\033[32m";
 
 
+$allDomains = [];
+
 echo "\n";
 echo "HTTP CONFIG\n";
 
@@ -29,6 +31,8 @@ $config = '';
 foreach ($HTTPS_SERVICES as $domain => $conf)
 {
   $service = $conf['service'];
+  $allDomains[$domain] = $domain;
+  
   $documentRoot = $conf['path'];
   $cert = $conf['cert'];
   $strDirectory = '';
@@ -121,6 +125,8 @@ $config = '';
 foreach ($HTTP_SERVICES as $domain => $conf)
 {
   $service = $conf['service'];
+  $allDomains[$domain] = $domain;
+
   $documentRoot = $conf['path'];
   $cert = $conf['cert'];
   $strDirectory = '';
@@ -199,3 +205,12 @@ foreach ($HTTP_SERVICES as $domain => $conf)
 
 fclose($file);
 print "{$white}Saved to file '$httpOutConfigPath' \n";
+
+
+echo "\n";
+echo "\n";
+echo "################## HOSTS FILE #######################";
+foreach ($allDomains as $service)
+{
+  echo "127.0.0.1 $service \n";
+}
