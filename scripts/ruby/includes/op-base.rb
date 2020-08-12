@@ -51,7 +51,7 @@ class OpBase
 
       throw "Config for #{name} not found" if conf.nil?
       conf.merge({hostname: hostnames[name]})
-          .slice(:user, :key, :hostname, :dst)
+          .slice(:user, :key, :hostname, :dst, :port)
     end
     @__ssh_config[name]
   end
