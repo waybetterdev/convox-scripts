@@ -33,11 +33,12 @@ class OpKonnect < OpBase
 
   def go
     parse_opts
+    port = @ssh_config[:port] ? @ssh_config[:port] : 22
 
     if @command.nil?
-      run_ssh_connect(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key])
+      run_ssh_connect(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], port)
     else
-      run_ssh_command(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], @command)
+      run_ssh_command(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], @command, port)
     end
   end
 
@@ -87,14 +88,14 @@ class OpKonnect < OpBase
     exec(cmd)
   end
 
-  def run_ssh_connect(user, host, key)
+  def run_ssh_connect(user, host, key, port = 22)
     puts "Connecting to #{user}@#{host}".green
-    exec_command("ssh -i #{key} #{user}@#{host}")
+    exec_command("ssh -i #{key} #{user}@#{host} -p #{port}")
   end
 
-  def run_ssh_command(user, host, key, command)
+  def run_ssh_command(user, host, key, command, port = 22)
     puts "Connecting to #{user}@#{host}".green
-    response = exec_command("ssh -i #{key} #{user}@#{host} -t '#{command}'")
+    response = exec_command("ssh -i #{key} #{user}@#{host} -t '#{command}' -p #{port}")
     print response.green
   end
 end
