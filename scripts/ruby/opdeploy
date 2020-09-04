@@ -168,11 +168,6 @@ class OpDeploy < OpBase
     print response.green
   end
 
-  def run_ssh_command(user, host, key, command)
-    response = exec_command("ssh -i #{key} #{user}@#{host} -t '#{command}'")
-    print response.green
-  end
-
   HELP = <<-BAN
 
   A deploy script for old platform websites
