@@ -21,9 +21,10 @@ end
 
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
-class OpKonnect < OpBase
+class OpPhpLogs < OpBase
 
-  attr_accessor :server, :command, :option_parser, :debug
+  attr_accessor :server, :option_parser, :debug
+
 
   def initialize
     load_settings
@@ -32,18 +33,14 @@ class OpKonnect < OpBase
   def go
     parse_opts
     port = @ssh_config[:port] ? @ssh_config[:port] : 22
-
-    if @command.nil?
-      run_ssh_connect(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], port)
-    else
-      run_ssh_command(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], @command, port)
-    end
+    command = 'vim "/var/log/php-fpm/www-error.log"'
+    run_ssh_command(@ssh_config[:user], @ssh_config[:hostname], @ssh_config[:key], command, port)
   end
 
   HELP = <<-BAN
   A ssh connect script for old platform websites
   Ex:
-    opkonnect -s stepbet-dev
+    opphplogs -s stepbet-dev
   BAN
 
   def parse_opts
@@ -58,10 +55,6 @@ class OpKonnect < OpBase
 
       opts.on("-s", "--server=S", "Required, the server to connect") do |x|
         self.server = x
-      end
-
-      opts.on("-c", "--command=C", "Optional, command to run") do |x|
-        self.command = x
       end
 
       add_help_option(opts)
@@ -80,16 +73,14 @@ class OpKonnect < OpBase
   end
 
   def exec_command(cmd)
-    puts "Running command: '#{cmd}'"  if self.debug 
+    puts "Running command: '#{cmd}'"  if self.debug
+
     cmd.gsub("'", "\\\\'")
     # %x[ #{cmd} ]
     exec(cmd)
   end
 
-  def run_ssh_connect(user, host, key, port = 22)
-    puts "Connecting to #{user}@#{host}".green
-    exec_command("ssh -i #{key} #{user}@#{host} -p #{port}")
-  end
+
 end
 
-OpKonnect.new.go
+OpPhpLogs.new.go

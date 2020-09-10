@@ -96,4 +96,10 @@ class OpBase
   def show_help
     puts self.option_parser.nil? ? HELP : self.option_parser
   end
+
+  def run_ssh_command(user, host, key, command, port = 22)
+    puts "Connecting to #{user}@#{host}".green
+    response = exec_command("ssh -i #{key} #{user}@#{host} -p #{port} -t '#{command}'")
+    print response.green
+  end
 end
