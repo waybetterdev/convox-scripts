@@ -22,8 +22,10 @@ end
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 class OpDeploy < OpBase
 
-  attr_accessor :app, :option_parser, :commit, :debug
+  attr_accessor :app, :option_parser, :commit, :debug, :make_backup
   TEMP_PATH = "~/Work/deploy/_files"
+  # we are in `docs/scripts/ruby/`
+  YUI_PATH = File.expand_path('../../../', __FILE__) + "/libraries/yuicompressor-2.4.7.jar"
 
   def initialize
     load_settings
@@ -93,7 +95,6 @@ class OpDeploy < OpBase
   end
 
   def compress_css(export_path)
-    yui = "yuicompressor-2.4.7.jar"
     paths = [
       'css',
       'admin/css',
@@ -108,13 +109,12 @@ class OpDeploy < OpBase
       next unless result.match(/\.css/)
 
       result.split("\n").each do |file|
-        print exec_command("java -jar #{yui} #{file} --type css -o #{file} --charset utf-8")
+        print exec_command("java -jar #{YUI_PATH} #{file} --type css -o #{file} --charset utf-8")
       end
     end
   end
 
   def compress_js(export_path)
-    yui = "yuicompressor-2.4.7.jar"
     paths = [
       'js',
       'admin/js'
@@ -125,7 +125,7 @@ class OpDeploy < OpBase
       next unless result.match(/\.js/)
 
       result.split("\n").each do |file|
-        print exec_command("java -jar #{yui} #{file} --type js -o #{file} --charset utf-8")
+        print exec_command("java -jar #{YUI_PATH} #{file} --type js -o #{file} --charset utf-8")
       end
     end
   end
@@ -136,7 +136,7 @@ class OpDeploy < OpBase
 
     temp_path = "#{TEMP_PATH}/#{site_name}"
 
-    zip_name = "#{site_name}.zip"
+    zip_name = (config[:zip_name] ? config[:zip_name] :  + "#{site_name}.zip")
     zip_path = "#{temp_path}/#{zip_name}"
     src_path = config[:src]
 
@@ -155,11 +155,16 @@ class OpDeploy < OpBase
     key = config[:key]
     dst_path = config[:dst]
 
+    upload_path = config[:deploy_path] ? config[:deploy_path] : config[:dst]
     hostnames.each do |hostname|
-      upload_file_via_scp(user, hostname, key, zip_path, dst_path)
+      upload_file_via_scp(user, hostname, key, zip_path, upload_path)
 
-      run_ssh_command(user, hostname, key, "unzip -o #{dst_path}/#{zip_name} -d #{dst_path}")
-      run_ssh_command(user, hostname, key, "rm -f #{dst_path}/#{zip_name}")
+      if self.make_backup && config[:deploy_path]
+        run_ssh_command(user, hostname, key, "#{config[:deploy_path]}/run_deploy.sh")
+      else
+        run_ssh_command(user, hostname, key, "unzip -o #{upload_path}/#{zip_name} -d #{dst_path}")
+        run_ssh_command(user, hostname, key, "rm -f #{upload_path}/#{zip_name}")
+      end
     end
   end
 
@@ -194,6 +199,10 @@ class OpDeploy < OpBase
 
       opts.on("-c", "--commit=C", "Required, last commit released before") do |x|
         self.commit = x
+      end
+
+      opts.on("-b", "--backup", "Optional, deploy with backup") do |x|
+        self.make_backup = true
       end
 
       add_help_option(opts)

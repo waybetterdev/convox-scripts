@@ -16,7 +16,7 @@ require "colored"
 # -> 'wb-auth-service').
 RACKS = {
   "local" => "local/convox",
-  "staging" => "waybetter/stg-west",
+  "staging" => "waybetter/stagingv3",
 }.freeze
 
 # expansions for apps. See comment on RACKS.
