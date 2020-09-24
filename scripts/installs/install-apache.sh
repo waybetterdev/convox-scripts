@@ -75,7 +75,7 @@ if ! [ -x "$(command -v php)" ]; then
 	sudo a2enmod php7.4 
 	sudo apt-get install -y php7.4-mysqli
 	sudo apt-get install -y php7.4-pgsql
-	sudo apt-get install php-dom
+	sudo apt-get install php7.4-dom
 	sudo apt-get install php7.4-gd
 else
   echo 'php is already installed. Skipping.'
