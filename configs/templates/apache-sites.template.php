@@ -25,6 +25,7 @@ $HTTPS_SERVICES = array(
   'dev-stepbet.convox.local'           => array('path' => '/var/www/stepbet',                            'cert' => 'apache-local-selfsigned'),
   'prod-dietbet.convox.local'          => array('path' => '/var/www/dietbet',                            'cert' => 'apache-local-selfsigned'),
   'dev-dietbet.convox.local'           => array('path' => '/var/www/dietbet',                            'cert' => 'apache-local-selfsigned'),
+  'local.dietbet.com'                  => array('path' => '/var/www/dietbet',                            'cert' => 'apache-dietbet-selfsigned'),
   'phpmyadmin.convox.local'            => array('path' => '/var/www/phpmyadmin',                         'cert' => 'apache-local-selfsigned'),
   
   'accounts-local.waybetterdev.com'  => array('service' => 'https://web.wb-auth-service.convox/',      'cert' => 'apache-waybetterdev-selfsigned'),
