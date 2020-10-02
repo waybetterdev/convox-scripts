@@ -27,11 +27,6 @@ source /home/dev/.bashrc
 source /home/dev/.bash_aliases
 source /home/dev/.profile
 
-
-#ruby -v >> /home/dev/tmux-boot-logs/ruby.txt 2>&1
-echo $(date) + ": sleeping for 120 seconds and then starting wbtmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
-sleep 120
-
 echo $(date) + "Fixing DNS: "  >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod) >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
@@ -40,8 +35,5 @@ tmux kill-session -t lconvox >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
 echo $(date) + ": running wbtmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 ruby /home/dev/Work/docs/scripts/ruby/wbtmux -r mysql,user,auth,bill,falkor,graphql,admin-auth,admin-web,metric,notify,member,runbet,quitbet,social -o dietbet,hub -w >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
-
-#echo $(date) + ": opening tmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
-#tmux attach -t lconvox >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
 
