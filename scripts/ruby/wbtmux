@@ -321,7 +321,7 @@ wbtmux
     end
 
     def new_window(name, path)
-      _add "new-window -c #{path} -n \"#{name}\""
+      _add "new-window -c #{path} -n \"#{name}\" /bin/bash"
       _add "split-window -v -c #{path}"
     end
 

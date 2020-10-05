@@ -2,20 +2,12 @@
 
 
 #####################################################################
-# script that starts convox in a tmux terminal
+# Script that kill currect tmux session and creates it again (to safe CPU load due to convox bug)
 # HOT TO INSTALL
-# 1. Add /home/dev/Work/docs/scripts/boot/crontab-root-startup.sh to root crontab (open script to see help)
-#
-# 2. Make terminal run at user login
-#    - Press the Super key (windows key).
-#    - Type "Startup Applications"
-#    - Click on the Startup Applications option
-#    - Click "Add"
-#    	In the "name" field, type Terminal
-#    	In the "command" field, type gnome-terminal
-#	Command to add: /usr/bin/gnome-terminal --command '/home/dev/Work/docs/scripts/boot/ubuntu-user-startup.sh'
-# 3. Check that both crontab-root-startup.sh and ubuntu-user-startup.sh have run permission
-# 4. Create folder /home/dev/tmux-boot-logs/ for logs
+# 1. run 'sudo crontab -e'
+# 2. Add the following line  
+#    0 */6 * * * env DISPLAY=:0 /usr/bin/xfce4-terminal --maximize -e 'bash -c "/home/dev/Work/docs/scripts/boot/restart-tmux-session.sh; exit 0"' -T "Local Convox"
+# 3. Create folder /home/dev/tmux-boot-logs/ for logs
 #####################################################################
 
 
