@@ -16,6 +16,18 @@ cd
 
 sudo apt-get install -y tmux vim htop
 
+if ! [ -x "$(command -v aws)" ]; then
+	echo "Installing aws"
+	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+	sleep 10s
+
+	sudo apt install -y python3-pip
+	pip3 install awscli --upgrade --user
+else
+  echo 'AWS is already installed. Skipping.'
+fi
+
+
 if ! [ -x "$(command -v ruby)" ]; then
 	echo "Installing ruby 2.6.2"
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
@@ -53,7 +65,8 @@ if ! [ -x "$(command -v ruby)" ]; then
 	sudo apt-get install -y libssl-dev libreadline-dev
 	rbenv install 2.6.2
 	rbenv global 2.6.2
-	rbenv shell 2.6.2
+	#rbenv init
+	#rbenv shell 2.6.2
 	ruby -v
 
 	gem install bundler
@@ -97,12 +110,9 @@ if ! [ -x "$(command -v terraform)" ]; then
 
 
 	cd
-	sudo apt install unzip
-	wget https://releases.hashicorp.com/terraform/0.12.29/terraform_0.12.29_linux_amd64.zip
-	unzip terraform_0.12.29_linux_amd64.zip
-	sudo mv terraform /usr/local/bin/
-	rm terraform_0.12.29_linux_amd64.zip
-	terraform -v
+	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+	sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+	sudo apt-get update && sudo apt-get install terraform
 
 else
   echo 'terraform is already installed. Skipping.'
@@ -187,18 +197,6 @@ if ! test -f "/usr/share/ca-certificates/convox/convox.crt"; then
 
 else
   echo 'Convox cert already installed. Skipping.'
-fi
-
-
-if ! [ -x "$(command -v aws)" ]; then
-	echo "Installing aws"
-	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
-	sleep 10s
-
-	sudo apt install -y python3-pip
-	pip3 install awscli --upgrade --user
-else
-  echo 'AWS is already installed. Skipping.'
 fi
 
 
