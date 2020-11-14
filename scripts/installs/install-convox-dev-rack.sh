@@ -117,7 +117,7 @@ fi
 
 
 if ! [ -x "$(command -v ruby)" ]; then
-	~/Work/docs/scripts/installs/install-ruby.sh
+	sudo ~/Work/docs/scripts/installs/install-ruby.sh
 else
   echo 'Ruby 2.6.2 is already installed. Skipping.'
 fi

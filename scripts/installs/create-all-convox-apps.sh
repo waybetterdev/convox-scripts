@@ -16,8 +16,9 @@ trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
 kk='/home/dev/Work/docs/scripts/ruby/kmd-local'
 
 # TODO : why is this setting always off?
-# rbenv init
-# rbenv shell 2.6.2
+eval "$(rbenv init -)"
+rbenv shell 2.6.2
+
 
 sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'
 convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)
