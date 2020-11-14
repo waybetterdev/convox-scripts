@@ -277,24 +277,24 @@ if test -d "${HOME}/Work/wb-services/quitbet-game-service"; then
 fi
 
 
-if test -d "${HOME}/Work/wb-services/wb-hub"; then
-	if ! [[ $(convox apps) =~ 'wb-hub' ]]; then
-		echo "Creating wb-hub app"
-		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
-		sleep 3s
+# if test -d "${HOME}/Work/wb-services/wb-hub"; then
+# 	if ! [[ $(convox apps) =~ 'wb-hub' ]]; then
+# 		echo "Creating wb-hub app"
+# 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
+# 		sleep 3s
 
-		cd "${HOME}/Work/wb-services/wb-hub"
-		convox apps create wb-hub
-		git reset --hard
-		git clean -f
-		git pull
-		$kk refresh-yml -- local hub
-		$kk refresh-env -- local hub no-confirm
-		convox build -m convox.local.yml
-	else
-	  echo 'wb-hub app already exists. Skipping.'
-	fi
-fi
+# 		cd "${HOME}/Work/wb-services/wb-hub"
+# 		convox apps create wb-hub
+# 		git reset --hard
+# 		git clean -f
+# 		git pull
+# 		$kk refresh-yml -- local hub
+# 		$kk refresh-env -- local hub no-confirm
+# 		convox build -m convox.local.yml
+# 	else
+# 	  echo 'wb-hub app already exists. Skipping.'
+# 	fi
+# fi
 
 
 if test -d "${HOME}/Work/wb-services/dietbet-game-service"; then
