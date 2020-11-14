@@ -14,26 +14,6 @@ trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
 cd
 
 
-if ! [ -x "$(command -v aws)" ]; then
-	echo "Installing aws"
-	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
-	sleep 10s
-
-	sudo apt install -y python3-pip
-	pip3 install awscli --upgrade --user
-else
-  echo 'AWS is already installed. Skipping.'
-fi
-
-
-
-if ! [ -x "$(command -v ruby)" ]; then
-	~/Work/docs/scripts/installs/install-ruby.sh
-else
-  echo 'Ruby 2.6.2 is already installed. Skipping.'
-fi
-
-
 if ! [ -x "$(command -v docker)" ]; then
 	~/Work/docs/scripts/installs/install-docker.sh
 else
@@ -48,13 +28,17 @@ if ! [ -x "$(command -v terraform)" ]; then
 
 
 	cd
+	sudo apt-get install -y curl
 	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 	sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-	sudo apt-get update && sudo apt-get install terraform
+	sudo apt-get update && sudo apt-get install -y terraform
 
 else
   echo 'terraform is already installed. Skipping.'
 fi
+
+
+
 
 
 if ! [ -x "$(command -v convox)" ]; then
@@ -62,7 +46,7 @@ if ! [ -x "$(command -v convox)" ]; then
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
-	sudo apt-get install curl
+	sudo apt-get install -y curl
 	cd
 	curl -L https://github.com/convox/convox/releases/latest/download/convox-linux -o /tmp/convox
 	sudo mv /tmp/convox /usr/local/bin/convox
@@ -87,8 +71,8 @@ if ! [[ "$(convox racks)" =~ .*local.* ]]; then
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
-	sudo convox rack install local dev
-	convox switch local
+	convox rack install local dev
+	convox switch dev
 
 	sudo mkdir -p /usr/lib/systemd/resolved.conf.d
 	sudo bash -c "printf '[Resolve]\nDNS=$(kubectl get service/resolver-external -n dev-system -o jsonpath="{.spec.clusterIP}")\nDomains=~convox' > /usr/lib/systemd/resolved.conf.d/convox.conf"
@@ -119,9 +103,29 @@ else
 fi
 
 
+if ! [ -x "$(command -v aws)" ]; then
+	echo "Installing aws"
+	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+	sleep 10s
 
-echo "copying secrets"
-cp -rf ~/Work/docs/secrets/.aws ~/.aws
+	sudo apt install -y python3-pip
+	pip3 install awscli --upgrade --user
+else
+  echo 'AWS is already installed. Skipping.'
+fi
+
+
+
+if ! [ -x "$(command -v ruby)" ]; then
+	~/Work/docs/scripts/installs/install-ruby.sh
+else
+  echo 'Ruby 2.6.2 is already installed. Skipping.'
+fi
+
+
+
+#echo "copying secrets"
+#cp -rf ~/Work/docs/secrets/.aws ~/.aws
 #cp -rf ~/Work/docs/secrets/.ssh ~/.ssh
 
 
