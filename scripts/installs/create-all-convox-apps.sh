@@ -12,6 +12,13 @@ trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
 
 
 
+if ! [ -x "$(command -v ruby)" ]; then
+	sudo ~/Work/docs/scripts/installs/install-ruby.sh
+	reloadaliases
+else
+  echo 'Ruby 2.6.2 is already installed. Skipping.'
+fi
+
 # TODO: why is the alias not working?
 kk='/home/dev/Work/docs/scripts/ruby/kmd-local'
 

@@ -16,6 +16,7 @@ cd
 
 if ! [ -x "$(command -v docker)" ]; then
 	~/Work/docs/scripts/installs/install-docker.sh
+	sleep 60s
 else
   echo 'Docker is already installed. Skipping.'
 fi
@@ -32,12 +33,18 @@ if ! [ -x "$(command -v terraform)" ]; then
 	curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
 	sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
 	sudo apt-get update && sudo apt-get install -y terraform
+	sleep 60s
 
 else
   echo 'terraform is already installed. Skipping.'
 fi
 
-
+if ! [ -x "$(command -v kubectl)" ]; then
+	~/Work/docs/scripts/installs/install-kubernetes.sh
+	sleep 60s
+else
+  echo 'Kubernetes is already installed. Skipping.'
+fi
 
 
 
@@ -56,14 +63,6 @@ if ! [ -x "$(command -v convox)" ]; then
 else
   echo 'Convox is already installed. Skipping.'
 fi
-
-
-if ! [ -x "$(command -v kubectl)" ]; then
-	~/Work/docs/scripts/installs/install-kubernetes.sh
-else
-  echo 'Kubernetes is already installed. Skipping.'
-fi
-
 
 
 if ! [[ "$(convox racks)" =~ .*local.* ]]; then
@@ -116,11 +115,6 @@ fi
 
 
 
-if ! [ -x "$(command -v ruby)" ]; then
-	sudo ~/Work/docs/scripts/installs/install-ruby.sh
-else
-  echo 'Ruby 2.6.2 is already installed. Skipping.'
-fi
 
 
 

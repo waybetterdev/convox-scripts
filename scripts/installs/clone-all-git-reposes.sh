@@ -275,18 +275,5 @@ else
 fi
 
 
-if ! [ -x "$(command -v github-desktop)" ]; then
-	echo "Installing GitHub Desktop"
-	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
-	sleep 10s
-
-	wget -qO - https://packagecloud.io/shiftkey/desktop/gpgkey | sudo tee /etc/apt/trusted.gpg.d/shiftkey-desktop.asc > /dev/null
-	sudo sh -c 'echo "deb [arch=amd64] https://packagecloud.io/shiftkey/desktop/any/ any main" > /etc/apt/sources.list.d/packagecloud-shiftky-desktop.list'
-	sudo apt-get update
-
-	sudo apt install github-desktop
-else
-  echo 'GitHub Desktop is already installed. Skipping.'
-fi
 
 
