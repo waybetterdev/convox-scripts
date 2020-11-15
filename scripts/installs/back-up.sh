@@ -12,6 +12,11 @@ sudo zip -r home.zip ~/.ssh ~/.aws .gitconfig .bash_aliases .bash_profile
 ls -la
 sudo mv home.zip "/home/$USER/Work/backups/$date"
 
+cd ~/Work
+sudo zip -r docs.zip docs
+sudo mv docs.zip "/home/$USER/Work/backups/$date"
+
+
 cd ~/Work/wb-services/kraken/superlocal
 sudo zip -r mysql.zip data
 sudo mv mysql.zip "/home/$USER/Work/backups/$date"
