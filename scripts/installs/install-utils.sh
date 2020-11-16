@@ -14,7 +14,7 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 cd
 
-sudo apt-get install -y git tmux vim htop
+sudo apt-get install -y git tmux vim htop openssh-server
 
 
 if ! [ -x "$(command -v github-desktop)" ]; then
@@ -33,4 +33,5 @@ else
 fi
 
 
-sudo snap install --classic code
+sudo snap install code --classic
+snap install sublime-text --classic
