@@ -126,11 +126,7 @@ if ! test -f "/etc/apache2/sites-enabled/wb-proxy-ssl.conf"; then
 	sleep 10s
 
 	echo "Generating apache conf." 
-	php ~/Work/docs/scripts/installs/apache-conf/print-wbproxy-ssl-config.php
-	sudo rm /etc/apache2/sites-enabled/000-default.conf 
-	sudo mv -v wb-proxy.conf /etc/apache2/sites-enabled/wb-proxy.conf
-	sudo mv -v wb-proxy-ssl.conf /etc/apache2/sites-enabled/wb-proxy-ssl.conf
-	sudo systemctl restart apache2.service
+	~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh
 else
   echo 'Apache conf file is already installed. Skipping.'
 fi

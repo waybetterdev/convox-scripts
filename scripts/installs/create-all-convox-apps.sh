@@ -12,12 +12,20 @@ trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
 
 
 
+if ! [ -x "$(command -v ruby)" ]; then
+	sudo ~/Work/docs/scripts/installs/install-ruby.sh
+	reloadaliases
+else
+  echo 'Ruby 2.6.2 is already installed. Skipping.'
+fi
+
 # TODO: why is the alias not working?
 kk='/home/dev/Work/docs/scripts/ruby/kmd-local'
 
 # TODO : why is this setting always off?
-# rbenv init
-# rbenv shell 2.6.2
+eval "$(rbenv init -)"
+rbenv shell 2.6.2
+
 
 sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'
 convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)
@@ -275,27 +283,6 @@ if test -d "${HOME}/Work/wb-services/quitbet-game-service"; then
 	  echo 'quitbet-game-service app already exists. Skipping.'
 	fi
 fi
-
-
-if test -d "${HOME}/Work/wb-services/wb-hub"; then
-	if ! [[ $(convox apps) =~ 'wb-hub' ]]; then
-		echo "Creating wb-hub app"
-		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
-		sleep 3s
-
-		cd "${HOME}/Work/wb-services/wb-hub"
-		convox apps create wb-hub
-		git reset --hard
-		git clean -f
-		git pull
-		$kk refresh-yml -- local hub
-		$kk refresh-env -- local hub no-confirm
-		convox build -m convox.local.yml
-	else
-	  echo 'wb-hub app already exists. Skipping.'
-	fi
-fi
-
 
 if test -d "${HOME}/Work/wb-services/dietbet-game-service"; then
 	if ! [[ $(convox apps) =~ 'dietbet-game-service' ]]; then

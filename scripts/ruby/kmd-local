@@ -15,7 +15,7 @@ require "colored"
 # 'wb-admin-auth-service'), you can add an extra shorthand entry (eg. 'auth'
 # -> 'wb-auth-service').
 RACKS = {
-  "local" => "local/convox",
+  "local" => "dev",
   "staging" => "waybetter/stagingv3",
 }.freeze
 

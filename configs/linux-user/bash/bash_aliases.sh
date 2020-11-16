@@ -56,6 +56,7 @@ alias notepad=sublime-text.subl
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
 
 alias restartapache='sudo systemctl restart apache2.service'
+alias stopapache='sudo systemctl stop apache2.service'
 
 
 alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"

@@ -144,11 +144,17 @@ class Wbtmux
 
         path = convox_app_path(convox_app)
         app_command = "kk start -- local #{app}"
+        # app_command = "source #{Dir.home}/.bash_aliases && source #{Dir.home}/.bash_profile && kk start -- local #{app}"
       end
 
       queue = CommandQueue.new(session_name)
       queue.attach_session
-      queue.exec_command_inside_screen(app, 1, app_command)
+      if app == 'mysql'
+        queue.exec_command_inside_screen(app, 1, 'docker-compose build')
+        queue.exec_command_inside_screen(app, 1, 'docker-compose up')
+      else
+        queue.exec_command_inside_screen(app, 1, app_command)
+      end
       queue.swap_panes(0, 1)
       queue.run
     end
@@ -322,7 +328,7 @@ wbtmux
 
     def new_window(name, path)
       _add "new-window -c #{path} -n \"#{name}\" /bin/bash"
-      _add "split-window -v -c #{path}"
+      _add "split-window -v -c #{path} /bin/bash"
     end
 
     def exec_command_inside_screen(screen, pane, command)
@@ -355,6 +361,8 @@ wbtmux
     def _add(cmd)
       commands.push(cmd)
     end
+
+    # Time.now.strftime('%Y-%m-%d %H:%M:%S')
   end
 
 end
