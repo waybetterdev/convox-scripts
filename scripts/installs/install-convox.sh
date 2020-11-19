@@ -8,67 +8,13 @@ set -e
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
-trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
+trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 
 cd
 
 
 sudo apt-get install -y tmux vim htop
-
-if ! [ -x "$(command -v ruby)" ]; then
-	echo "Installing ruby 2.6.2"
-	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
-	sleep 10s
-
-	sudo apt install -y curl
-	curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-	curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-	echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-
-
-	sudo apt-get install -y git-core zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev nodejs yarn
-
-	if ! [ -x "$(command -v rbenv)" ]; then
-		echo "Installing rbenv"
-		cd
-		git clone https://github.com/rbenv/rbenv.git ~/.rbenv
-		echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
-		echo 'eval "$(rbenv init -)"' >> ~/.bashrc
-		exec $SHELL
-	else
-	  echo 'rbenv is already installed. Skipping.'
-	fi
-
-	if ! [ -x "$(command -v ruby-build)" ]; then
-		echo "Adding rbenv to PATH"
-		cd
-		git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
-		echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
-		exec $SHELL
-	else
-	  echo 'ruby-build is already installed. Skipping.'
-	fi
-
-	sudo apt-get install -y libssl-dev libreadline-dev
-	rbenv install 2.6.2
-	rbenv global 2.6.2
-	rbenv shell 2.6.2
-	ruby -v
-
-	gem install bundler
-	gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo'
-
-	echo "Also installing ruby 2.6.3 for kraken scripts"
-	rbenv install 2.6.3
-
-	gem install bundler
-	gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo'
-
-else
-  echo 'Ruby 2.6.2 is already installed. Skipping.'
-fi
-
 
 
 if ! [ -x "$(command -v docker)" ]; then

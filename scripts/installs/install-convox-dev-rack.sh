@@ -8,7 +8,7 @@ set -e
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
-trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
+trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 
 cd
@@ -72,14 +72,23 @@ if ! [[ "$(convox racks)" =~ .*local.* ]]; then
 
 	convox rack install local dev
 	convox switch dev
+else
+  echo 'Local rack is already installed. Skipping.'
+fi
+
+if ! test -f "/usr/lib/systemd/resolved.conf.d/convox.conf"; then
+
+	echo 'Setting *.convox to be resolved by the local Rack’s DNS server.'
+	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+	sleep 10s
 
 	sudo mkdir -p /usr/lib/systemd/resolved.conf.d
 	sudo bash -c "printf '[Resolve]\nDNS=$(kubectl get service/resolver-external -n dev-system -o jsonpath="{.spec.clusterIP}")\nDomains=~convox' > /usr/lib/systemd/resolved.conf.d/convox.conf"
 	systemctl daemon-reload
 	systemctl restart systemd-networkd systemd-resolved
-
+	cat /usr/lib/systemd/resolved.conf.d/convox.conf
 else
-  echo 'Local rack is already installed. Skipping.'
+  echo 'DNS already set up. Skipping.'
 fi
 
 
@@ -87,7 +96,6 @@ if ! test -f "/usr/share/ca-certificates/convox/convox.crt"; then
 	echo 'Installing convox certificates'
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
-
 
 	kubectl get secret/ca -n dev-system -o jsonpath="{.data.tls\.crt}" | base64 -d > /tmp/ca
 	sudo mkdir /usr/share/ca-certificates/convox

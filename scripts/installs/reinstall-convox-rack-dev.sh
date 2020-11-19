@@ -34,6 +34,7 @@ if [ -x "$(command -v terraform)" ]; then
 	
 	sudo apt-get purge -y terraform
 	rm -rf ~/.terraform.d
+	rm -rf /root/.terraform.d
 fi
 
 if ! [ -x "$(command -v terraform)" ]; then
@@ -59,6 +60,7 @@ if [ -x "$(command -v kubectl)" ]; then
 	
 	sudo snap remove microk8s --purge
 	rm -rf ~/.kube
+	rm -rf /usr/libexec/kubernetes
 fi
 
 if ! [ -x "$(command -v kubectl)" ]; then
@@ -75,9 +77,9 @@ if ! [[ "$(convox racks)" =~ .*local.* ]]; then
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
-	sudo convox rack install local dev
+    convox rack install local dev
 	sleep 5s
-	convox switch local
+	convox switch dev
 else
   echo 'Local rack is already installed. Skipping.'
 fi

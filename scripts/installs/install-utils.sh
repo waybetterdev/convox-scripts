@@ -17,7 +17,7 @@ cd
 sudo apt-get install -y git tmux vim htop openssh-server
 
 
-if ! [ -x "$(command -v github-desktop)" ]; then
+#if ! [ -x "$(command -v github-desktop)" ]; then
 	#echo "Installing github-desktop"
 	#echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	#sleep 10s
@@ -28,9 +28,9 @@ if ! [ -x "$(command -v github-desktop)" ]; then
 
 	#sudo apt install github-desktop
 
-else
-  echo 'github-desktop is already installed. Skipping.'
-fi
+#else
+#  echo 'github-desktop is already installed. Skipping.'
+#fi
 
 
 sudo snap install code --classic
