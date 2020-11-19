@@ -14,37 +14,25 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 cd
 
 
-sudo apt-get install -y tmux vim htop
+sudo apt-get install -y tmux vim htop curl
+
+sudo rm -rf ~/.config/convox
+sudo rm -rf /root/.config/convox/
+
 
 if [ -x "$(command -v kubectl)" ]; then
 	echo 'Purging all kubernetes data.'
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
- 
+
+	
 	sudo snap remove microk8s --purge
-else
-  echo 'Kubernetes not installed. Exiting.'
-  exit
+	rm -rf ~/.kube
 fi
 
 if ! [ -x "$(command -v kubectl)" ]; then
-	echo "Installing kubernetes"
-	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
-	sleep 10s
-
-	sudo snap install microk8s --classic --channel=1.13/stable
-	echo "Enabling DNS on Kubernetes. Sleeping for 30 seconds. Click ctrl+C to abort script." 
-	sleep 30s
-	microk8s.enable dns storage
-	echo "Sleeping for another 30 seconds. Click ctrl+C to abort script." 
-	sleep 30s
-
-	microk8s.status --wait-ready
-	mkdir -p ~/.kube
-	microk8s.config > ~/.kube/config
-	sudo snap restart microk8s
-	sudo snap alias microk8s.kubectl kubectl
-	kubectl config view
+	~/Work/docs/scripts/installs/install-kubernetes.sh
+	sleep 60s
 else
   echo 'Kubernetes is already installed. Skipping.'
 fi
