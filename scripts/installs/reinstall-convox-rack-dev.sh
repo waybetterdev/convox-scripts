@@ -33,8 +33,8 @@ if [ -x "$(command -v terraform)" ]; then
 
 	
 	sudo apt-get purge -y terraform
-	rm -rf ~/.terraform.d
-	rm -rf /root/.terraform.d
+	sudo rm -rf ~/.terraform.d
+	sudo rm -rf /root/.terraform.d
 fi
 
 if ! [ -x "$(command -v terraform)" ]; then
@@ -59,8 +59,8 @@ if [ -x "$(command -v kubectl)" ]; then
 
 	
 	sudo snap remove microk8s --purge
-	rm -rf ~/.kube
-	rm -rf /usr/libexec/kubernetes
+	sudo rm -rf ~/.kube
+	sudo rm -rf /usr/libexec/kubernetes
 fi
 
 if ! [ -x "$(command -v kubectl)" ]; then
