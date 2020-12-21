@@ -35,3 +35,7 @@ sudo apt-get install -y git tmux vim htop openssh-server
 
 sudo snap install code --classic
 snap install sublime-text --classic
+sudo snap install slack --classic
+
+# disable ubuntu animations
+gsettings set org.gnome.desktop.interface enable-animations false
