@@ -63,6 +63,8 @@ class Wbtmux
 
   def run_tmux_session()
 
+    fix_dns_and_aws if self.opts_fix_dns
+
     unless kubernetes_ready?
       puts "Kubernetes (microk8s) not running. Starting it"
       start_kubernetes 
@@ -70,8 +72,6 @@ class Wbtmux
 
     wait_for_convox if self.opts_wait_convox 
     exit_with_error("Convox not ready. Aborting.") unless convox_ready?
-
-    fix_dns_and_aws if self.opts_fix_dns
 
     session_name = 'lconvox'
 
