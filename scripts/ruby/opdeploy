@@ -28,7 +28,7 @@ class OpDeploy < OpBase
   YUI_PATH = File.expand_path('../../../', __FILE__) + "/libraries/yuicompressor-2.4.7.jar"
 
   def initialize
-    load_settings
+    load_op_severs_config
   end
 
   def go
@@ -132,7 +132,7 @@ class OpDeploy < OpBase
 
   def deploy_changes_since_commit(site_name, commit)
     
-    config = deploy_config(site_name)
+    config = op_deploy_config(site_name)
 
     temp_path = "#{TEMP_PATH}/#{site_name}"
 
@@ -209,9 +209,9 @@ class OpDeploy < OpBase
     end
 
 
-    @deploy_config = deploy_config(self.app)
-    @deploy_config = deploy_config(self.app)
-    if @deploy_config.nil?
+    @op_deploy_config = op_deploy_config(self.app)
+    @op_deploy_config = op_deploy_config(self.app)
+    if @op_deploy_config.nil?
       exit_with_error("app not found")
     end
 

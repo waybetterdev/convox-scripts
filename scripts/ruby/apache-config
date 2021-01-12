@@ -1,0 +1,228 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+
+class ApacheConfig < OpBase
+
+  attr_accessor :print_option, :write_option, :silent_option
+
+  def initialize
+    
+  end
+
+  def go
+    parse_opts
+
+    if self.write_option
+      write_config  
+    elsif self.print_option
+      print_config
+    end
+  end
+
+  HELP = <<-BAN
+  Script for generating apache proxy config
+  Ex:
+    apache-config -p
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      self.add_debug_option(opts)
+
+      opts.on("-p", "--print", "Required, the app to clone") do |x|
+        self.print_option = true
+      end
+
+      opts.on("-s", "--silent", "Required, the app to clone") do |x|
+        self.silent_option = true
+      end
+
+      opts.on("-w", "--write", "Required, the app to clone") do |x|
+        self.write_option = true
+      end
+
+      add_help_option(opts)
+    end
+    self.option_parser.parse!(ARGV)
+  end
+
+
+  def write_config
+    conf = generate_config
+
+    file_path = "#{path_local_settings}/wb-proxy-ssl.conf"
+    puts "Saving config to #{file_path}"
+    File.open(file_path, 'w+') { |file| file.write(conf) }
+  end
+
+  def print_config
+    conf = generate_config
+
+    puts conf unless self.silent_option
+  end
+
+  def generate_config
+    service_names = np_services.values.map {|s| {name: s[:name], external: false}} + [
+      'wb-auth-service',
+      'wb-graphql-service', 
+      'wb-hub',
+      'wb-admin-auth-service',
+      'wb-admin-web',
+    ].map{|s| {name: s, external: true}}
+    
+    service_names.map do |data|
+      service_data = np_service_config(data[:name])
+      next if service_data[:location] == 'convox-office'
+
+      domain = get_proxy_from_url(service_data, data[:external])
+
+      proxy_conf = get_np_service_vhost_config(domain, service_data, is_proxy: true, use_ssl: true)
+
+      build_apache_virtual_host_conf(domain, 443, proxy_conf, nil)
+    end.compact.join("\n\n")
+  end
+
+
+  private 
+
+  def get_service_certificate(domain)
+    res = NpServices::CERTIFICATES.find {  |_,pattern| Regexp.new(pattern.gsub(/\./, '\.')) =~ (domain) }
+
+    res[0] if res
+  end
+
+  def get_np_service_vhost_config(domain, service_data, is_proxy:, use_ssl:)
+    service = get_proxy_to_url(service_data)
+    conf = {
+      'ServerAdmin' => 'mihai@waybetter.com',
+      'ServerName' => domain,
+      'DocumentRoot' => '/var/www/' + service_data[:folder],
+      'ErrorLog' => '/var/www/wb-proxy/logs/https-' + domain + '.error.log',
+      'CustomLog' => '/var/www/wb-proxy/logs/https-' + domain + '.access.log combined',
+    }
+
+    if use_ssl
+      cert = get_service_certificate(domain)
+      exit_with_error "No certificate for #{domain} found" unless cert
+
+      conf.merge!({
+        'SSLEngine' => 'on',
+        'SSLCertificateFile' => '/etc/ssl/certs/' + cert + '.crt',
+        'SSLCertificateKeyFile' => '/etc/ssl/private/' + cert + '.key',
+      })
+    end
+
+    if is_proxy
+      conf.merge!({
+        'ProxyPass' => "/ #{service}/",
+        'ProxyPassReverse' => "/ #{service}/",
+        'DocumentRoot' => '/var/www/wb-proxy',
+      })
+      
+      if /^https\:/ =~ service
+        conf.merge!({
+          'SSLProxyEngine' => 'On',
+          'SSLProxyCheckPeerCN' => 'On',
+          'SSLProxyCheckPeerExpire' => 'On',
+        })
+      else
+        conf.merge!({
+          'SSLProxyEngine' => 'Off',
+          'SSLProxyVerify' => 'none',
+          'SSLProxyCheckPeerCN' => 'Off',
+          'SSLProxyCheckPeerExpire' => 'Off',
+        })
+      end
+      puts "https://#{domain} redirects to #{service}\n"
+    end
+    
+    conf
+  end
+
+  def build_apache_virtual_host_conf(domain, port, vhost_conf = {}, www_directory = '')
+
+    str_directory = ''
+    if www_directory 
+      str_directory =  ' 
+    <Directory "' + www_directory + '">
+      Options Indexes FollowSymLinks Includes
+      Order deny,allow
+      Deny from all
+      Allow from all
+      AllowOverride All
+    </Directory>
+    '
+    end
+
+
+    '
+#' + domain + '
+<IfModule mod_ssl.c>
+  <VirtualHost _default_:' + port.to_s + '>
+
+'     + vhost_conf.map{ |k,v| "    #{k} #{v}" }.join("\n") + '
+    
+    <FilesMatch "\.(cgi|shtml|phtml|php)$">
+                    SSLOptions +StdEnvVars
+    </FilesMatch>
+    <Directory /usr/lib/cgi-bin>
+                    SSLOptions +StdEnvVars
+    </Directory>
+    ' + str_directory + '
+  </VirtualHost>
+</IfModule>
+    '
+  end
+
+
+  def get_proxy_from_url(service_data, external = false)
+    if external
+      get_service_external_domain(service_data[:name], service_data[:location])
+    else
+      get_service_domain(service_data[:name], service_data[:location])
+    end
+  end
+
+  def get_proxy_to_url(service_data)
+    name = service_data[:name]
+    location = service_data[:location]
+
+    if location == 'kraken'
+      port = service_data[:port]
+      "http://#{name}.convox.local#{":" + port.to_s if port}"
+    elsif location == 'convox-local'
+      "https://" + get_convox_service_domain(name)
+    elsif location == 'convox-office'
+      "https://" + get_convox_service_domain(name)
+    end
+  end
+
+end
+
+ApacheConfig.new.go

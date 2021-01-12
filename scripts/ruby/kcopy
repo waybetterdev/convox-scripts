@@ -19,7 +19,7 @@ XXX
   exit(1)
 end
 
-class KRubocop
+class KCopy
   attr_accessor :app, :rack, :file, :service_filter, :op, :any, :instance_id
 
   CONVOX_BIN = `which convox`.strip
@@ -189,4 +189,4 @@ BAN
   end
 end
 
-KRubocop.new.go
+KCopy.new.go

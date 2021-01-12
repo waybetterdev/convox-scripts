@@ -52,6 +52,8 @@ alias cdstepbetprod='cd /var/www/stepbet_prod;lcd'
 #utils
 alias notepad=sublime-text.subl
 
+alias npm_start_service="nvm use && nvm ls && lrun npm start"
+
 
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
 

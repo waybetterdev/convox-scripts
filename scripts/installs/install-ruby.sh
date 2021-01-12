@@ -56,8 +56,9 @@ rbenv install -v 2.6.3
 rbenv global 2.6.2
 
 gem install bundler
-gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo'
+gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo' 'tty-prompt' 'pry-byebug'
 rbenv rehash
+
 
 # Change folder and files owner
 chown -R "$SCRIPT_USER":"$SCRIPT_USER" /home/"$SCRIPT_USER"

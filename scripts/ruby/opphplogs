@@ -27,7 +27,7 @@ class OpPhpLogs < OpBase
 
 
   def initialize
-    load_settings
+    load_op_severs_config
   end
 
   def go

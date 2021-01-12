@@ -1,0 +1,171 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+
+class PrepareNodeApp < OpBase
+
+  attr_accessor :opts_app
+
+  def initialize
+    
+  end
+
+  def go
+    parse_opts
+
+    prepare_kraken
+
+    build_env_g2
+
+    return
+
+    copy_env_g2_to_kraken
+    prepare_app
+  end
+
+  HELP = <<-BAN
+  A ssh connect script for old platform websites
+  Ex:
+    prepare-node-app -a wb-user-service
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      self.add_debug_option(opts)
+
+      opts.on("-a", "--app=A", "Required, the app to prepare") do |x|
+        self.opts_app = x
+      end
+
+      add_help_option(opts)
+    end
+    self.option_parser.parse!(ARGV)
+
+    if self.opts_app.nil? 
+      exit_with_error("app parameter is required")
+    end
+  end
+
+  def prepare_kraken
+    unless Dir.exist?(path_kraken)
+      checkout_app(name: 'kraken', path: path_wb_services)
+
+      exec_bash_command "cd #{path_kraken} && npm install", message: "Installing kraken node modules"
+    end
+  end
+
+  def g2_env_path
+    "#{path_kraken}/.env.g2"
+  end
+
+  def copy_env_g2_to_kraken
+    unless File.exist? g2_env_path
+      src = "#{path_secrets}/env.g2"
+      unless File.exists? src
+        exit_with_error("File #{src} was not found. Cannot run `lrun` without it.")
+      end
+      
+      exec_command "cp #{src} #{g2_env_path}", message: "Copying env.g2 file to kraken"
+    end
+  end
+
+  def prepare_app
+    app_path = np_app_path(self.app)
+    unless Dir.exist?(app_path)
+      checkout_app(name: self.app, path: File.expand_path('../', app_path))
+    end
+
+    exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && nvm install && nvm ls && npm install && bin/first_run.sh'"
+  end
+
+
+  def build_env_g2
+
+    preset_values = {
+      'REDIS_HOST'                  => -> { '192.168.1.102' },
+      'WB_NOTIFY_SERVICE_URL'         => -> { local_service_url('wb-notify-service') },
+      'DIETBET_GAME_SERVICE_URL'      => -> { local_service_url('dietbet-game-service') },
+      'FALKOR_GAME_SERVICE_URL'       => -> { local_service_url('falkor-game-service') },
+      'QUITBET_GAME_SERVICE_URL'      => -> { local_service_url('quitbet-game-service') },
+      'RUNBET_GAME_SERVICE_URL'       => -> { local_service_url('runbet-game-service') },
+      'STEPBET_GAME_SERVICE_URL'      => -> { local_service_url('stepbet-game-service') },
+      'WB_BILLING_SERVICE_URL'        => -> { local_service_url('wb-billing-service') },
+      'WB_MEMBERSHIP_SERVICE_URL'     => -> { local_service_url('wb-membership-service') },
+      'WB_METRIC_SERVICE_URL'         => -> { local_service_url('wb-metric-service') },
+      'WB_SOCIAL_SERVICE_URL'         => -> { local_service_url('wb-social-service') },
+      'WB_USER_SERVICE_URL'           => -> { local_service_url('wb-user-service') },
+      'WB_AUTH_SERVICE_URL'           => -> { local_service_url('wb-auth-service') },
+      'WB_AUTH_SERVICE_EXTERNAL_URL'  => -> { local_service_url('wb-auth-service', true) },
+      'WB_ADMIN_AUTH_SERVICE_BASE_URL'  => -> { local_service_url('wb-admin-auth-service') },
+      'WB_ADMIN_WEB_URL'                => -> { local_service_url('wb-admin-web') },
+      'WB_ADMIN_WEB_EXTERNAL_URL'       => -> { local_service_url('wb-admin-web', true) },
+      'WB_GRAPHQL_SERVICE_URL'          => -> { local_service_url('wb-graphql-service') },
+      'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { local_service_url('wb-graphql-service', true) },
+      'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { local_service_url('wb-graphql-service', true).gsub(/waybetterdev\.com/, 'waybetter.ninja') },
+    }
+
+    rebuilt_file = []
+    File.open(g2_env_path).each do |line|
+      key, value = line.gsub("\n", "").split("=")
+    
+      if key
+        url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
+        if (preset_values[url_key])
+          value = preset_values[url_key].call
+          if /_PORT$/ =~ key
+            value = /https/ =~ value ? '443' : '80' 
+          elsif /_HOST$/ =~ key
+            value = value.gsub(/http(s)?\:\/\//, '')
+          end
+        end
+        line = "#{key}=#{value}" if (key && value)
+      end
+      rebuilt_file.push line
+    end
+    str = rebuilt_file.join("\n")
+
+    puts str
+    str
+  end
+
+  def local_service_url(name, external = false)
+    service_data = np_service_config(name)
+
+    exit_with_error "Missing NP service config for #{name}" unless service_data
+
+    if external
+      url = get_service_external_domain(service_data[:name], service_data[:location])
+    else
+      url = get_service_domain(service_data[:name], service_data[:location])
+    end
+
+    url ? 'https://' + url : ""
+  end
+end
+
+PrepareNodeApp.new.go
