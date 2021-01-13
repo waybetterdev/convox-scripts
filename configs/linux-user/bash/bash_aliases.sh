@@ -53,7 +53,7 @@ alias cdstepbetprod='cd /var/www/stepbet_prod;lcd'
 alias notepad=sublime-text.subl
 
 alias npmstartservice="lrun bash -ic 'nvm use && nvm ls && npm start'"
-alias npminstallservice="bash -ic 'nvm use && nvm ls && lrun npm install && npm start'"
+alias npminstallservice="bash -ic 'nvm install && nvm ls && lrun npm install'"
 alias npmmigrate="lrun bash -ic 'NODE_ENV=test ./node_modules/.bin/sequelize db:migrate'"
 
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
@@ -67,3 +67,6 @@ alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCE
 alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
 alias convoxenvreloadall="~/Work/docs/scripts/bash/convox-reload-all-envs.sh"
 alias convoxymlreloadall="~/Work/docs/scripts/bash/convox-reload-all-local-ymls.sh"
+
+
+alias printnodeapps="netstat -tulpn | grep node"

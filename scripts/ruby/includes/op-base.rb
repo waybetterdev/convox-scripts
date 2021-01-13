@@ -46,8 +46,8 @@ class OpBase
     @__np_services ||= begin
       NpServices::SERVICES.each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
-        app_folder = service_data[:folder]
-        service_data[:path] = (service_data[:location] == 'kraken') ? "#{path_kraken}/#{app_folder}" : "#{path_wb_services}/#{app_folder}"
+        folder_name = service_data[:name]
+        service_data[:path] = (service_data[:location] == 'kraken') ? "#{path_kraken}/#{folder_name}" : "#{path_wb_services}/#{folder_name}"
         hash[name] = service_data
       end
     end
@@ -213,7 +213,8 @@ class OpBase
 
   def checkout_app(name:, path:)
     name = hyphenated_app_name(name)
-    exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{name}.git", 
+    service_data = np_service_config(name)
+    exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{service_data[:gitname]}.git #{name}", 
       message: "Cloning #{name} from git"
   end
 
@@ -237,6 +238,7 @@ class OpBase
       'wb-admin-auth-service' => 'admin-auth-local.waybetter.ninja',
       'wb-admin-web' => 'www-local.waybetter.ninja'
     }
+    
     # TODO: need to support graphql-local.waybetter.ninja
     url = urls[name]
     return unless url

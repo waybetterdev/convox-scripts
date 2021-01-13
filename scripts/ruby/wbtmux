@@ -342,8 +342,8 @@ wbtmux
     end
 
     def new_window(name, path)
-      _add "new-window -c #{path} -n \"#{name}\" /bin/bash"
-      _add "split-window -v -c #{path} /bin/bash"
+      _add "new-window -c #{path} -n \"#{name}\" /bin/bash -i"
+      _add "split-window -v -c #{path} /bin/bash -i"
     end
 
     def exec_command_inside_screen(screen, pane, command)

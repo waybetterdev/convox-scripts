@@ -84,10 +84,12 @@ class EnvBuilder < OpBase
     Dir.foreach("#{path_local_settings}/convox-env") do |filename|
       # next unless /\.env\.local$/ =~ filename
       
-      next unless /\.env\.g2$/ =~ filename
+      # next unless /\.env\.g2$/ =~ filename
 
-      # next unless filename == 'wb-admin-web.env.local'
-
+      next unless filename == 'combined.env.g2'
+      # next unless filename == 'wb-graphql-service.env.g2'
+      # next unless filename == '.env.template.g2'
+ 
       File.open("#{path_local_settings}/convox-env/#{filename}").each do |line|
         key, value = line.gsub("\n", "").split("=")
 
@@ -105,7 +107,7 @@ class EnvBuilder < OpBase
 
     preset_values = {
       'GEN2'                  => -> { 'false' },
-      'REDIS_HOST'                  => -> { '192.168.1.102' },
+      'REDIS_HOST'                  => -> { get_local_ip },
       'WB_NOTIFY_SERVICE_URL'         => -> { local_service_url('wb-notify-service') },
       'DIETBET_GAME_SERVICE_URL'      => -> { local_service_url('dietbet-game-service') },
       'FALKOR_GAME_SERVICE_URL'       => -> { local_service_url('falkor-game-service') },
@@ -117,20 +119,29 @@ class EnvBuilder < OpBase
       'WB_METRIC_SERVICE_URL'         => -> { local_service_url('wb-metric-service') },
       'WB_SOCIAL_SERVICE_URL'         => -> { local_service_url('wb-social-service') },
       'WB_USER_SERVICE_URL'           => -> { local_service_url('wb-user-service') },
+
       'WB_AUTH_SERVICE_URL'           => -> { local_service_url('wb-auth-service') },
       'WB_AUTH_SERVICE_EXTERNAL_URL'  => -> { local_service_url('wb-auth-service', true) },
-      'WB_ADMIN_AUTH_SERVICE_BASE_URL'  => -> { local_service_url('wb-admin-auth-service') },
+      'WB_ADMIN_AUTH_SERVICE_BASE_URL'  => -> { local_service_url('wb-admin-auth-service', true)  + '/auth' }, # https://admin-auth-office.waybetter.ninja/auth
+
       'WB_ADMIN_WEB_URL'                => -> { local_service_url('wb-admin-web') },
+      'WB_ADMIN_WEB_DOMAIN'             => -> { local_service_url('wb-admin-web', true, true) },
       'WB_ADMIN_WEB_EXTERNAL_URL'       => -> { local_service_url('wb-admin-web', true) },
+
       'WB_GRAPHQL_SERVICE_URL'          => -> { local_service_url('wb-graphql-service') },
+      'WB_GRAPHQL_SERVICE_DOMAIN'       => -> { local_service_url('wb-graphql-service', true, true) },
       'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { local_service_url('wb-graphql-service', true) },
+
+      # TODO: this is a hack. Needs to be fixed properly
       'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { local_service_url('wb-graphql-service', true).gsub(/waybetterdev\.com/, 'waybetter.ninja') },
     }
 
     rebuilt_file = []
     env_values.each do |key, value|
       url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
-      if (preset_values[url_key])
+      if preset_values[key]
+        value = preset_values[key].call
+      elsif (preset_values[url_key])
         value = preset_values[url_key].call
         if /_PORT$/ =~ key
           value = /https/ =~ value ? '443' : '80' 
@@ -152,7 +163,7 @@ class EnvBuilder < OpBase
     File.open(local_g2_env_path, 'w') { |file| file.write(str) }
   end
 
-  def local_service_url(name, external = false)
+  def local_service_url(name, external = false, domain_only = false)
     service_data = np_service_config(name)
 
     exit_with_error "Missing NP service config for #{name}" unless service_data
@@ -163,7 +174,9 @@ class EnvBuilder < OpBase
       url = get_service_domain(service_data[:name], service_data[:location])
     end
 
-    url ? 'https://' + url : ""
+    return "" unless url
+
+    domain_only ? url : 'https://' + url
   end
 end
 
