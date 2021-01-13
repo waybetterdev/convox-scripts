@@ -21,9 +21,9 @@ end
 
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
-class PrepareNodeApp < OpBase
+class EnvBuilder < OpBase
 
-  attr_accessor :opts_app
+  attr_accessor :opts_write
 
   def initialize
     
@@ -31,15 +31,10 @@ class PrepareNodeApp < OpBase
 
   def go
     parse_opts
-
-    prepare_kraken
-
-    build_env_g2
-
-    return
-
-    copy_env_g2_to_kraken
-    prepare_app
+    if self.opts_write || !File.exist?(kraken_g2_env_path)
+      build_env_g2
+      copy_env_g2_to_kraken
+    end
   end
 
   HELP = <<-BAN
@@ -58,55 +53,58 @@ class PrepareNodeApp < OpBase
 
       self.add_debug_option(opts)
 
-      opts.on("-a", "--app=A", "Required, the app to prepare") do |x|
-        self.opts_app = x
+      opts.on("-w", "--write", "Write the env to kraken") do |x|
+        self.opts_write = true
       end
 
       add_help_option(opts)
     end
     self.option_parser.parse!(ARGV)
-
-    if self.opts_app.nil? 
-      exit_with_error("app parameter is required")
-    end
   end
 
-  def prepare_kraken
-    unless Dir.exist?(path_kraken)
-      checkout_app(name: 'kraken', path: path_wb_services)
-
-      exec_bash_command "cd #{path_kraken} && npm install", message: "Installing kraken node modules"
-    end
-  end
-
-  def g2_env_path
+  def kraken_g2_env_path
     "#{path_kraken}/.env.g2"
   end
 
+  def local_g2_env_path
+    "#{path_secrets}/env.g2"
+  end
+
   def copy_env_g2_to_kraken
-    unless File.exist? g2_env_path
-      src = "#{path_secrets}/env.g2"
-      unless File.exists? src
-        exit_with_error("File #{src} was not found. Cannot run `lrun` without it.")
-      end
-      
-      exec_command "cp #{src} #{g2_env_path}", message: "Copying env.g2 file to kraken"
+    src = local_g2_env_path
+    unless File.exists? src
+      exit_with_error("File #{src} was not found. Cannot run `lrun` without it.")
     end
+    
+    exec_command "cp #{src} #{kraken_g2_env_path}", message: "Copying local env.g2 file to #{kraken_g2_env_path}"
   end
-
-  def prepare_app
-    app_path = np_app_path(self.app)
-    unless Dir.exist?(app_path)
-      checkout_app(name: self.app, path: File.expand_path('../', app_path))
-    end
-
-    exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && nvm install && nvm ls && npm install && bin/first_run.sh'"
-  end
-
 
   def build_env_g2
+    env_values = {}
+    Dir.foreach("#{path_local_settings}/convox-env") do |filename|
+      # next unless /\.env\.local$/ =~ filename
+      
+      next unless /\.env\.g2$/ =~ filename
+
+      # next unless filename == 'wb-admin-web.env.local'
+
+      File.open("#{path_local_settings}/convox-env/#{filename}").each do |line|
+        key, value = line.gsub("\n", "").split("=")
+
+        next unless key
+        next if (value.nil? || value == "")
+        next if /^(___|#)/ =~ key
+        next if key == 'PORT'
+
+        env_values[key] = value 
+      end
+    end
+
+    env_values = env_values.sort_by { |key| key }.to_h
+
 
     preset_values = {
+      'GEN2'                  => -> { 'false' },
       'REDIS_HOST'                  => -> { '192.168.1.102' },
       'WB_NOTIFY_SERVICE_URL'         => -> { local_service_url('wb-notify-service') },
       'DIETBET_GAME_SERVICE_URL'      => -> { local_service_url('dietbet-game-service') },
@@ -130,27 +128,28 @@ class PrepareNodeApp < OpBase
     }
 
     rebuilt_file = []
-    File.open(g2_env_path).each do |line|
-      key, value = line.gsub("\n", "").split("=")
-    
-      if key
-        url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
-        if (preset_values[url_key])
-          value = preset_values[url_key].call
-          if /_PORT$/ =~ key
-            value = /https/ =~ value ? '443' : '80' 
-          elsif /_HOST$/ =~ key
-            value = value.gsub(/http(s)?\:\/\//, '')
-          end
+    env_values.each do |key, value|
+      url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
+      if (preset_values[url_key])
+        value = preset_values[url_key].call
+        if /_PORT$/ =~ key
+          value = /https/ =~ value ? '443' : '80' 
+        elsif /_HOST$/ =~ key
+          value = value.gsub(/http(s)?\:\/\//, '')
         end
-        line = "#{key}=#{value}" if (key && value)
+      elsif /_DB_HOST$/ =~ key && /^192/ =~ value
+        value = get_local_ip
+      elsif value == '_set_me_' 
+        value = '_not_needed_locally_'
       end
+
+      line = "#{key}=#{value}"
       rebuilt_file.push line
     end
+
     str = rebuilt_file.join("\n")
 
-    puts str
-    str
+    File.open(local_g2_env_path, 'w') { |file| file.write(str) }
   end
 
   def local_service_url(name, external = false)
@@ -168,4 +167,4 @@ class PrepareNodeApp < OpBase
   end
 end
 
-PrepareNodeApp.new.go
+EnvBuilder.new.go

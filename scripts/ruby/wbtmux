@@ -19,8 +19,10 @@ XXX
   exit(1)
 end
 
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+
 # CLI script which will start tmux
-class Wbtmux
+class Wbtmux < OpBase
   attr_accessor :option_parser, :apps_to_run, :apps_to_open, :opt_exit_tmux, :opts_fix_dns, :opts_wait_convox
 
   DEFAULT_SERVICES = ['mysql', 'user']
@@ -65,13 +67,15 @@ class Wbtmux
 
     fix_dns_and_aws if self.opts_fix_dns
 
-    unless kubernetes_ready?
+    if convox_required? && !kubernetes_ready?
       puts "Kubernetes (microk8s) not running. Starting it"
       start_kubernetes 
     end
 
     wait_for_convox if self.opts_wait_convox 
-    exit_with_error("Convox not ready. Aborting.") unless convox_ready?
+    if convox_required?
+      exit_with_error("Convox not ready. Aborting.") unless convox_ready?
+    end
 
     session_name = 'lconvox'
 
@@ -133,10 +137,10 @@ class Wbtmux
       next unless active_windows.include?(app)
 
       convox_app = app_full_name(app)
-
+      app_command = ''
       if app == 'mysql'
         app_command = 'docker-compose up'
-      else
+      elsif service_is_on_local_convox?(convox_app)
         # create the app if it does not exist
         if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app)
           create_convox_app(convox_app)
@@ -144,17 +148,15 @@ class Wbtmux
 
         path = convox_app_path(convox_app)
         app_command = "kk start -- local #{app}"
-        # app_command = "source #{Dir.home}/.bash_aliases && source #{Dir.home}/.bash_profile && kk start -- local #{app}"
+      elsif service_is_on_local_kraken?(convox_app)
+        exec_command "install-node-app -a #{app}" unless convox_app_path_exists?(convox_app)
+        app_command = "npmstartservice"
       end
 
       queue = CommandQueue.new(session_name)
       queue.attach_session
-      if app == 'mysql'
-        queue.exec_command_inside_screen(app, 1, 'docker-compose build')
-        queue.exec_command_inside_screen(app, 1, 'docker-compose up')
-      else
-        queue.exec_command_inside_screen(app, 1, app_command)
-      end
+      queue.exec_command_inside_screen(app, 1, app_command)
+      
       queue.swap_panes(0, 1)
       queue.run
     end
@@ -244,6 +246,18 @@ class Wbtmux
     %x[ #{cmd} ]
   end
 
+  def convox_required?
+    @__convox_required ||= begin
+      res = self.apps_to_run.find do |s| 
+        next if s == 'mysql'
+        name = app_full_name(s)
+        next unless name
+        service_is_on_local_convox?(name)
+      end
+      !res.nil?
+    end
+  end
+
   def wait_for_convox
     12.times do 
       break if convox_ready?
@@ -266,7 +280,8 @@ class Wbtmux
   end
 
   def convox_app_path(convox_app)
-    "#{@path}/#{convox_app}"
+    path = np_app_path(convox_app) unless convox_app == 'kraken/superlocal'
+    path ? path : "#{@path}/#{convox_app}"
   end
 
   def convox_app_path_exists?(convox_app)

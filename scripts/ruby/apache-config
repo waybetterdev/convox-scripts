@@ -95,7 +95,7 @@ class ApacheConfig < OpBase
       'wb-admin-auth-service',
       'wb-admin-web',
     ].map{|s| {name: s, external: true}}
-    
+
     service_names.map do |data|
       service_data = np_service_config(data[:name])
       next if service_data[:location] == 'convox-office'
@@ -159,9 +159,8 @@ class ApacheConfig < OpBase
           'SSLProxyCheckPeerExpire' => 'Off',
         })
       end
-      puts "https://#{domain} redirects to #{service}\n"
+      puts "https://#{domain}".red + " redirects to ".white + "#{service}".green + "\n"
     end
-    
     conf
   end
 

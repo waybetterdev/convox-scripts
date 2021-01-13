@@ -130,6 +130,23 @@ class OpBase
   def np_app_path(name)
     np_service_config(name)[:path]
   end
+
+  def np_service_location(name)
+    np_service_config(name)[:location]
+  end
+
+  def service_is_on_convox_office?(name)
+    np_service_location(name) == 'convox-office'
+  end
+
+  def service_is_on_local_kraken?(name)
+    np_service_location(name) == 'kraken'
+  end
+
+  def service_is_on_local_convox?(name)
+    np_service_location(name) == 'convox-local'
+  end
+
   ################ NP SERVICES ###################
 
   def add_debug_option(opts)
@@ -232,5 +249,9 @@ class OpBase
 
   def get_convox_service_domain(name)
     "web.#{name}.convox"
+  end
+
+  def get_local_ip
+    @__get_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').gsub("\n", "")
   end
 end

@@ -52,13 +52,15 @@ alias cdstepbetprod='cd /var/www/stepbet_prod;lcd'
 #utils
 alias notepad=sublime-text.subl
 
-alias npm_start_service="nvm use && nvm ls && lrun npm start"
-
+alias npmstartservice="lrun bash -ic 'nvm use && nvm ls && npm start'"
+alias npminstallservice="bash -ic 'nvm use && nvm ls && lrun npm install && npm start'"
+alias npmmigrate="lrun bash -ic 'NODE_ENV=test ./node_modules/.bin/sequelize db:migrate'"
 
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
 
 alias restartapache='sudo systemctl restart apache2.service'
 alias stopapache='sudo systemctl stop apache2.service'
+alias rebuildapacheproxy='~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh'
 
 
 alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
