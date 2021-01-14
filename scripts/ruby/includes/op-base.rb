@@ -127,7 +127,11 @@ class OpBase
     config
   end
 
-  def np_app_path(name)
+  def np_service_app_name(name)
+    np_service_config(name)[:name]
+  end
+
+  def np_service_path(name)
     np_service_config(name)[:path]
   end
 
@@ -135,15 +139,15 @@ class OpBase
     np_service_config(name)[:location]
   end
 
-  def service_is_on_convox_office?(name)
+  def np_service_is_on_convox_office(name)
     np_service_location(name) == 'convox-office'
   end
 
-  def service_is_on_local_kraken?(name)
+  def np_service_is_on_local_kraken(name)
     np_service_location(name) == 'kraken'
   end
 
-  def service_is_on_local_convox?(name)
+  def np_service_is_on_local_convox(name)
     np_service_location(name) == 'convox-local'
   end
 
@@ -166,7 +170,16 @@ class OpBase
 
   def add_op_app_option(opts)
     opts.on("-a", "--app=A", "Required, application (website name)") do |x|
-      self.app = x
+      self.opts_op_app = x
+    end
+  end
+
+  def add_np_app_option(opts)
+    opts.on("-a", "--app=A", "Required, NP application name") do |x|
+      pattern = Regexp.new(x)
+      res = np_services.find { |k,v| pattern =~ v[:name] }
+      exit_with_error "Did not find any NP services for pattern '*#{x}*'" unless res
+      self.opts_np_app = res[1][:name]
     end
   end
 
@@ -218,15 +231,19 @@ class OpBase
       message: "Cloning #{name} from git"
   end
 
-  def get_service_domain(name, location)
+  def get_service_domain(name)
     name = hyphenated_app_name(name)
-    if location == 'kraken'
+    if np_service_is_on_local_kraken(name)
       "#{name}.convox.local"
-    elsif location == 'convox-local'
+    elsif np_service_is_on_local_convox(name)
       "#{name}.convox.local"
-    elsif location == 'convox-office'
+    elsif np_service_is_on_convox_office(name)
       "#{name}.convox.office"
     end
+  end
+
+  def get_service_convox_domain(name)
+    return "web.#{name}.dev.local" if np_service_is_on_local_convox(name)
   end
 
   def get_service_external_domain(name, location)

@@ -17,7 +17,7 @@ class NpServices < OpBase
     { name: 'wb-admin-web',           gitname: 'wb-admin-web',         location: 'kraken', type: 'node',        port: 8010 },
 
     # services on local convox rack
-    #{ name: 'wb-social-service',      gitname: 'wb-social-service',    location: 'convox-local',   type: 'ruby'  },
+    { name: 'wb-social-service',      gitname: 'wb-social-service',    location: 'convox-local',   type: 'ruby', port: 3005 },
     
     # services on office convox rack
     { name: 'wb-admin-auth-service',  gitname: 'wb-admin-auth-service',  location: 'convox-office', type: 'node' },
@@ -32,7 +32,7 @@ class NpServices < OpBase
     { name: 'wb-membership-service',  gitname: 'wb-membership-service',  location: 'convox-office', type: 'ruby' },
     { name: 'wb-metric-service',      gitname: 'wb-metric-service',      location: 'convox-office', type: 'ruby' },
     { name: 'wb-hub',                 gitname: 'wb-hub',                 location: 'convox-office', type: 'node' },
-    { name: 'wb-social-service',      gitname: 'wb-social-service',      location: 'convox-office', type: 'ruby' },
+    # { name: 'wb-social-service',      gitname: 'wb-social-service',      location: 'convox-office', type: 'ruby' },
   ]
 
 

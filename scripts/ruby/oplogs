@@ -22,7 +22,7 @@ end
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 class OpDeploy < OpBase
 
-  attr_accessor :app, :option_parser, :file, :debug, :open_files, :join_files
+  attr_accessor :opts_op_app, :option_parser, :file, :debug, :open_files, :join_files
 
   def initialize
     load_op_severs_config
@@ -31,7 +31,7 @@ class OpDeploy < OpBase
   def go
     parse_opts
 
-    download_log_file(self.app, self.file)
+    download_log_file(self.opts_op_app, self.file)
   end
 
   def download_log_file(app, file)
@@ -111,10 +111,10 @@ END
     end
     self.option_parser.parse!(ARGV)
 
-    if self.app.nil? 
+    if self.opts_op_app.nil? 
       exit_with_error("app parameter is required")
     end
-    op_deploy_config = op_deploy_config(self.app)
+    op_deploy_config = op_deploy_config(self.opts_op_app)
     if op_deploy_config.nil?
       exit_with_error("app not found")
     end

@@ -215,7 +215,7 @@ class ApacheConfig < OpBase
     if external
       get_service_external_domain(service_data[:name], service_data[:location])
     else
-      get_service_domain(service_data[:name], service_data[:location])
+      get_service_domain(service_data[:name])
     end
   end
 
@@ -223,13 +223,12 @@ class ApacheConfig < OpBase
     name = service_data[:name]
     location = service_data[:location]
 
-    if location == 'kraken'
+    domain = get_service_domain(name)
+    if np_service_is_on_local_kraken(name) || np_service_is_on_local_convox(name)
       port = service_data[:port]
-      "http://#{name}.convox.local#{":" + port.to_s if port}"
-    elsif location == 'convox-local'
-      "https://" + get_convox_service_domain(name)
+      "http://#{domain}#{":" + port.to_s if port}"
     elsif location == 'convox-office'
-      "https://" + get_convox_service_domain(name)
+      "https://#{domain}"
     end
   end
 

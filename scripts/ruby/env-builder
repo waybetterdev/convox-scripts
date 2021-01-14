@@ -23,7 +23,7 @@ require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
 class EnvBuilder < OpBase
 
-  attr_accessor :opts_write
+  attr_accessor :opts_write, :opts_print, :opts_np_app
 
   def initialize
     
@@ -31,16 +31,18 @@ class EnvBuilder < OpBase
 
   def go
     parse_opts
-    if self.opts_write || !File.exist?(kraken_g2_env_path)
-      build_env_g2
-      copy_env_g2_to_kraken
+    if self.opts_write
+      str_env = generate_env
+      write_env_to_file(str_env)
+    elsif self.opts_print 
+      puts generate_env
     end
   end
 
   HELP = <<-BAN
-  A ssh connect script for old platform websites
+  Env builder script for local NP services
   Ex:
-    prepare-node-app -a wb-user-service
+    prepare-node-app -w -a user
   BAN
 
   def parse_opts
@@ -53,131 +55,172 @@ class EnvBuilder < OpBase
 
       self.add_debug_option(opts)
 
-      opts.on("-w", "--write", "Write the env to kraken") do |x|
+      opts.on("-w", "--write", "Write the env to kraken or convox") do |x|
         self.opts_write = true
       end
+
+      opts.on("-p", "--print", "Print the env to kraken or convox") do |x|
+        self.opts_print = true
+      end
+
+      add_np_app_option(opts)
 
       add_help_option(opts)
     end
     self.option_parser.parse!(ARGV)
-  end
 
-  def kraken_g2_env_path
-    "#{path_kraken}/.env.g2"
-  end
-
-  def local_g2_env_path
-    "#{path_secrets}/env.g2"
-  end
-
-  def copy_env_g2_to_kraken
-    src = local_g2_env_path
-    unless File.exists? src
-      exit_with_error("File #{src} was not found. Cannot run `lrun` without it.")
+    if self.opts_np_app.nil? 
+      exit_with_error("app parameter is required")
     end
-    
-    exec_command "cp #{src} #{kraken_g2_env_path}", message: "Copying local env.g2 file to #{kraken_g2_env_path}"
   end
 
-  def build_env_g2
+
+  def read_src_env_file
     env_values = {}
-    Dir.foreach("#{path_local_settings}/convox-env") do |filename|
-      # next unless /\.env\.local$/ =~ filename
-      
-      # next unless /\.env\.g2$/ =~ filename
+    app_name = self.opts_np_app
+    
+    env_path = service_src_env_path(self.opts_np_app)
+    exit_with_error "No env path found for app `#{self.opts_np_app}`" unless env_path
+    exit_with_error "Env file '#{env_path}' not found" unless File.exist?(env_path)
 
-      next unless filename == 'combined.env.g2'
-      # next unless filename == 'wb-graphql-service.env.g2'
-      # next unless filename == '.env.template.g2'
- 
-      File.open("#{path_local_settings}/convox-env/#{filename}").each do |line|
-        key, value = line.gsub("\n", "").split("=")
+    File.foreach(env_path) do |line|
+      key, value = line.gsub(/\n|\r/, "").split("=")
 
-        next unless key
-        next if (value.nil? || value == "")
-        next if /^(___|#)/ =~ key
-        next if key == 'PORT'
+      next unless key
+      next if (value.nil? || value == "")
+      next if /^(___|#)/ =~ key
+      next if key == 'PORT'
 
-        env_values[key] = value 
-      end
+      env_values[key] = value 
     end
+    exit_with_error "No env variables found in file '#{env_path}'" unless env_values
 
-    env_values = env_values.sort_by { |key| key }.to_h
+    env_values.sort_by { |key| key }.to_h
+  end
 
-
-    preset_values = {
-      'GEN2'                  => -> { 'false' },
-      'REDIS_HOST'                  => -> { get_local_ip },
-      'WB_NOTIFY_SERVICE_URL'         => -> { local_service_url('wb-notify-service') },
-      'DIETBET_GAME_SERVICE_URL'      => -> { local_service_url('dietbet-game-service') },
-      'FALKOR_GAME_SERVICE_URL'       => -> { local_service_url('falkor-game-service') },
-      'QUITBET_GAME_SERVICE_URL'      => -> { local_service_url('quitbet-game-service') },
-      'RUNBET_GAME_SERVICE_URL'       => -> { local_service_url('runbet-game-service') },
-      'STEPBET_GAME_SERVICE_URL'      => -> { local_service_url('stepbet-game-service') },
-      'WB_BILLING_SERVICE_URL'        => -> { local_service_url('wb-billing-service') },
-      'WB_MEMBERSHIP_SERVICE_URL'     => -> { local_service_url('wb-membership-service') },
-      'WB_METRIC_SERVICE_URL'         => -> { local_service_url('wb-metric-service') },
-      'WB_SOCIAL_SERVICE_URL'         => -> { local_service_url('wb-social-service') },
-      'WB_USER_SERVICE_URL'           => -> { local_service_url('wb-user-service') },
-
-      'WB_AUTH_SERVICE_URL'           => -> { local_service_url('wb-auth-service') },
-      'WB_AUTH_SERVICE_EXTERNAL_URL'  => -> { local_service_url('wb-auth-service', true) },
-      'WB_ADMIN_AUTH_SERVICE_BASE_URL'  => -> { local_service_url('wb-admin-auth-service', true)  + '/auth' }, # https://admin-auth-office.waybetter.ninja/auth
-
-      'WB_ADMIN_WEB_URL'                => -> { local_service_url('wb-admin-web') },
-      'WB_ADMIN_WEB_DOMAIN'             => -> { local_service_url('wb-admin-web', true, true) },
-      'WB_ADMIN_WEB_EXTERNAL_URL'       => -> { local_service_url('wb-admin-web', true) },
-
-      'WB_GRAPHQL_SERVICE_URL'          => -> { local_service_url('wb-graphql-service') },
-      'WB_GRAPHQL_SERVICE_DOMAIN'       => -> { local_service_url('wb-graphql-service', true, true) },
-      'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { local_service_url('wb-graphql-service', true) },
-
-      # TODO: this is a hack. Needs to be fixed properly
-      'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { local_service_url('wb-graphql-service', true).gsub(/waybetterdev\.com/, 'waybetter.ninja') },
-    }
-
+  def generate_env
+    env_values = read_src_env_file
     rebuilt_file = []
     env_values.each do |key, value|
-      url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
-      if preset_values[key]
-        value = preset_values[key].call
-      elsif (preset_values[url_key])
-        value = preset_values[url_key].call
-        if /_PORT$/ =~ key
-          value = /https/ =~ value ? '443' : '80' 
-        elsif /_HOST$/ =~ key
-          value = value.gsub(/http(s)?\:\/\//, '')
-        end
-      elsif /_DB_HOST$/ =~ key && /^192/ =~ value
-        value = get_local_ip
-      elsif value == '_set_me_' 
-        value = '_not_needed_locally_'
+      
+      if (proc_val = call_val_proc(key, value))
+        value = proc_val
       end
+      value = '_not_needed_locally_' if value == '_set_me_'
 
       line = "#{key}=#{value}"
       rebuilt_file.push line
     end
 
-    str = rebuilt_file.join("\n")
-
-    File.open(local_g2_env_path, 'w') { |file| file.write(str) }
+    rebuilt_file.join("\n")
   end
 
-  def local_service_url(name, external = false, domain_only = false)
+  def write_env_to_file(str_env)
+    env_path = service_dst_env_path(self.opts_np_app)
+    
+    puts "Writing env file to #{env_path}"
+    File.open(env_path, 'w') { |file| file.write(str_env) }
+  end
+
+  def np_service_internal_url(name, domain_only = false)
     service_data = np_service_config(name)
 
     exit_with_error "Missing NP service config for #{name}" unless service_data
 
-    if external
-      url = get_service_external_domain(service_data[:name], service_data[:location])
-    else
-      url = get_service_domain(service_data[:name], service_data[:location])
-    end
-
+    url = get_service_domain(name)
     return "" unless url
 
-    domain_only ? url : 'https://' + url
+    if np_service_is_on_convox_office(name)
+      "https://#{url}"
+    elsif np_service_is_on_local_convox(name)
+      url = get_service_convox_domain(name)
+      port = service_data[:port]
+      "http://#{url}#{":" + port.to_s if port}"
+    elsif np_service_is_on_local_kraken(name)
+      port = service_data[:port]
+      "http://#{url}#{":" + port.to_s if port}"
+    end
   end
+
+
+  def np_service_external_url(name, external = false, domain_only = false)
+    service_data = np_service_config(name)
+
+    exit_with_error "Missing NP service config for #{name}" unless service_data
+
+    url = get_service_external_domain(service_data[:name], service_data[:location])
+    return "" unless url
+
+    "https://#{url}"
+  end
+
+  def service_src_env_path(app)
+    if np_service_is_on_local_convox(app)
+      "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local"
+    elsif np_service_is_on_local_kraken(app)
+      "#{path_local_settings}/convox-env/combined.env.g2"
+    end
+  end
+
+  def service_dst_env_path(app)
+    if np_service_is_on_local_convox(app)
+      "#{np_service_path(app)}/#{np_service_app_name(app)}.env"
+    elsif np_service_is_on_local_kraken(app)
+      "#{path_kraken}/.env.g2"
+    end
+  end
+
+  private 
+
+  def call_val_proc(key, value)
+    url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
+    if val_procs[key]
+      val_procs[key].call
+    elsif val_procs[url_key]
+      value = val_procs[url_key].call
+      if /_PORT$/ =~ key
+        /https/ =~ value ? '443' : '80' 
+      elsif /_HOST$/ =~ key
+        value.gsub(/http(s)?\:\/\//, '')
+      end
+    elsif /_DB_HOST$/ =~ key && /^192/ =~ value
+      get_local_ip 
+    end
+  end
+
+  def val_procs
+    @__val_procs ||= {
+      'GEN2'                          => -> { 'false' },
+      'REDIS_HOST'                    => -> { get_local_ip },
+      'WB_NOTIFY_SERVICE_URL'         => -> { np_service_internal_url('wb-notify-service') },
+      'DIETBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('dietbet-game-service') },
+      'FALKOR_GAME_SERVICE_URL'       => -> { np_service_internal_url('falkor-game-service') },
+      'QUITBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('quitbet-game-service') },
+      'RUNBET_GAME_SERVICE_URL'       => -> { np_service_internal_url('runbet-game-service') },
+      'STEPBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('stepbet-game-service') },
+      'WB_BILLING_SERVICE_URL'        => -> { np_service_internal_url('wb-billing-service') },
+      'WB_MEMBERSHIP_SERVICE_URL'     => -> { np_service_internal_url('wb-membership-service') },
+      'WB_METRIC_SERVICE_URL'         => -> { np_service_internal_url('wb-metric-service') },
+      'WB_SOCIAL_SERVICE_URL'         => -> { np_service_internal_url('wb-social-service') },
+      'WB_USER_SERVICE_URL'           => -> { np_service_internal_url('wb-user-service') },
+
+      'WB_AUTH_SERVICE_URL'           => -> { np_service_internal_url('wb-auth-service') },
+      'WB_AUTH_SERVICE_EXTERNAL_URL'  => -> { np_service_external_url('wb-auth-service') },
+      'WB_ADMIN_AUTH_SERVICE_BASE_URL'  => -> { np_service_external_url('wb-admin-auth-service')  + '/auth' }, # https://admin-auth-office.waybetter.ninja/auth
+
+      'WB_ADMIN_WEB_URL'                => -> { np_service_internal_url('wb-admin-web') },
+      'WB_ADMIN_WEB_DOMAIN'             => -> { np_service_external_url('wb-admin-web', true) },
+      'WB_ADMIN_WEB_EXTERNAL_URL'       => -> { np_service_external_url('wb-admin-web') },
+
+      'WB_GRAPHQL_SERVICE_URL'          => -> { np_service_internal_url('wb-graphql-service') },
+      'WB_GRAPHQL_SERVICE_DOMAIN'       => -> { np_service_external_url('wb-graphql-service', true) },
+      'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service') },
+
+      # TODO: this is a hack. Needs to be fixed properly
+      'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service').gsub(/waybetterdev\.com/, 'waybetter.ninja') },
+    }
+  end
+
 end
 
 EnvBuilder.new.go

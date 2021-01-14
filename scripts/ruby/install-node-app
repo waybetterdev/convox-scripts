@@ -23,7 +23,7 @@ require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
 class InstallNodeApp < OpBase
 
-  attr_accessor :opts_app
+  attr_accessor :opts_np_app
 
   def initialize
     
@@ -52,15 +52,13 @@ class InstallNodeApp < OpBase
 
       self.add_debug_option(opts)
 
-      opts.on("-a", "--app=A", "Required, the app to prepare") do |x|
-        self.opts_app = x
-      end
+      add_np_app_option(opts)
 
       add_help_option(opts)
     end
     self.option_parser.parse!(ARGV)
 
-    if self.opts_app.nil? 
+    if self.opts_np_app.nil? 
       exit_with_error("app parameter is required")
     end
   end
@@ -75,9 +73,9 @@ class InstallNodeApp < OpBase
 
 
   def prepare_app
-    app_path = np_app_path(self.opts_app)
+    app_path = np_service_path(self.opts_np_app)
     unless Dir.exist?(app_path)
-      checkout_app(name: self.opts_app, path: File.expand_path('../', app_path))
+      checkout_app(name: self.opts_np_app, path: File.expand_path('../', app_path))
     end
 
     exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && nvm install && nvm ls && npm install && npm start'"

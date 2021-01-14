@@ -22,7 +22,7 @@ end
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 class OpDeploy < OpBase
 
-  attr_accessor :app, :option_parser, :commit, :debug, :make_backup
+  attr_accessor :opts_op_app, :option_parser, :commit, :debug, :make_backup
   TEMP_PATH = "~/Work/deploy/_files"
   # we are in `docs/scripts/ruby/`
   YUI_PATH = File.expand_path('../../../', __FILE__) + "/libraries/yuicompressor-2.4.7.jar"
@@ -34,7 +34,7 @@ class OpDeploy < OpBase
   def go
     parse_opts
 
-    deploy_changes_since_commit(self.app, self.commit)
+    deploy_changes_since_commit(self.opts_op_app, self.commit)
   end
 
 
@@ -45,7 +45,7 @@ class OpDeploy < OpBase
     zip_path = "#{source_path}/archive.zip"
     files = exec_command(cmd)
 
-    puts "You are about to deploy to #{self.app.red}"
+    puts "You are about to deploy to #{self.opts_op_app.red}"
     puts "Files modified:"
     puts files.green
     puts "Continue? y/n"
@@ -204,13 +204,13 @@ class OpDeploy < OpBase
     end
     self.option_parser.parse!(ARGV)
 
-    if self.app.nil? 
+    if self.opts_op_app.nil? 
       exit_with_error("app parameter is required")
     end
 
 
-    @op_deploy_config = op_deploy_config(self.app)
-    @op_deploy_config = op_deploy_config(self.app)
+    @op_deploy_config = op_deploy_config(self.opts_op_app)
+    @op_deploy_config = op_deploy_config(self.opts_op_app)
     if @op_deploy_config.nil?
       exit_with_error("app not found")
     end

@@ -140,7 +140,7 @@ class Wbtmux < OpBase
       app_command = ''
       if app == 'mysql'
         app_command = 'docker-compose up'
-      elsif service_is_on_local_convox?(convox_app)
+      elsif np_service_is_on_local_convox(convox_app)
         # create the app if it does not exist
         if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app)
           create_convox_app(convox_app)
@@ -148,7 +148,7 @@ class Wbtmux < OpBase
 
         path = convox_app_path(convox_app)
         app_command = "kk start -- local #{app}"
-      elsif service_is_on_local_kraken?(convox_app)
+      elsif np_service_is_on_local_kraken(convox_app)
         exec_command "install-node-app -a #{app}" unless convox_app_path_exists?(convox_app)
         app_command = "npmstartservice"
       end
@@ -252,7 +252,7 @@ class Wbtmux < OpBase
         next if s == 'mysql'
         name = app_full_name(s)
         next unless name
-        service_is_on_local_convox?(name)
+        np_service_is_on_local_convox(name)
       end
       !res.nil?
     end
@@ -280,7 +280,7 @@ class Wbtmux < OpBase
   end
 
   def convox_app_path(convox_app)
-    path = np_app_path(convox_app) unless convox_app == 'kraken/superlocal'
+    path = np_service_path(convox_app) unless convox_app == 'kraken/superlocal'
     path ? path : "#{@path}/#{convox_app}"
   end
 
