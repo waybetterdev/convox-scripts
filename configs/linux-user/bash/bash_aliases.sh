@@ -1,6 +1,7 @@
 #!/bin/bash
 
-/bin/bash ~/Work/docs/secrets/bash-secrets.sh
+chmod +x ~/Work/docs/secrets/bash-secrets.sh
+. ~/Work/docs/secrets/bash-secrets.sh
 
 #awscli
 export PATH="${PATH}:$HOME/.local/bin"

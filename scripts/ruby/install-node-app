@@ -67,7 +67,10 @@ class InstallNodeApp < OpBase
     unless Dir.exist?(path_kraken)
       checkout_app(name: 'kraken', path: path_wb_services)
 
-      exec_bash_command "cd #{path_kraken} && npm install", message: "Installing kraken node modules"
+      exec_bash_command "cd #{path_kraken} && nvm install --lts && npm install", 
+          message: "Installing kraken node modules", exit_on_fail: false
+      exec_bash_command "cd #{path_kraken} && bundle config --global gem.fury.io $GEMFURY_SECRET && gem install bundler && bundle install", 
+          message: "Installing kraken ruby gems", exit_on_fail: false
     end
   end
 
@@ -78,8 +81,8 @@ class InstallNodeApp < OpBase
       checkout_app(name: self.opts_np_app, path: File.expand_path('../', app_path))
     end
 
+    exec_command "env-builder -w -a #{self.opts_np_app}"
     exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && nvm install && nvm ls && npm install && npm start'"
-    
   end
 end
 

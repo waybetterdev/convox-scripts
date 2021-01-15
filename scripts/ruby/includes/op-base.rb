@@ -27,7 +27,7 @@ class OpBase
   end
   ################ OP SERVERS ###################
 
-  ################ OP SERVICES ###################
+  ################ NP SERVICES ###################
   def load_np_services_config
     if File.exists?("#{path_local_settings}/np-services-config.rb")
       require "#{path_local_settings}/np-services-config.rb" 
@@ -42,9 +42,14 @@ class OpBase
     unless defined?(NpServices) == 'constant'
       load_np_services_config
     end
-
     @__np_services ||= begin
-      NpServices::SERVICES.each_with_object({}) do |service_data, hash|
+      [
+        NpServices::NP_SERVICES[:local_kraken].map { |s| s.merge(location: 'kraken') },
+        NpServices::NP_SERVICES[:local_convox].map { |s| s.merge(location: 'convox-local') },
+        NpServices::NP_SERVICES[:remote_convox_office].map { |s| s.merge(location: 'convox-office') },
+      ]
+      .flatten
+      .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
         folder_name = service_data[:name]
         service_data[:path] = (service_data[:location] == 'kraken') ? "#{path_kraken}/#{folder_name}" : "#{path_wb_services}/#{folder_name}"
@@ -52,6 +57,10 @@ class OpBase
       end
     end
     @__np_services
+  end
+
+  def is_convox_office_server
+    @_res ||= NpServices::CONFING_TYPE == NpServices::CONFIG_TYPE_COVOX_OFFICE
   end
   ################ NP SERVICES ###################
 
@@ -71,6 +80,10 @@ class OpBase
 
   def path_secrets
     "#{base_path}/secrets"
+  end
+
+  def path_install_scripts
+    "#{base_path}/scripts/installs"
   end
 
   def path_wb_services
@@ -226,19 +239,19 @@ class OpBase
 
   def checkout_app(name:, path:)
     name = hyphenated_app_name(name)
-    service_data = np_service_config(name)
-    exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{service_data[:gitname]}.git #{name}", 
+
+    gitname = (name == 'kraken') ? 'kraken' : np_service_config(name)[:gitname]
+
+    exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{gitname}.git #{name}", 
       message: "Cloning #{name} from git"
   end
 
   def get_service_domain(name)
     name = hyphenated_app_name(name)
-    if np_service_is_on_local_kraken(name)
-      "#{name}.convox.local"
-    elsif np_service_is_on_local_convox(name)
-      "#{name}.convox.local"
-    elsif np_service_is_on_convox_office(name)
+    if is_convox_office_server || np_service_is_on_convox_office(name)
       "#{name}.convox.office"
+    elsif np_service_is_on_local_kraken(name) || np_service_is_on_local_convox(name)
+      "#{name}.convox.local"
     end
   end
 
@@ -246,24 +259,27 @@ class OpBase
     return "web.#{name}.dev.local" if np_service_is_on_local_convox(name)
   end
 
-  def get_service_external_domain(name, location)
+  def get_service_external_domain(name, variant: nil, location: nil)
     name = hyphenated_app_name(name)
     urls = {
-      'wb-auth-service' => 'accounts-local.waybetterdev.com',
-      'wb-graphql-service' => 'graphql-local.waybetterdev.com', 
-      'wb-hub' => 'hub-local.waybetterdev.com',
-      'wb-admin-auth-service' => 'admin-auth-local.waybetter.ninja',
-      'wb-admin-web' => 'www-local.waybetter.ninja'
+      'wb-auth-service'       => { 'default' => 'accounts-local.waybetterdev.com' },
+      'wb-graphql-service'    => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja'},
+      'wb-hub'                => { 'default' => 'hub-local.waybetterdev.com' },
+      'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
+      'wb-admin-web'          => { 'default' => 'www-local.waybetter.ninja' },
     }
-    
-    # TODO: need to support graphql-local.waybetter.ninja
-    url = urls[name]
+    variant = 'default' unless variant
+    url = urls[name][variant]
     return unless url
-    
-    if location == 'convox-office'
-      url.gsub!(/local/, 'office')
+
+    if is_convox_office_server
+      domain_part = 'office'
+    else
+      location ||= np_service_config(name)[:location]
+      domain_part = (location == 'convox-office') ? 'office' : 'local'
     end
-    url
+
+    url.gsub(/(local|office)/, domain_part)
   end
 
   def get_convox_service_domain(name)

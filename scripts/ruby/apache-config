@@ -23,10 +23,10 @@ require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
 class ApacheConfig < OpBase
 
-  attr_accessor :print_option, :write_option, :silent_option
+  attr_accessor :print_option, :write_option, :silent_option, :etc_hosts_conf
 
   def initialize
-    
+    self.etc_hosts_conf = []
   end
 
   def go
@@ -85,33 +85,30 @@ class ApacheConfig < OpBase
     conf = generate_config
 
     puts conf unless self.silent_option
+
+    puts build_etc_hosts_conf
   end
 
-  def generate_config
-    service_names = np_services.values.map { |s| { name: s[:name], external: false } } + [
-      'wb-auth-service',
-      'wb-graphql-service', 
-      'wb-admin-graphql-service', 
-      'wb-hub',
-      'wb-admin-auth-service',
-      'wb-admin-web',
-    ].map { |s| { name: s, external: true } }
+  def np_service_domains_conf
+    np_services.values.map { |s| { name: s[:name], external: false } } + [
+      { name: 'wb-auth-service',          external: true },
+      { name: 'wb-graphql-service',       external: true }, 
+      { name: 'wb-graphql-service',       external: true, variant: 'ninja'}, 
+      { name: 'wb-hub',                   external: true },
+      { name: 'wb-admin-auth-service',    external: true },
+      { name: 'wb-admin-web',             external: true },
+    ]
+  end
 
-    service_names.map do |data|
+
+  def generate_config
+    np_service_domains_conf.map do |data|
       name = data[:name]
-      # TODO: this is a hack. Rewrite it
-      is_admin_graphql = false
-      if name == 'wb-admin-graphql-service'
-        name = 'wb-graphql-service'
-        is_admin_graphql = true
-      end
 
       service_data = np_service_config(name)
       next if service_data[:location] == 'convox-office'
 
-      domain = get_proxy_from_url(service_data, data[:external])
-      
-      domain.gsub!(/waybetterdev\.com/, 'waybetter.ninja') if is_admin_graphql
+      domain = get_proxy_from_url(name, data[:external], data[:variant])
 
       proxy_conf = get_np_service_vhost_config(domain, service_data, is_proxy: true, use_ssl: true)
 
@@ -170,7 +167,7 @@ class ApacheConfig < OpBase
           'SSLProxyCheckPeerExpire' => 'Off',
         })
       end
-      puts "https://#{domain}".red + " redirects to ".white + "#{service}".green + "\n"
+      puts "https://#{domain}".red + " redirects to ".white + "#{service}".green + " with cert " + cert.blue + "\n"
     end
     conf
   end
@@ -210,12 +207,38 @@ class ApacheConfig < OpBase
     '
   end
 
+  def build_etc_hosts_conf
+    conf = etc_hosts_conf_ips.map do |ip_data|
+      ip = ip_data[:ip]
+      np_service_domains_conf.map do |data|
+        name = data[:name]
+        domain = get_proxy_from_url(name, data[:external], data[:variant])
 
-  def get_proxy_from_url(service_data, external = false)
-    if external
-      get_service_external_domain(service_data[:name], service_data[:location])
+        "#{ip} #{domain}"
+      end
+    end.flatten
+    puts conf
+  end
+
+  def etc_hosts_conf_ips
+    if is_convox_office_server
+      [{ ip: NpServices::SERVER_IPS[:localhost] }]
     else
-      get_service_domain(service_data[:name])
+      [
+        { ip: NpServices::SERVER_IPS[:localhost] },
+        { ip: NpServices::SERVER_IPS[:convox_office_external], overwrite_location: 'convox-office' }
+      ]
+    end
+  end
+
+
+  def get_proxy_from_url(name, external = false, variant = nil)
+    
+    if external
+      service_data = np_service_config(name)
+      get_service_external_domain(name, variant: variant)
+    else
+      get_service_domain(name)
     end
   end
 

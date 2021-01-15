@@ -148,7 +148,7 @@ class EnvBuilder < OpBase
 
     exit_with_error "Missing NP service config for #{name}" unless service_data
 
-    url = get_service_external_domain(service_data[:name], service_data[:location])
+    url = get_service_external_domain(service_data[:name])
     return "" unless url
 
     "https://#{url}"
