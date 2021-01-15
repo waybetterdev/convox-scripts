@@ -44,15 +44,16 @@ class OpBase
     end
     @__np_services ||= begin
       [
-        NpServices::NP_SERVICES[:local_kraken].map { |s| s.merge(location: 'kraken') },
-        NpServices::NP_SERVICES[:local_convox].map { |s| s.merge(location: 'convox-local') },
-        NpServices::NP_SERVICES[:remote_convox_office].map { |s| s.merge(location: 'convox-office') },
+        NpServices::NP_SERVICES[:local_kraken].map          { |s| s.merge(location: 'kraken') },
+        NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: 'convox-local') },
+        NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: 'remote-convox-office') },
+        NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: 'apache-local') },
       ]
       .flatten
       .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
         folder_name = service_data[:name]
-        service_data[:path] = (service_data[:location] == 'kraken') ? "#{path_kraken}/#{folder_name}" : "#{path_wb_services}/#{folder_name}"
+        service_data[:path] ||= (service_data[:location] == 'kraken') ? "#{path_kraken}/#{folder_name}" : "#{path_wb_services}/#{folder_name}"
         hash[name] = service_data
       end
     end
@@ -152,8 +153,12 @@ class OpBase
     np_service_config(name)[:location]
   end
 
+  def np_service_port(name)
+    np_service_config(name)[:port]
+  end
+
   def np_service_is_on_convox_office(name)
-    np_service_location(name) == 'convox-office'
+    np_service_location(name) == 'remote-convox-office'
   end
 
   def np_service_is_on_local_kraken(name)
@@ -162,6 +167,10 @@ class OpBase
 
   def np_service_is_on_local_convox(name)
     np_service_location(name) == 'convox-local'
+  end
+
+  def np_service_is_on_local_apache(name)
+    np_service_location(name) == 'apache-local'
   end
 
   ################ NP SERVICES ###################
@@ -246,16 +255,12 @@ class OpBase
       message: "Cloning #{name} from git"
   end
 
-  def get_service_domain(name)
+  def np_service_domain(name, location: nil)
     name = hyphenated_app_name(name)
-    if is_convox_office_server || np_service_is_on_convox_office(name)
-      "#{name}.convox.office"
-    elsif np_service_is_on_local_kraken(name) || np_service_is_on_local_convox(name)
-      "#{name}.convox.local"
-    end
+    apply_location_to_np_service_domain("#{name}.convox.local", name, location)
   end
 
-  def get_service_convox_domain(name)
+  def np_service_convox_domain(name)
     return "web.#{name}.dev.local" if np_service_is_on_local_convox(name)
   end
 
@@ -272,14 +277,18 @@ class OpBase
     url = urls[name][variant]
     return unless url
 
+    apply_location_to_np_service_domain(url, name, location)
+  end
+
+  def apply_location_to_np_service_domain(domain, name, location = nil)
     if is_convox_office_server
       domain_part = 'office'
     else
-      location ||= np_service_config(name)[:location]
-      domain_part = (location == 'convox-office') ? 'office' : 'local'
+      location ||= np_service_location(name)
+      domain_part = (location == 'remote-convox-office') ? 'office' : 'local'
     end
-
-    url.gsub(/(local|office)/, domain_part)
+    
+    domain.gsub(/(local|office)/, domain_part)
   end
 
   def get_convox_service_domain(name)

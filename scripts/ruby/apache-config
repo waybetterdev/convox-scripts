@@ -79,6 +79,12 @@ class ApacheConfig < OpBase
     file_path = "#{path_local_settings}/wb-proxy-ssl.conf"
     puts "Saving config to #{file_path}"
     File.open(file_path, 'w+') { |file| file.write(conf) }
+
+
+    puts "\n\n Content for #{"/etc/hosts".green}:"
+    puts build_etc_hosts_conf
+    puts "\n\nPlease run '#{"sudo gedit /etc/hosts".green}' and paste the content from above into your hosts file."
+
   end
 
   def print_config
@@ -106,13 +112,17 @@ class ApacheConfig < OpBase
       name = data[:name]
 
       service_data = np_service_config(name)
-      next if service_data[:location] == 'convox-office'
+      next if np_service_is_on_convox_office(name)
 
-      domain = get_proxy_from_url(name, data[:external], data[:variant])
+      domain = get_proxy_from_url(name, external: data[:external], variant: data[:variant])
 
-      proxy_conf = get_np_service_vhost_config(domain, service_data, is_proxy: true, use_ssl: true)
+      is_proxy = !np_service_is_on_local_apache(name)
+      path = is_proxy ? "/var/www/#{name}" : np_service_path(name)
+      www_directory = is_proxy ? nil : path
 
-      build_apache_virtual_host_conf(domain, 443, proxy_conf, nil)
+      proxy_conf = get_np_service_vhost_config(domain, name, path, is_proxy: is_proxy, use_ssl: true)
+
+      build_apache_virtual_host_conf(domain, 443, proxy_conf, www_directory)
     end.compact.join("\n\n")
   end
 
@@ -125,12 +135,12 @@ class ApacheConfig < OpBase
     res[0] if res
   end
 
-  def get_np_service_vhost_config(domain, service_data, is_proxy:, use_ssl:)
-    service = get_proxy_to_url(service_data)
+  def get_np_service_vhost_config(domain, name, path, is_proxy:, use_ssl:)
+    service = get_proxy_to_url(name)
     conf = {
       'ServerAdmin' => 'mihai@waybetter.com',
       'ServerName' => domain,
-      'DocumentRoot' => '/var/www/' + service_data[:name],
+      'DocumentRoot' => path,
       'ErrorLog' => '/var/www/wb-proxy/logs/https-' + domain + '.error.log',
       'CustomLog' => '/var/www/wb-proxy/logs/https-' + domain + '.access.log combined',
     }
@@ -167,7 +177,9 @@ class ApacheConfig < OpBase
           'SSLProxyCheckPeerExpire' => 'Off',
         })
       end
-      puts "https://#{domain}".red + " redirects to ".white + "#{service}".green + " with cert " + cert.blue + "\n"
+      puts "https://#{domain}".green + " redirects to " + "#{service}".blue + " with cert " + cert.red + "\n"
+    else
+      puts "https://#{domain}".green + " is on " + "#{conf['DocumentRoot']}".blue + " with cert " + cert.red + "\n"
     end
     conf
   end
@@ -207,50 +219,45 @@ class ApacheConfig < OpBase
     '
   end
 
-  def build_etc_hosts_conf
-    conf = etc_hosts_conf_ips.map do |ip_data|
-      ip = ip_data[:ip]
-      np_service_domains_conf.map do |data|
-        name = data[:name]
-        domain = get_proxy_from_url(name, data[:external], data[:variant])
-
-        "#{ip} #{domain}"
-      end
-    end.flatten
-    puts conf
-  end
-
   def etc_hosts_conf_ips
     if is_convox_office_server
-      [{ ip: NpServices::SERVER_IPS[:localhost] }]
+      [{ ip: NpServices::SERVER_IPS[:localhost], overwrite_location: 'convox-local' }]
     else
       [
-        { ip: NpServices::SERVER_IPS[:localhost] },
-        { ip: NpServices::SERVER_IPS[:convox_office_external], overwrite_location: 'convox-office' }
+        { ip: NpServices::SERVER_IPS[:localhost], overwrite_location: 'convox-local' },
+        { ip: NpServices::SERVER_IPS[:convox_office_external], overwrite_location: 'remote-convox-office' }
       ]
     end
   end
 
+  def build_etc_hosts_conf
+    etc_hosts_conf_ips.map do |ip_data|
+      ip = ip_data[:ip]
+      np_service_domains_conf.map do |data|
+        name = data[:name]
+        domain = get_proxy_from_url(name, external: data[:external], variant: data[:variant], location: ip_data[:overwrite_location])
 
-  def get_proxy_from_url(name, external = false, variant = nil)
-    
+        "#{ip} #{domain}"
+      end
+    end.flatten
+  end
+
+
+  def get_proxy_from_url(name, external: false, variant: nil, location: nil)
     if external
       service_data = np_service_config(name)
-      get_service_external_domain(name, variant: variant)
+      get_service_external_domain(name, variant: variant, location: location)
     else
-      get_service_domain(name)
+      np_service_domain(name, location: location)
     end
   end
 
-  def get_proxy_to_url(service_data)
-    name = service_data[:name]
-    location = service_data[:location]
-
-    domain = get_service_domain(name)
+  def get_proxy_to_url(name)
+    domain = np_service_domain(name)
     if np_service_is_on_local_kraken(name) || np_service_is_on_local_convox(name)
-      port = service_data[:port]
+      port = np_service_port(name)
       "http://#{domain}#{":" + port.to_s if port}"
-    elsif location == 'convox-office'
+    elsif np_service_is_on_convox_office(name)
       "https://#{domain}"
     end
   end

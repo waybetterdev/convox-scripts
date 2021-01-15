@@ -31,6 +31,7 @@ class EnvBuilder < OpBase
 
   def go
     parse_opts
+    
     if self.opts_write
       str_env = generate_env
       write_env_to_file(str_env)
@@ -127,18 +128,20 @@ class EnvBuilder < OpBase
 
     exit_with_error "Missing NP service config for #{name}" unless service_data
 
-    url = get_service_domain(name)
+    url = np_service_domain(name)
     return "" unless url
 
     if np_service_is_on_convox_office(name)
       "https://#{url}"
     elsif np_service_is_on_local_convox(name)
-      url = get_service_convox_domain(name)
+      url = np_service_convox_domain(name)
       port = service_data[:port]
       "http://#{url}#{":" + port.to_s if port}"
     elsif np_service_is_on_local_kraken(name)
       port = service_data[:port]
       "http://#{url}#{":" + port.to_s if port}"
+    elsif np_service_is_on_local_apache(name)
+      "https://#{url}"
     end
   end
 
@@ -193,11 +196,11 @@ class EnvBuilder < OpBase
       'GEN2'                          => -> { 'false' },
       'REDIS_HOST'                    => -> { get_local_ip },
       'WB_NOTIFY_SERVICE_URL'         => -> { np_service_internal_url('wb-notify-service') },
-      'DIETBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('dietbet-game-service') },
+      'DIETBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('dietbet') },
       'FALKOR_GAME_SERVICE_URL'       => -> { np_service_internal_url('falkor-game-service') },
       'QUITBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('quitbet-game-service') },
       'RUNBET_GAME_SERVICE_URL'       => -> { np_service_internal_url('runbet-game-service') },
-      'STEPBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('stepbet-game-service') },
+      'STEPBET_GAME_SERVICE_URL'      => -> { np_service_internal_url('stepbet') },
       'WB_BILLING_SERVICE_URL'        => -> { np_service_internal_url('wb-billing-service') },
       'WB_MEMBERSHIP_SERVICE_URL'     => -> { np_service_internal_url('wb-membership-service') },
       'WB_METRIC_SERVICE_URL'         => -> { np_service_internal_url('wb-metric-service') },

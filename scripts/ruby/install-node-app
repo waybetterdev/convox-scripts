@@ -82,7 +82,7 @@ class InstallNodeApp < OpBase
     end
 
     exec_command "env-builder -w -a #{self.opts_np_app}"
-    exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && nvm install && nvm ls && npm install && npm start'"
+    exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && nvm install && nvm ls && npm install'"
   end
 end
 
