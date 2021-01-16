@@ -23,27 +23,26 @@ class NpServices < OpBase
   CONFING_TYPE = CONFIG_TYPE_DEV_PC
   NP_SERVICES = {
     local_kraken: [
-      { name: 'wb-graphql-service',     gitname: 'wb-graphql',           type: 'node',        port: 3003 },
-      { name: 'wb-admin-web',           gitname: 'wb-admin-web',         type: 'node',        port: 8010 },
-      { name: 'wb-hub',                 gitname: 'wb-hub',               type: 'node' },
+      { name: 'wb-graphql-service',     gitname: 'wb-graphql',              type: 'node',        port: 3003 },
+      { name: 'wb-admin-web',           gitname: 'wb-admin-web',            type: 'node',        port: 8010 },
+      { name: 'wb-hub',                 gitname: 'wb-hub',                  type: 'node',        port: 3000 },
+      { name: 'wb-user-service',        gitname: 'wb-user-service',         type: 'node',        port: 4000 },
+      { name: 'wb-admin-auth-service',  gitname: 'wb-admin-auth-service',   type: 'node',        port: 8020 },
+      { name: 'wb-auth-service',        gitname: 'wb-auth-service',         type: 'node',        port: 8000 },
     ],
     local_convox: [
-
+      { name: 'wb-social-service',      gitname: 'wb-social-service',       type: 'ruby',       port: 3005 },
     ],
     remote_convox_office: [
-      { name: 'wb-admin-auth-service',  gitname: 'wb-admin-auth-service',  type: 'node' },
-      { name: 'wb-notify-service',      gitname: 'wb-notify-service',      type: 'ruby' },
-      { name: 'dietbet-game-service',   gitname: 'dietbet-game-service',   type: 'ruby' },
-      { name: 'falkor-game-service',    gitname: 'falkor-game-service',    type: 'ruby' },
-      { name: 'quitbet-game-service',   gitname: 'quitbet-game-service',   type: 'ruby' },
-      { name: 'runbet-game-service',    gitname: 'runbet-game-service',    type: 'ruby' },
-      { name: 'stepbet-game-service',   gitname: 'stepbet-game-service',   type: 'ruby' },
-      { name: 'wb-auth-service',        gitname: 'wb-auth-service',        type: 'node' },
-      { name: 'wb-billing-service',     gitname: 'wb-billing-service',     type: 'ruby' },
-      { name: 'wb-membership-service',  gitname: 'wb-membership-service',  type: 'ruby' },
-      { name: 'wb-metric-service',      gitname: 'wb-metric-service',      type: 'ruby' },
-      { name: 'wb-social-service',      gitname: 'wb-social-service',      type: 'ruby',       port: 3005 },
-      { name: 'wb-user-service',        gitname: 'wb-user-service',        type: 'node',       port: 4000 },
+      { name: 'wb-notify-service',      gitname: 'wb-notify-service',       type: 'ruby' },
+      { name: 'dietbet-game-service',   gitname: 'dietbet-game-service',    type: 'ruby' },
+      { name: 'falkor-game-service',    gitname: 'falkor-game-service',     type: 'ruby' },
+      { name: 'quitbet-game-service',   gitname: 'quitbet-game-service',    type: 'ruby' },
+      { name: 'runbet-game-service',    gitname: 'runbet-game-service',     type: 'ruby' },
+      { name: 'stepbet-game-service',   gitname: 'stepbet-game-service',    type: 'ruby' },
+      { name: 'wb-billing-service',     gitname: 'wb-billing-service',      type: 'ruby' },
+      { name: 'wb-membership-service',  gitname: 'wb-membership-service',   type: 'ruby' },
+      { name: 'wb-metric-service',      gitname: 'wb-metric-service',       type: 'ruby' },
     ],
     local_apache: [
       { name: 'stepbet',                path: '/var/www/stepbet',           type: 'php'},

@@ -279,7 +279,9 @@ class Kmd
   end
 
   def find_env_file
-    if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local")
+    if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local.tmp")
+      "#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local.tmp"
+    elsif File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local")
       "#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local"
     elsif File.file?("#{Dir.home}/Work/docs/configs/templates/convox-env/#{self.app}.env.local")
       "#{Dir.home}/Work/docs/configs/templates/convox-env/#{self.app}.env.local"
@@ -458,7 +460,6 @@ class Kmd
   def exit_with_error(msg)
     show_help
     puts msg.red
-    exit(1)
   end
 end
 

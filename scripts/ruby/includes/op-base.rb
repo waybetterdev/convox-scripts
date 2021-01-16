@@ -198,6 +198,7 @@ class OpBase
 
   def add_np_app_option(opts)
     opts.on("-a", "--app=A", "Required, NP application name") do |x|
+      x  = 'wb-auth-service' if x == 'auth'
       pattern = Regexp.new(x)
       res = np_services.find { |k,v| pattern =~ v[:name] }
       exit_with_error "Did not find any NP services for pattern '*#{x}*'" unless res
@@ -232,7 +233,6 @@ class OpBase
 
   def exit_with_error(msg)
     puts "Error: #{msg}".red
-    show_help
     exit(1)
   end
 
