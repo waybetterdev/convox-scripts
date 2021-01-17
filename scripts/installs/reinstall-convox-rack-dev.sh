@@ -16,6 +16,19 @@ cd
 
 sudo apt-get install -y tmux vim htop curl
 
+
+if ! [[ "$(convox racks)" =~ .*local.* ]]; then
+	echo "Uninstalling local rack"
+	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+	sleep 10s
+
+    sudo convox rack uninstall convox
+    sleep 5s
+else
+  echo 'Local rack is already uninstalled. Skipping.'
+fi
+
+
 sudo rm -rf ~/.config/convox
 sudo rm -rf /root/.config/convox/
 
