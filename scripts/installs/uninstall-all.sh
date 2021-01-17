@@ -5,6 +5,8 @@ sudo rm -rf /root/.config/convox/
 
 
 sudo apt-get purge -y terraform docker.io
+sudo apt autoremove
+
 sudo rm -rf ~/.terraform.d
 sudo rm -rf /root/.terraform.d
 
