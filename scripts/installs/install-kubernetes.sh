@@ -17,11 +17,11 @@ echo "Sleeping for 10 seconds. Click ctrl+C to abort script."
 sleep 10s
 
 sudo snap install microk8s --classic --channel=1.13/stable
-echo "Enabling DNS on Kubernetes. Sleeping for 30 seconds. Click ctrl+C to abort script." 
-sleep 30s
+echo "Enabling DNS on Kubernetes. Sleeping for 10 seconds. Click ctrl+C to abort script." 
+sleep 10s
 microk8s.enable dns storage
-echo "Sleeping for another 30 seconds. Click ctrl+C to abort script." 
-sleep 30s
+echo "Sleeping for another 60 seconds. Click ctrl+C to abort script." 
+sleep 60s
 
 export PATH="${PATH}:/snap/bin"
 PATH="${PATH}:/snap/bin"

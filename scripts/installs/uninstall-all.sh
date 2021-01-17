@@ -1,10 +1,24 @@
 #!/bin/bash
 
+
+if [[ "$(convox racks)" =~ .*local.* ]]; then
+	echo "Uninstalling local rack"
+	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+	sleep 10s
+
+    convox rack uninstall dev
+    sleep 5s
+else
+  echo 'Local rack is already uninstalled. Skipping.'
+fi
+
 sudo rm -rf ~/.config/convox
 sudo rm -rf /root/.config/convox/
 
 
 sudo apt-get purge -y terraform docker.io
+sudo apt autoremove
+
 sudo rm -rf ~/.terraform.d
 sudo rm -rf /root/.terraform.d
 
