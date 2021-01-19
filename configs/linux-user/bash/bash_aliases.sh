@@ -44,11 +44,11 @@ alias cdadminauth='cd ~/Work/wb-services/wb-admin-auth-service;lcd'
 alias cdgraphql='cd ~/Work/wb-services/wb-graphql-service;lcd'
 alias cdadminweb='cd ~/Work/wb-services/wb-admin-web;lcd'
 alias cddietbet='cd /var/www/dietbet;lcd'
-alias cddietbetdev='cd /var/www/dietbet_dev;lcd'
-alias cddietbetprod='cd /var/www/dietbet_prod;lcd'
+alias cddietbetdev='cd /var/www/dietbet-dev;lcd'
+alias cddietbetprod='cd /var/www/dietbet-prod;lcd'
 alias cdstepbet='cd /var/www/stepbet;lcd'
-alias cdstepbetdev='cd /var/www/stepbet_dev;lcd'
-alias cdstepbetprod='cd /var/www/stepbet_prod;lcd'
+alias cdstepbetdev='cd /var/www/stepbet-dev;lcd'
+alias cdstepbetprod='cd /var/www/stepbet-prod;lcd'
 
 #utils
 alias notepad=sublime-text.subl
