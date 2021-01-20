@@ -56,14 +56,9 @@ class EnvBuilder < OpBase
 
       self.add_debug_option(opts)
 
-      opts.on("-w", "--write", "Write the env to kraken or convox") do |x|
-        self.opts_write = true
-      end
-
-      opts.on("-p", "--print", "Print the env to kraken or convox") do |x|
-        self.opts_print = true
-      end
-
+      self.add_write_option(opts, "Write the env to kraken or convox")
+      self.add_print_option(opts, "Print the env to kraken or convox")
+      
       add_np_app_option(opts)
 
       add_help_option(opts)
