@@ -29,6 +29,8 @@ class OpBase
 
   ################ NP SERVICES ###################
   def load_np_services_config
+    return if defined?(NpServices)
+
     if File.exists?("#{path_local_settings}/np-services-config.rb")
       require "#{path_local_settings}/np-services-config.rb" 
     elsif File.exists?("#{path_templates}/np-services-config.rb")
@@ -78,7 +80,30 @@ class OpBase
   end
 
   def is_convox_office_server
-    @_res ||= NpServices::CONFING_TYPE == NpServices::CONFIG_TYPE_COVOX_OFFICE
+    @_conf_type ||= begin
+      load_np_services_config 
+      NpServices::CONFING_TYPE
+    end
+
+    @_conf_type == NpServices::CONFIG_TYPE_COVOX_OFFICE
+  end
+
+  def convox_local_rack
+    @_convox_local_rack ||= begin
+      load_np_services_config 
+      NpServices::LOCAL_CONVOX_RACK
+    end
+  end
+
+  def convox_racks
+    @_convox_racks ||= begin
+      load_np_services_config 
+      NpServices::CONVOX_RACKS
+    end
+  end
+
+  def is_convox_local_dev_rack
+    convox_local_rack == 'dev'
   end
   ################ NP SERVICES ###################
 
@@ -294,8 +319,10 @@ class OpBase
   end
 
   def np_service_convox_domain(name)
-    return "web.#{name}.dev.local" if np_service_is_on_local_convox(name)
+    return unless np_service_is_on_local_convox(name)
+    return is_convox_local_dev_rack ? "web.#{name}.dev.local" : "web.#{name}.convox" 
   end
+  
 
   def get_service_external_domain(name, variant: nil, location: nil)
     name = hyphenated_app_name(name)

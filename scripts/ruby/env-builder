@@ -147,12 +147,24 @@ class EnvBuilder < OpBase
     elsif np_service_is_on_local_convox(name)
       url = np_service_convox_domain(name)
       port = service_data[:port]
-      "http://#{url}#{":" + port.to_s if port}"
+      if is_convox_local_dev_rack && np_service_is_on_local_convox(self.opts_np_app) && port
+        "http://#{url}:#{port}"
+      else
+        "https://#{url}"
+      end
     elsif np_service_is_on_local_kraken(name)
       port = service_data[:port]
       "http://#{url}#{":" + port.to_s if port}"
     elsif np_service_is_on_local_apache(name)
       "https://#{url}"
+    end
+  end
+
+  def np_service_internal_domain(name)
+    if np_service_is_on_local_convox(name)
+      np_service_convox_domain(name)
+    else
+      np_service_domain(name)
     end
   end
 
@@ -239,13 +251,21 @@ class EnvBuilder < OpBase
       'WB_ADMIN_AUTH_SERVICE_BASE_URL'  => -> { np_service_external_url('wb-admin-auth-service')  + '/auth' },
 
       'WB_ADMIN_WEB_URL'                => -> { np_service_internal_url('wb-admin-web') },
-      'WB_ADMIN_WEB_DOMAIN'             => -> { np_service_external_url('wb-admin-web', domain_only: true) },
+      'WB_ADMIN_WEB_DOMAIN'             => -> {
+        [
+          np_service_internal_domain('wb-admin-web'),
+          np_service_external_url('wb-admin-web', domain_only: true),
+        ].join(',')
+      },
       'WB_ADMIN_WEB_EXTERNAL_URL'       => -> { np_service_external_url('wb-admin-web') },
 
       'WB_GRAPHQL_SERVICE_URL'          => -> { np_service_internal_url('wb-graphql-service') },
       'WB_GRAPHQL_SERVICE_DOMAIN'       => -> { 
-        np_service_external_url('wb-graphql-service', domain_only: true)  + ',' + 
-        np_service_external_url('wb-graphql-service', domain_only: true, variant: 'ninja')
+        [
+          np_service_internal_domain('wb-graphql-service'),
+          np_service_external_url('wb-graphql-service', domain_only: true),
+          np_service_external_url('wb-graphql-service', domain_only: true, variant: 'ninja'),
+        ].join(',')
       },
       'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service') },
       'GRAPHQL_URL'                     => -> { np_service_external_url('wb-graphql-service')  + '/graphql'}, # https://graphql-office.waybetterdev.com/graphql
