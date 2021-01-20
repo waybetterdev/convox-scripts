@@ -1,6 +1,13 @@
 
 class NpServices < OpBase
 
+  # local/convox or dev
+  LOCAL_CONVOX_RACK = 'local/convox'
+
+  CONVOX_RACKS = {
+    "local" => LOCAL_CONVOX_RACK,
+    "staging" => "waybetter/stagingv3",
+  }.freeze
 
   CERTIFICATES = {
     'apache-local-selfsigned' => '.convox.local',

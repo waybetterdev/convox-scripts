@@ -20,7 +20,7 @@ class OpServers < OpBase
       user:  'centos', 
       key:  '~/Work/deploy/keys/staging/staging.pem',
       hostnames:  [:stepbet_imageserver_dev],
-      src:  '/var/www/stepbet-imageserver_dev', 
+      src:  '/var/www/stepbet-imageserver-dev', 
       dst:  '/var/www/dev.images.stepbet',
     },
     dietbet_dev:  {
@@ -34,7 +34,7 @@ class OpServers < OpBase
       user:  'centos', 
       key:  '~/Work/deploy/keys/staging/staging.pem',
       hostnames:  [:dietbet_imageserver_dev],
-      src:  '/var/www/dietbet-imageserver_dev', 
+      src:  '/var/www/dietbet-imageserver-dev', 
       dst:  '/var/www/dev.images.dietbet',
     },
     convox_office_external:  {

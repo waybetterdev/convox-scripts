@@ -23,7 +23,7 @@ require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
 class ApacheConfig < OpBase
 
-  attr_accessor :print_option, :write_option, :silent_option, :etc_hosts_conf
+  attr_accessor :opts_print, :opts_write, :silent_option, :etc_hosts_conf
 
   def initialize
     self.etc_hosts_conf = []
@@ -32,9 +32,9 @@ class ApacheConfig < OpBase
   def go
     parse_opts
 
-    if self.write_option
+    if self.opts_write
       write_config  
-    elsif self.print_option
+    elsif self.opts_print
       print_config
     end
   end
@@ -55,17 +55,12 @@ class ApacheConfig < OpBase
 
       self.add_debug_option(opts)
 
-      opts.on("-p", "--print", "Required, the app to clone") do |x|
-        self.print_option = true
-      end
-
       opts.on("-s", "--silent", "Required, the app to clone") do |x|
         self.silent_option = true
       end
 
-      opts.on("-w", "--write", "Required, the app to clone") do |x|
-        self.write_option = true
-      end
+      self.add_print_option(opts, "Print the apache config to screen")
+      self.add_write_option(opts, "Write apache config")
 
       add_help_option(opts)
     end
@@ -254,9 +249,17 @@ class ApacheConfig < OpBase
 
   def get_proxy_to_url(name)
     domain = np_service_domain(name)
-    if np_service_is_on_local_kraken(name) || np_service_is_on_local_convox(name)
+    if np_service_is_on_local_kraken(name)
       port = np_service_port(name)
       "http://#{domain}#{":" + port.to_s if port}"
+    elsif np_service_is_on_local_convox(name)
+      if is_convox_local_dev_rack
+        port = np_service_port(name)
+        "http://#{domain}#{":" + port.to_s if port}"
+      else
+        domain = np_service_convox_domain(name)
+        "https://#{domain}"
+      end
     elsif np_service_is_on_convox_office(name)
       "https://#{domain}"
     end
