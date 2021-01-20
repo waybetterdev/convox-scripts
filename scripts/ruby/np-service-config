@@ -96,6 +96,7 @@ class NpServiceConfig < OpBase
         if convox_app_path_exists?(app)
           next unless self.opts_write
           exec_command "env-builder -w -a #{app}"
+          return
         end
 
         if self.opts_print
