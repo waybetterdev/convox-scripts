@@ -42,3 +42,5 @@ gsettings set org.gnome.desktop.interface enable-animations false
 
 #set the same time as in windows
 timedatectl set-local-rtc 1 --adjust-system-clock
+
+sudo apt install default-jre
