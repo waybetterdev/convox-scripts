@@ -44,8 +44,8 @@ class Wbtmux
   }
   ALL_SERVICES = SERVICE_MAP.keys
   def initialize()
-    @path = "#{Dir.home}/Work/wb-services"
-    @bin_path = "#{Dir.home}/Work/docs/scripts/ruby"
+    @path = "#{Dir.home}Work/wb-services"
+    @bin_path = "#{Dir.home}Work/docs/scripts/ruby"
     @apps_to_open = []
     @apps_to_run = [] 
   end
