@@ -8,7 +8,7 @@ Type=simple
 StandardOutput=journal
 ExecStart=/home/dev/Work/docs/scripts/boot/start-wbtmux-user-service.sh
 Restart=always
-RuntimeMaxSec=500
+RuntimeMaxSec=28800
 
 [Install]
 WantedBy=default.target
