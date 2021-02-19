@@ -57,6 +57,7 @@ alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~
 
 alias restartapache='sudo systemctl restart apache2.service'
 alias stopapache='sudo systemctl stop apache2.service'
+alias restartwbtmuxservice='systemctl --user restart wbtmux'
 
 
 alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
