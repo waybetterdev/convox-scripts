@@ -253,13 +253,8 @@ class ApacheConfig < OpBase
       port = np_service_port(name)
       "http://#{domain}#{":" + port.to_s if port}"
     elsif np_service_is_on_local_convox(name)
-      if is_convox_local_dev_rack
-        port = np_service_port(name)
-        "http://#{domain}#{":" + port.to_s if port}"
-      else
-        domain = np_service_convox_domain(name)
-        "https://#{domain}"
-      end
+      domain = np_service_convox_domain(name)
+      "https://#{domain}"
     elsif np_service_is_on_convox_office(name)
       "https://#{domain}"
     end

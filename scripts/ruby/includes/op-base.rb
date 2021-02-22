@@ -319,7 +319,6 @@ class OpBase
   end
 
   def np_service_convox_domain(name)
-    return unless np_service_is_on_local_convox(name)
     return is_convox_local_dev_rack ? "web.#{name}.dev.convox" : "web.#{name}.convox" 
   end
   

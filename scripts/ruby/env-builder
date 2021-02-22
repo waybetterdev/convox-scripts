@@ -145,13 +145,14 @@ class EnvBuilder < OpBase
     if np_service_is_on_convox_office(name)
       "https://#{url}"
     elsif np_service_is_on_local_convox(name)
-      url = np_service_convox_domain(name)
-      port = service_data[:port]
-      if is_convox_local_dev_rack && np_service_is_on_local_convox(self.opts_np_app) && port
-        "http://#{url}:#{port}"
-      else
-        "https://#{url}"
+      if use_convox_rack_internal_urls
+        url = np_service_convox_domain(name)
+        port = service_data[:port]
+        if is_convox_local_dev_rack && np_service_is_on_local_convox(self.opts_np_app) && port
+          return "http://#{url}:#{port}"
+        end
       end
+      "https://#{url}#{":" + port.to_s if port}"
     elsif np_service_is_on_local_kraken(name)
       port = service_data[:port]
       "http://#{url}#{":" + port.to_s if port}"
@@ -167,7 +168,6 @@ class EnvBuilder < OpBase
       np_service_domain(name)
     end
   end
-
 
   def np_service_external_url(name, domain_only: false, variant: nil)
     service_data = np_service_config(name)
@@ -187,6 +187,10 @@ class EnvBuilder < OpBase
     elsif np_service_is_on_local_kraken(app)
       "#{path_kraken}/.env.g2"
     end
+  end
+
+  def use_convox_rack_internal_urls
+    np_service_is_on_local_convox(self.opts_np_app)
   end
 
   private 
