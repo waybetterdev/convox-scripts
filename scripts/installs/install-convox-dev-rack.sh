@@ -92,22 +92,18 @@ else
 fi
 
 
-if ! test -f "/usr/share/ca-certificates/convox/convox.crt"; then
-	echo 'Installing convox certificates'
-	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
-	sleep 10s
+echo 'Installing convox certificates'
+echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
+sleep 10s
 
-	kubectl get secret/ca -n dev-system -o jsonpath="{.data.tls\.crt}" | base64 -d > /tmp/ca
-	sudo mkdir /usr/share/ca-certificates/convox
-	sudo mv /tmp/ca /usr/share/ca-certificates/convox/convox.crt
-	sudo bash -c 'echo "convox/convox.crt" >> /etc/ca-certificates.conf'
-	sudo update-ca-certificates
-	sudo snap restart microk8s
-	sudo service docker restart
-
-else
-  echo 'Convox cert already installed. Skipping.'
-fi
+kubectl get secret/ca -n dev-system -o jsonpath="{.data.tls\.crt}" | base64 -d > /tmp/ca
+sudo rm -rf /usr/share/ca-certificates/convox
+sudo mkdir /usr/share/ca-certificates/convox
+sudo mv /tmp/ca /usr/share/ca-certificates/convox/convox.crt
+sudo bash -c 'echo "convox/convox.crt" >> /etc/ca-certificates.conf'
+sudo update-ca-certificates
+sudo snap restart microk8s
+sudo service docker restart
 
 
 if ! [ -x "$(command -v aws)" ]; then
