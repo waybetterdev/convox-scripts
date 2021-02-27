@@ -272,7 +272,10 @@ class OpBase
     %x[ #{cmd} ]
   end
 
-  def exec_command_1(cmd, exit_on_fail: true, message: nil)
+  ##
+  # Executes command in interactive mode, outputting stout to screen and returning true or false
+  #
+  def exec_ic_command(cmd, exit_on_fail: true, message: nil)
     puts message if message
     result = system cmd
     if result
@@ -285,7 +288,7 @@ class OpBase
 
   def exec_bash_command(cmd, exit_on_fail: true, message: nil)
     cmd = "/bin/bash -ic '#{cmd}'"
-    exec_command_1(cmd, exit_on_fail: exit_on_fail, message: message)
+    exec_ic_command(cmd, exit_on_fail: exit_on_fail, message: message)
   end
 
 
@@ -360,7 +363,9 @@ class OpBase
 
   ################ CONVOX ###################
   def convox_ready?
-    exec_command("cd #{@path} && convox apps").match(/RELEASE/)
+    @__convox_ready ||= begin
+      exec_command("cd #{@path} && convox apps").match(/RELEASE/)
+    end
   end
 
   def kubernetes_ready?
@@ -380,15 +385,19 @@ class OpBase
     File.directory?(convox_app_path(convox_app))
   end
 
-  def convox_app_exists?(convox_app)
+  def convox_app_exists?(convox_app, use_cache: false)
     return false if convox_app.nil?
-    exec_command("convox apps").match("#{convox_app}  running")
+    list_convox_apps(use_cache: use_cache).include?(convox_app)
   end
 
-  def list_convox_apps
-    res = exec_command("convox apps")
-    return [] unless res
-    res.scan(/\n([\w-]+)/).flatten
+  def list_convox_apps(use_cache: false)
+    @__convox_apps = nil unless use_cache
+    @__convox_apps ||= begin
+      exec_command("convox apps")
+    end
+
+    return [] unless @__convox_apps
+    @__convox_apps.scan(/\n([\w-]+)/).flatten
   end
 
   def create_convox_app(convox_app)

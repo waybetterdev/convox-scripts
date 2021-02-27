@@ -276,6 +276,7 @@ class EnvBuilder < OpBase
 
 
       'WB_HUB_URL'                      => -> { np_service_external_url('wb-hub') },
+      'WB_HUB_EXTERNAL_URL'             => -> { np_service_external_url('wb-hub') },
       'WB_HUB_DOMAIN'                   => -> { np_service_external_url('wb-hub', domain_only: true) },
 
 

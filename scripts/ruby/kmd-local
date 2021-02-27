@@ -310,6 +310,8 @@ class Kmd < OpBase
     default = (dir if APPS.include?(dir))
 
     return APPS[app_filter] if APPS.key?(app_filter)
+    return app_filter if APPS.values.include?(app_filter)
+
     choices = APPS.keys.grep Regexp.new(app_filter || ".*")
     choices = APPS.keys if choices.empty?
     msg = "App"

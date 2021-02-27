@@ -50,6 +50,13 @@ alias cdstepbet='cd /var/www/stepbet;lcd'
 alias cdstepbetdev='cd /var/www/stepbet-dev;lcd'
 alias cdstepbetprod='cd /var/www/stepbet-prod;lcd'
 
+alias cdmobile='cd ~/Work/mobile-apps;lcd'
+alias cdwaybettermobile='cd ~/Work/mobile-apps/waybetter-mobile;lcd'
+alias cdquitbetmobile='cd ~/Work/mobile-apps/quitbet-mobile;lcd'
+alias cddietbetmobile='cd ~/Work/mobile-apps/dietbet-mobile;lcd'
+alias cdstepbetmobile='cd ~/Work/mobile-apps/stepbet-mobile;lcd'
+
+
 #utils
 alias notepad=sublime-text.subl
 

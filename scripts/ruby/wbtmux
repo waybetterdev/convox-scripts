@@ -142,7 +142,7 @@ class Wbtmux < OpBase
         app_command = 'docker-compose up'
       elsif np_service_is_on_local_convox(convox_app)
         # create the app if it does not exist
-        if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app)
+        if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app, use_cache: true)
           create_convox_app(convox_app)
         end 
 

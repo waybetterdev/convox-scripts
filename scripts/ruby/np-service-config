@@ -37,7 +37,7 @@ class NpServiceConfig < OpBase
 
     if self.opts_write
       puts "Rebuilding apache proxy config"
-      exec_command("~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh")
+      exec_ic_command "~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh"
     end
   end
 
@@ -93,8 +93,9 @@ class NpServiceConfig < OpBase
       unchanged_apps = new_apps - apps_to_create
       unchanged_apps.each do |app|
         puts "Rebuilding env for #{app.green}"
-        exec_command "env-builder -w -a #{app}"
-        exec_command "#{path_ruby_bin}/kmd-local refresh-env -- local #{app} no-confirm"
+        exec_ic_command "env-builder -w -a #{app}"
+        exec_ic_command "#{path_ruby_bin}/kmd-local refresh-env -- local #{app} no-confirm"
+        exec_ic_command "#{path_ruby_bin}/kmd-local refresh-yml -- local #{app} no-confirm"
       end
     end
   end
@@ -105,7 +106,7 @@ class NpServiceConfig < OpBase
     local_kraken_np_services.each do |app|
       if convox_app_path_exists?(app)
         next unless self.opts_write
-        exec_command "env-builder -w -a #{app}"
+        exec_ic_command "env-builder -w -a #{app}"
         return
       end
 
@@ -113,7 +114,7 @@ class NpServiceConfig < OpBase
         puts "Local kraken app #{app.green} needs to be installed to #{convox_app_path(app).green}."
       else
         puts "Installing local kraken app #{app.green}"
-        exec_command "install-node-app -a #{app}" 
+        exec_ic_command "install-node-app -a #{app}" 
       end
     end
   end
