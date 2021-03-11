@@ -43,6 +43,7 @@ alias cdauth='cd ~/Work/wb-services/wb-auth-service;lcd'
 alias cdadminauth='cd ~/Work/wb-services/wb-admin-auth-service;lcd'
 alias cdgraphql='cd ~/Work/wb-services/wb-graphql-service;lcd'
 alias cdadminweb='cd ~/Work/wb-services/wb-admin-web;lcd'
+alias cdquitbet='cd ~/Work/wb-services/quitbet-game-service;lcd'
 alias cddietbet='cd /var/www/dietbet;lcd'
 alias cddietbetdev='cd /var/www/dietbet-dev;lcd'
 alias cddietbetprod='cd /var/www/dietbet-prod;lcd'
@@ -55,6 +56,8 @@ alias cdwaybettermobile='cd ~/Work/mobile-apps/waybetter-mobile;lcd'
 alias cdquitbetmobile='cd ~/Work/mobile-apps/quitbet-mobile;lcd'
 alias cddietbetmobile='cd ~/Work/mobile-apps/dietbet-mobile;lcd'
 alias cdstepbetmobile='cd ~/Work/mobile-apps/stepbet-mobile;lcd'
+
+alias buildandroidapp='cd ./android && ./gradlew clean assembleStagingDebug -Pcredentialssource=properties && cd ../'
 
 
 #utils
