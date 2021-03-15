@@ -288,7 +288,7 @@ class Kmd
     elsif File.file?(".env.local")
       ".env.local"
     else
-      exit_with_error("Could not find env file")
+      exit_with_error("Could not find env file for #{self.app}")
     end
   end
 
@@ -458,8 +458,9 @@ class Kmd
   HELP
 
   def exit_with_error(msg)
-    show_help
+    # show_help
     puts msg.red
+    exit
   end
 end
 
