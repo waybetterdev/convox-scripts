@@ -15,9 +15,18 @@ if ! test -f "~/.config/systemd/user"; then
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
-  mkdir "~/.config"
-  mkdir "~/.config/systemd"
-  mkdir "~/.config/systemd/user"
+  sudo apt-get install -y xfce4-terminal
+
+  cd 
+  mkdir -p ".config"
+  mkdir -p ".config/systemd"
+  mkdir -p ".config/systemd/user"
+
+  cp -f ~/Work/docs/configs/linux-user/systemd/wbtmux.service .config/systemd/user/wbtmux.service
+
+  systemctl --user enable wbtmux.service
+
+  systemctl --user start wbtmux.service
 else
   echo 'User service already installed. Skipping.'
 fi

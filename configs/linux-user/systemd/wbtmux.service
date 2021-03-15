@@ -1,0 +1,19 @@
+
+[Unit]
+Description=Service kepping wbtmux alive
+
+[Service]
+Type=simple
+StandardOutput=journal
+ExecStart=/home/dev/Work/docs/scripts/boot/start-wbtmux-user-service.sh
+Restart=always
+RuntimeMaxSec=28800
+RestartSec=90
+StartLimitInterval=400
+StartLimitBurst=3
+
+
+[Install]
+WantedBy=default.target
+
+
