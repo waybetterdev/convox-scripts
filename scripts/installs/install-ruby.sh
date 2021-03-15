@@ -56,6 +56,7 @@ export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
 # Install Ruby
 rbenv install -v 2.6.2
 rbenv install -v 2.6.3
+rbenv install -v 2.7.1
 rbenv global 2.6.2
 
 gem install bundler
