@@ -14,7 +14,7 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 cd
 
-sudo apt-get install -y git tmux vim htop openssh-server net-tools
+sudo apt-get install -y git tmux vim htop openssh-server net-tools git-flow
 
 
 #if ! [ -x "$(command -v github-desktop)" ]; then
@@ -42,3 +42,5 @@ gsettings set org.gnome.desktop.interface enable-animations false
 
 #set the same time as in windows
 timedatectl set-local-rtc 1 --adjust-system-clock
+
+sudo apt install default-jre

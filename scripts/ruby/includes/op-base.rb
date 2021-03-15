@@ -29,6 +29,8 @@ class OpBase
 
   ################ NP SERVICES ###################
   def load_np_services_config
+    return if defined?(NpServices)
+
     if File.exists?("#{path_local_settings}/np-services-config.rb")
       require "#{path_local_settings}/np-services-config.rb" 
     elsif File.exists?("#{path_templates}/np-services-config.rb")
@@ -54,14 +56,54 @@ class OpBase
         name = dashed_app_name(service_data[:name]).to_sym
         folder_name = service_data[:name]
         service_data[:path] ||= (service_data[:location] == 'kraken') ? "#{path_kraken}/#{folder_name}" : "#{path_wb_services}/#{folder_name}"
+        
+        if hash[name]
+          exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
+        end
+
         hash[name] = service_data
       end
     end
     @__np_services
   end
 
+  def local_kraken_np_services
+    @__local_kraken_np_services ||= begin
+      np_services.map { |k, v| v[:location] == 'kraken' ? v[:name] : nil }.compact
+    end
+  end
+
+  def local_convox_np_services
+    @__local_convox_np_services ||= begin
+      np_services.map { |k, v| v[:location] == 'convox-local' ? v[:name] : nil }.compact
+    end
+  end
+
   def is_convox_office_server
-    @_res ||= NpServices::CONFING_TYPE == NpServices::CONFIG_TYPE_COVOX_OFFICE
+    @_conf_type ||= begin
+      load_np_services_config 
+      NpServices::CONFING_TYPE
+    end
+
+    @_conf_type == NpServices::CONFIG_TYPE_COVOX_OFFICE
+  end
+
+  def convox_local_rack
+    @_convox_local_rack ||= begin
+      load_np_services_config 
+      NpServices::LOCAL_CONVOX_RACK
+    end
+  end
+
+  def convox_racks
+    @_convox_racks ||= begin
+      load_np_services_config 
+      NpServices::CONVOX_RACKS
+    end
+  end
+
+  def is_convox_local_dev_rack
+    convox_local_rack == 'dev'
   end
   ################ NP SERVICES ###################
 
@@ -93,6 +135,10 @@ class OpBase
 
   def path_kraken
     "#{Dir.home}/Work/wb-services/kraken"
+  end
+
+  def path_ruby_bin
+    "#{Dir.home}/Work/docs/scripts/ruby"
   end
 
   def hyphenated_app_name(name)
@@ -191,8 +237,20 @@ class OpBase
   end
 
   def add_op_app_option(opts)
-    opts.on("-a", "--app=A", "Required, application (website name)") do |x|
+    opts.on("-a", "--app=A", "Application Name (website name)") do |x|
       self.opts_op_app = x
+    end
+  end  
+  
+  def add_write_option(opts, message)
+    opts.on("-w", "--write", message) do |x|
+      self.opts_write = true
+    end
+  end
+
+  def add_print_option(opts, message)
+    opts.on("-p", "--print", message) do |x|
+      self.opts_print = true
     end
   end
 
@@ -214,7 +272,10 @@ class OpBase
     %x[ #{cmd} ]
   end
 
-  def exec_command_1(cmd, exit_on_fail: true, message: nil)
+  ##
+  # Executes command in interactive mode, outputting stout to screen and returning true or false
+  #
+  def exec_ic_command(cmd, exit_on_fail: true, message: nil)
     puts message if message
     result = system cmd
     if result
@@ -227,7 +288,7 @@ class OpBase
 
   def exec_bash_command(cmd, exit_on_fail: true, message: nil)
     cmd = "/bin/bash -ic '#{cmd}'"
-    exec_command_1(cmd, exit_on_fail: exit_on_fail, message: message)
+    exec_ic_command(cmd, exit_on_fail: exit_on_fail, message: message)
   end
 
 
@@ -261,8 +322,9 @@ class OpBase
   end
 
   def np_service_convox_domain(name)
-    return "web.#{name}.dev.local" if np_service_is_on_local_convox(name)
+    return is_convox_local_dev_rack ? "web.#{name}.dev.convox" : "web.#{name}.convox" 
   end
+  
 
   def get_service_external_domain(name, variant: nil, location: nil)
     name = hyphenated_app_name(name)
@@ -298,4 +360,58 @@ class OpBase
   def get_local_ip
     @__get_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').gsub("\n", "")
   end
+
+  ################ CONVOX ###################
+  def convox_ready?
+    @__convox_ready ||= begin
+      exec_command("cd #{@path} && convox apps").match(/RELEASE/)
+    end
+  end
+
+  def kubernetes_ready?
+    exec_command("microk8s.status").match(/microk8s is running/)
+  end
+
+  def start_kubernetes
+    exec_command("microk8s.start && microk8s.status --wait-ready")
+  end
+
+  def convox_app_path(convox_app)
+    path = np_service_path(convox_app) unless convox_app == 'kraken/superlocal'
+    path ? path : "#{@path}/#{convox_app}"
+  end
+
+  def convox_app_path_exists?(convox_app)
+    File.directory?(convox_app_path(convox_app))
+  end
+
+  def convox_app_exists?(convox_app, use_cache: false)
+    return false if convox_app.nil?
+    list_convox_apps(use_cache: use_cache).include?(convox_app)
+  end
+
+  def list_convox_apps(use_cache: false)
+    @__convox_apps = nil unless use_cache
+    @__convox_apps ||= begin
+      exec_command("convox apps")
+    end
+
+    return [] unless @__convox_apps
+    @__convox_apps.scan(/\n([\w-]+)/).flatten
+  end
+
+  def create_convox_app(convox_app)
+    exec_command([
+        "cd #{convox_app_path(convox_app)}",
+        "convox apps create #{convox_app}",
+        "#{path_ruby_bin}/kmd-local refresh-env -- local #{convox_app} no-confirm",
+        "#{path_ruby_bin}/kmd-local refresh-yml -- local #{convox_app} no-confirm"
+      ].join(" && ")
+    )
+  end
+
+  def delete_convox_app(convox_app)
+    exec_command("convox apps delete #{convox_app}")
+  end
+  ################ CONVOX ###################
 end

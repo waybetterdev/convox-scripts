@@ -142,7 +142,7 @@ class Wbtmux < OpBase
         app_command = 'docker-compose up'
       elsif np_service_is_on_local_convox(convox_app)
         # create the app if it does not exist
-        if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app)
+        if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app, use_cache: true)
           create_convox_app(convox_app)
         end 
 
@@ -265,42 +265,6 @@ class Wbtmux < OpBase
       puts "Convox not ready. Waiting 10 seconds"
       exec_command("sleep 10")
     end
-  end
-
-  def convox_ready?
-    exec_command("cd #{@path} && convox apps").match(/RELEASE/)
-  end
-
-  def kubernetes_ready?
-    exec_command("microk8s.status").match(/microk8s is running/)
-  end
-
-  def start_kubernetes
-    exec_command("microk8s.start && microk8s.status --wait-ready")
-  end
-
-  def convox_app_path(convox_app)
-    path = np_service_path(convox_app) unless convox_app == 'kraken/superlocal'
-    path ? path : "#{@path}/#{convox_app}"
-  end
-
-  def convox_app_path_exists?(convox_app)
-    File.directory?(convox_app_path(convox_app))
-  end
-
-  def convox_app_exists?(convox_app)
-    return false if convox_app.nil?
-    exec_command("convox apps").match("#{convox_app}  running")
-  end
-
-  def create_convox_app(convox_app)
-    exec_command([
-        "cd #{convox_app_path(convox_app)}",
-        "convox apps create #{convox_app}",
-        "#{@bin_path}/kmd-local refresh-env -- local #{convox_app} no-confirm",
-        "#{@bin_path}/kmd-local refresh-yml -- local #{convox_app} no-confirm"
-      ].join(" && ")
-    )
   end
 
   def fix_dns_and_aws

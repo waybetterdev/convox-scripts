@@ -10,14 +10,13 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 
-
 if ! [ -x "$(command -v nvm)" ]; then
 	echo "Installing nvm"
 	echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
 	sleep 10s
 
 
-  apt-get update && apt-get install -y \
+  sudo apt-get update && apt-get install -y \
     vim \
     curl \
     less \
