@@ -26,6 +26,12 @@ if ! [ -x "$(command -v nvm)" ]; then
   curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash 
 
   source ~/.profile
+
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+  nvm install node 
 else
   echo 'nvm is already installed. Skipping.'
 fi
