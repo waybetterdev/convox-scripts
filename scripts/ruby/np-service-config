@@ -74,7 +74,7 @@ class NpServiceConfig < OpBase
       puts "Old convox apps that need to be deleted: #{apps_to_delete.inspect.green}"
     elsif self.opts_write && apps_to_delete
       apps_to_delete.each do |s| 
-        puts "Deleting convox app '#{s.green}'. This may take a while to comple."
+        puts "Deleting convox app '#{s.green}'. This may take a while to complete."
         delete_convox_app(s)
       end
     end
@@ -84,7 +84,7 @@ class NpServiceConfig < OpBase
       puts "Convox apps that need to be created: #{apps_to_create.inspect.green}"
     elsif self.opts_write && apps_to_create
       apps_to_create.each do |s| 
-        puts "Creating convox app '#{s.green}'. This may take a while to comple."
+        puts "Creating convox app '#{s.green}'. This may take a while to complete."
         create_convox_app(s)
       end
     end

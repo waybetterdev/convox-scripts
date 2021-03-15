@@ -283,7 +283,6 @@ class EnvBuilder < OpBase
       'STEPBET_GAME_SERVICE_URL'        => -> { np_service_internal_url('stepbet') },
       'WB_STEPBET_ADMIN_URL'            => -> { np_service_internal_url('stepbet') + '/admin' },
 
-      'DIETBET_GAME_SERVICE_HOST'       => -> { np_service_internal_url('dietbet-game-service') },
       'DIETBET_GAME_SERVICE_URL'        => -> { np_service_internal_url('dietbet') },
       'WB_DIETBET_ADMIN_URL'            => -> { np_service_internal_url('dietbet') + 'admin' },
 
