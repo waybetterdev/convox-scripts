@@ -4,12 +4,6 @@
 # exit when any command fails
 set -e
 
-# Checking if script running with sudo
-if [[ $(id -u) -ne 0 ]]
-    then echo "Please run with sudo ..."
-    exit 1
-fi
-
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
