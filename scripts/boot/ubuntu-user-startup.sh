@@ -39,7 +39,7 @@ echo $(date) + ": killing old tmux session" >> /home/dev/tmux-boot-logs/wbtmux.t
 tmux kill-session -t lconvox >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
 echo $(date) + ": running wbtmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
-ruby /home/dev/Work/docs/scripts/ruby/wbtmux -r mysql,user,auth,bill,falkor,graphql,admin-auth,admin-web,metric,notify,member,quitbet,social -o hub,runbet -w >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
+ruby /home/dev/Work/docs/scripts/ruby/wbtmux -r mysql,user,auth,bill,falkor,graphql,admin-auth,admin-web,metric,notify,member,quitbet,social,hub -o runbet -w >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 
 #echo $(date) + ": opening tmux" >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
 #tmux attach -t lconvox >> /home/dev/tmux-boot-logs/wbtmux.txt 2>&1
