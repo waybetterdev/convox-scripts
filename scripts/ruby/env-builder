@@ -231,8 +231,8 @@ class EnvBuilder < OpBase
       'RUNBET_GAME_SERVICE_URL'       => -> { np_service_internal_url('runbet-game-service') },
       'WB_BILLING_SERVICE_URL'        => -> { np_service_internal_url('wb-billing-service') },
       'WB_MEMBERSHIP_SERVICE_URL'     => -> { np_service_internal_url('wb-membership-service') },
-      #falkor needs MEMBERSHIP_SERVICE_HOST instead of WB_MEMBERSHIP_SERVICE_HOST
-      'MEMBERSHIP_SERVICE'       => -> { np_service_internal_url('wb-membership-service') },
+      # falkor needs MEMBERSHIP_SERVICE_HOST instead of WB_MEMBERSHIP_SERVICE_HOST
+      'MEMBERSHIP_SERVICE_URL'        => -> { np_service_internal_url('wb-membership-service') },
       'WB_METRIC_SERVICE_URL'         => -> { np_service_internal_url('wb-metric-service') },
       'WB_SOCIAL_SERVICE_URL'         => -> { np_service_internal_url('wb-social-service') },
       'WB_USER_SERVICE_URL'           => -> { np_service_internal_url('wb-user-service') },
