@@ -300,7 +300,7 @@ class EnvBuilder < OpBase
 
   def get_system_env(name)
     val = ENV[name.to_s]
-    exit_with_error "System environment varible #{name} not set" unless val
+    exit_with_error "System environment variable #{name} not set" unless val
     val
   end
 
