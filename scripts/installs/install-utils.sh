@@ -14,7 +14,7 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 cd
 
-sudo apt-get install -y git tmux vim htop openssh-server net-tools git-flow
+sudo apt-get install -y git tmux vim htop openssh-server net-tools git-flow libmysqlclient-dev
 
 
 #if ! [ -x "$(command -v github-desktop)" ]; then
@@ -44,3 +44,7 @@ gsettings set org.gnome.desktop.interface enable-animations false
 timedatectl set-local-rtc 1 --adjust-system-clock
 
 sudo apt install default-jre
+
+
+echo "Please disable unattended updates"
+sudo dpkg-reconfigure unattended-upgrades
