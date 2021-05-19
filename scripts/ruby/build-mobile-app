@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-XXX
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+XXX
+  exit(1)
+end
+
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+
+# CLI script which will start tmux
+class BuildMobileApp < OpBase
+  def go
+    base_path = Dir.getwd
+    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/keystore.properties #{base_path}/android/keystore.properties",
+      exit_on_fail: true, 
+      message: "Copying keystore.properties"
+    )
+    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/app/DietbetterApp.keystore #{base_path}/android/app/DietbetterApp.keystore",
+      exit_on_fail: true, 
+      message: "Copying DietbetterApp.keystore"
+    )
+    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/app/upload-keystore.jks #{base_path}/android/app/upload-keystore.jks",
+      exit_on_fail: true, 
+      message: "Copying upload-keystore.jks"
+    )
+    
+    exec_command_in_path("#{base_path}/android", 
+      "./gradlew clean assembleStagingDebug -Pcredentialssource=properties",
+      message: "Running gradle"
+    )
+
+    exec_command_in_path("#{base_path}/android/app/build/outputs/apk/staging/debug", 
+      "adb install app-staging-debug.apk",
+      message: "Sending the APK file to the phone"
+    )
+
+    exec_ic_command("rm -f #{base_path}/android/keystore.properties")
+    exec_ic_command("rm -f #{base_path}/android/app/DietbetterApp.keystore")
+    exec_ic_command("rm -f #{base_path}/android/app/upload-keystore.jks")
+
+  end
+
+  def exec_command_in_path(path, cmd, message:)
+    exec_ic_command("cd #{path} && #{cmd}",
+      exit_on_fail: true, 
+      message: message.blue
+    )
+  end
+
+end
+
+BuildMobileApp.new.go
