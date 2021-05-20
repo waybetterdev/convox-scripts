@@ -22,7 +22,7 @@ end
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
 # CLI script which will start tmux
-class BuildMobileApp < OpBase
+class BuildAndroidApp < OpBase
   def go
     base_path = Dir.getwd
     exec_ic_command("cp -f #{path_secrets}/mobile-app/android/keystore.properties #{base_path}/android/keystore.properties",
@@ -63,4 +63,4 @@ class BuildMobileApp < OpBase
 
 end
 
-BuildMobileApp.new.go
+BuildAndroidApp.new.go

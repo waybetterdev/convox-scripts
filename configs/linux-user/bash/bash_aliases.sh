@@ -57,8 +57,6 @@ alias cdquitbetmobile='cd ~/Work/mobile-apps/quitbet-mobile;lcd'
 alias cddietbetmobile='cd ~/Work/mobile-apps/dietbet-mobile;lcd'
 alias cdstepbetmobile='cd ~/Work/mobile-apps/stepbet-mobile;lcd'
 
-alias buildandroidapp='cd ./android && ./gradlew clean assembleStagingDebug -Pcredentialssource=properties && cd ../'
-
 
 #utils
 alias notepad=sublime-text.subl

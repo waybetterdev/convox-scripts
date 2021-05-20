@@ -54,7 +54,7 @@ class KCopy
 
     info "Copying file '#{file}'"
     #cmd = build_convox_command("cat '#{file}'") + " | tr -d '\r' > '#{file}'"
-    cmd = build_convox_command('cat "' + file + '"') + " | tr -d '\r' > '#{file}'"
+    cmd = build_convox_command('cat "' + file + '"') + " | tr -d '\r' > '#{file}.tmp'"
     if exec_command(cmd)
       info "Success. "
     end
