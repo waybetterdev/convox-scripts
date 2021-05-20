@@ -23,41 +23,59 @@ require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
 # CLI script which will start tmux
 class BuildAndroidApp < OpBase
+  attr_accessor :android_app_path
+
   def go
-    base_path = Dir.getwd
-    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/keystore.properties #{base_path}/android/keystore.properties",
-      exit_on_fail: true, 
-      message: "Copying keystore.properties"
-    )
-    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/app/DietbetterApp.keystore #{base_path}/android/app/DietbetterApp.keystore",
-      exit_on_fail: true, 
-      message: "Copying DietbetterApp.keystore"
-    )
-    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/app/upload-keystore.jks #{base_path}/android/app/upload-keystore.jks",
-      exit_on_fail: true, 
-      message: "Copying upload-keystore.jks"
-    )
+    self.android_app_path = Dir.getwd
+
+    unless File.directory?('./android')
+      puts "Android directory not found.".red
+      exit
+    end
+
+    prepare_secret_file("keystore.properties")
+    prepare_secret_file("app/DietbetterApp.keystore")
+    prepare_secret_file("app/upload-keystore.jks")
     
-    exec_command_in_path("#{base_path}/android", 
-      "./gradlew clean assembleStagingDebug -Pcredentialssource=properties",
+    # exec_command_in_path("nvm use && npm install",
+    #   path: "#{android_app_path}", 
+    #   message: "Running gradle"
+    # )
+
+    exec_command_in_path("./gradlew clean assembleStagingDebug -Pcredentialssource=properties",
+      path: "#{android_app_path}/android", 
       message: "Running gradle"
     )
 
-    exec_command_in_path("#{base_path}/android/app/build/outputs/apk/staging/debug", 
-      "adb install app-staging-debug.apk",
+    exec_command_in_path( "adb install app-staging-debug.apk",
+      path: "#{android_app_path}/android/app/build/outputs/apk/staging/debug",
       message: "Sending the APK file to the phone"
     )
 
-    exec_ic_command("rm -f #{base_path}/android/keystore.properties")
-    exec_ic_command("rm -f #{base_path}/android/app/DietbetterApp.keystore")
-    exec_ic_command("rm -f #{base_path}/android/app/upload-keystore.jks")
+    cleanup_secret_file("keystore.properties")
+    cleanup_secret_file("app/DietbetterApp.keystore")
+    cleanup_secret_file("app/upload-keystore.jks")
 
   end
 
-  def exec_command_in_path(path, cmd, message:)
+  def cleanup_secret_file(file)
+    exec_ic_command("rm -f #{android_app_path}/android/#{file}",
+      exit_on_fail: false, 
+      message: "Deleting #{file}".green
+    )
+  end
+
+  def prepare_secret_file(file)
+    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/#{file} #{android_app_path}/android/#{file}",
+      exit_on_fail: true, 
+      message: "Copying #{file}".green
+    )
+  end
+
+  def exec_command_in_path(cmd, path:, message:)
     exec_ic_command("cd #{path} && #{cmd}",
       exit_on_fail: true, 
-      message: message.blue
+      message: message.green
     )
   end
 
