@@ -14,7 +14,7 @@ trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 cd
 
-sudo apt-get install -y git tmux vim htop openssh-server net-tools git-flow libmysqlclient-dev filezilla curl less mysql-client
+sudo apt-get install -y git tmux vim htop openssh-server net-tools git-flow libmysqlclient-dev filezilla curl less mysql-client libpq-dev
 
 #if ! [ -x "$(command -v github-desktop)" ]; then
 	#echo "Installing github-desktop"
