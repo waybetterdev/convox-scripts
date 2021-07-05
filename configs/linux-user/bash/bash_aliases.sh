@@ -65,6 +65,8 @@ alias npmstartservice="lrun bash -ic 'nvm use && nvm ls && npm start'"
 alias npminstallservice="bash -ic 'nvm install && nvm ls && lrun npm install'"
 alias npmmigrate="lrun bash -ic 'NODE_ENV=test ./node_modules/.bin/sequelize db:migrate'"
 
+alias lintfix="npx eslint ./src --fix"
+
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
 
 alias restartapache='sudo systemctl restart apache2.service'
@@ -77,5 +79,6 @@ alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazona
 alias convoxenvreloadall="~/Work/docs/scripts/bash/convox-reload-all-envs.sh"
 alias convoxymlreloadall="~/Work/docs/scripts/bash/convox-reload-all-local-ymls.sh"
 
+alias 7zmaxcompression="sudo 7z a -t7z -m0=lzma2 -mx=9 -aoa"
 
 alias printnodeapps="netstat -tulpn | grep node"
