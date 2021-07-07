@@ -58,6 +58,7 @@ class NpServiceConfig < OpBase
       self.add_debug_option(opts)
       self.add_print_option(opts, "Print config to screen")
       self.add_write_option(opts, "Apply config")
+      self.add_delete_option(opts, "Delete unnecessary convox apps")
 
       add_help_option(opts)
     end
@@ -72,7 +73,7 @@ class NpServiceConfig < OpBase
     apps_to_delete = old_apps - new_apps
     if self.opts_print
       puts "Old convox apps that need to be deleted: #{apps_to_delete.inspect.green}"
-    elsif self.opts_write && apps_to_delete
+    elsif self.opts_write && self.opts_delete && apps_to_delete
       apps_to_delete.each do |s| 
         puts "Deleting convox app '#{s.green}'. This may take a while to complete."
         delete_convox_app(s)

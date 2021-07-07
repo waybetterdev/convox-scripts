@@ -1,7 +1,7 @@
 
 class OpBase
 
-  attr_accessor :option_parser, :debug
+  attr_accessor :option_parser, :debug, :opts_write, :opts_delete
 
   ################ OP SERVERS ###################
   def load_op_severs_config
@@ -245,6 +245,12 @@ class OpBase
   def add_write_option(opts, message)
     opts.on("-w", "--write", message) do |x|
       self.opts_write = true
+    end
+  end
+
+  def add_delete_option(opts, message)
+    opts.on("-d", "--delete", message) do |x|
+      self.opts_delete = true
     end
   end
 
