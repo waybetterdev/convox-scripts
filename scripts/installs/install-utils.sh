@@ -16,6 +16,9 @@ cd
 
 sudo apt-get install -y git tmux vim htop openssh-server net-tools git-flow libmysqlclient-dev filezilla curl less mysql-client libpq-dev
 
+# required by idn-ruby gem
+sudo apt-get install -y libldap2-dev libidn11-dev
+
 #if ! [ -x "$(command -v github-desktop)" ]; then
 	#echo "Installing github-desktop"
 	#echo "Sleeping for 10 seconds. Click ctrl+C to abort script." 
