@@ -26,7 +26,7 @@ class OpKonnect < OpBase
   attr_accessor :server, :command, :option_parser, :debug
 
   def initialize
-    load_settings
+    load_op_severs_config
   end
 
   def go

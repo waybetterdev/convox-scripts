@@ -19,6 +19,9 @@ echo 'Well, there we go then! Running the script...'
 # apt update
 apt install -y curl unzip wget  git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
 
+#mysql client is required by wb-game
+sudo apt-get install libmysqlclient-dev
+
 # Install yarn
 npm -g install yarn
 
@@ -53,11 +56,14 @@ export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
 # Install Ruby
 rbenv install -v 2.6.2
 rbenv install -v 2.6.3
+rbenv install -v 2.7.1
+rbenv install -v 2.7.2
 rbenv global 2.6.2
 
 gem install bundler
-gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo'
+gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo' 'tty-prompt' 'pry-byebug'
 rbenv rehash
+
 
 # Change folder and files owner
 chown -R "$SCRIPT_USER":"$SCRIPT_USER" /home/"$SCRIPT_USER"

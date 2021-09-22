@@ -89,7 +89,10 @@ PAPERTRAIL_GROUPS = {
   "production" => "prod-west",
 }.freeze
 
-class Kmd
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+
+# CLI script which will start tmux
+class Kmd < OpBase
   def initialize(confirm: true)
     @production = false
     @confirm = confirm
@@ -279,14 +282,16 @@ class Kmd
   end
 
   def find_env_file
-    if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local")
+    if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local.tmp")
+      "#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local.tmp"
+    elsif File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local")
       "#{Dir.home}/Work/docs/local-settings/convox-env/#{self.app}.env.local"
     elsif File.file?("#{Dir.home}/Work/docs/configs/templates/convox-env/#{self.app}.env.local")
       "#{Dir.home}/Work/docs/configs/templates/convox-env/#{self.app}.env.local"
     elsif File.file?(".env.local")
       ".env.local"
     else
-      exit_with_error("Could not find env file")
+      exit_with_error("Could not find env file for #{self.app}")
     end
   end
 
@@ -309,10 +314,10 @@ class Kmd
     default = `convox switch`.strip
     default = "local" if default =~ /local/
     default = default.split("/").last if default["/"]
-    choices = RACKS.keys.grep Regexp.new(rack_filter || ".*")
-    choices = RACKS.keys if choices.empty?
+    choices = convox_racks.keys.grep Regexp.new(rack_filter || ".*")
+    choices = convox_racks.keys if choices.empty?
     rack = choose(msg: "Rack (default: #{default})", field: :command, choices: choices, default: default)
-    RACKS[rack]
+    convox_racks[rack]
   end
 
   def choose_app
@@ -320,6 +325,8 @@ class Kmd
     default = (dir if APPS.include?(dir))
 
     return APPS[app_filter] if APPS.key?(app_filter)
+    return app_filter if APPS.values.include?(app_filter)
+
     choices = APPS.keys.grep Regexp.new(app_filter || ".*")
     choices = APPS.keys if choices.empty?
     msg = "App"
@@ -456,9 +463,9 @@ class Kmd
   HELP
 
   def exit_with_error(msg)
-    show_help
+    # show_help
     puts msg.red
-    exit(1)
+    exit
   end
 end
 

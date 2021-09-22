@@ -13,7 +13,7 @@
 
 # Ensure the environment is available
 export HOME="/home/dev/"
-export PATH="/home/dev/.rbenv/plugins/ruby-build/bin:/home/dev/.rbenv/shims:/home/dev/.rbenv/bin:/home/dev/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+export PATH="/home/dev/.rbenv/plugins/ruby-build/bin:/usr/local/rbenv/shims:/usr/local/rbenv/bin:/home/dev/.nvm/versions/node/v10.16.3/bin:/home/dev/.rbenv/plugins/ruby-build/bin:/usr/local/rbenv/shims:/usr/local/rbenv/bin:/home/dev/.rbenv/plugins/ruby-build/bin:/usr/local/rbenv/shims:/usr/local/rbenv/bin:/home/dev/.rbenv/plugins/ruby-build/bin:/usr/local/rbenv/shims:/usr/local/rbenv/bin:/home/dev/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/dev/.local/bin:/home/dev/.local/bin:/home/dev/Work/docs/scripts/ruby:/home/dev/Work/docs/scripts/ruby:/home/dev/Work/wb-services/kraken/bin:/home/dev/Work/wb-services/kraken/bin"
 
 source /home/dev/.bashrc
 source /home/dev/.bash_aliases

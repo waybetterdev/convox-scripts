@@ -1,6 +1,7 @@
 #!/bin/bash
 
-/bin/bash ~/Work/docs/secrets/bash-secrets.sh
+chmod +x ~/Work/docs/secrets/bash-secrets.sh
+. ~/Work/docs/secrets/bash-secrets.sh
 
 #awscli
 export PATH="${PATH}:$HOME/.local/bin"
@@ -42,25 +43,43 @@ alias cdauth='cd ~/Work/wb-services/wb-auth-service;lcd'
 alias cdadminauth='cd ~/Work/wb-services/wb-admin-auth-service;lcd'
 alias cdgraphql='cd ~/Work/wb-services/wb-graphql-service;lcd'
 alias cdadminweb='cd ~/Work/wb-services/wb-admin-web;lcd'
+alias cdquitbet='cd ~/Work/wb-services/quitbet-game-service;lcd'
 alias cddietbet='cd /var/www/dietbet;lcd'
-alias cddietbetdev='cd /var/www/dietbet_dev;lcd'
-alias cddietbetprod='cd /var/www/dietbet_prod;lcd'
+alias cddietbetdev='cd /var/www/dietbet-dev;lcd'
+alias cddietbetprod='cd /var/www/dietbet-prod;lcd'
 alias cdstepbet='cd /var/www/stepbet;lcd'
-alias cdstepbetdev='cd /var/www/stepbet_dev;lcd'
-alias cdstepbetprod='cd /var/www/stepbet_prod;lcd'
+alias cdstepbetdev='cd /var/www/stepbet-dev;lcd'
+alias cdstepbetprod='cd /var/www/stepbet-prod;lcd'
+
+alias cdmobile='cd ~/Work/mobile-apps;lcd'
+alias cdwaybettermobile='cd ~/Work/mobile-apps/waybetter-mobile;lcd'
+alias cdquitbetmobile='cd ~/Work/mobile-apps/quitbet-mobile;lcd'
+alias cddietbetmobile='cd ~/Work/mobile-apps/dietbet-mobile;lcd'
+alias cdstepbetmobile='cd ~/Work/mobile-apps/stepbet-mobile;lcd'
+
 
 #utils
 alias notepad=sublime-text.subl
 
+alias npmstartservice="lrun bash -ic 'nvm use && nvm ls && npm start'"
+alias npminstallservice="bash -ic 'nvm install && nvm ls && lrun npm install'"
+alias npmmigrate="lrun bash -ic 'NODE_ENV=test ./node_modules/.bin/sequelize db:migrate'"
+
+alias lintfix="npx eslint ./src --fix"
 
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
 
 alias restartapache='sudo systemctl restart apache2.service'
 alias stopapache='sudo systemctl stop apache2.service'
 alias restartwbtmuxservice='systemctl --user restart wbtmux'
+alias rebuildapacheproxy='~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh'
 
 
 alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
 alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
 alias convoxenvreloadall="~/Work/docs/scripts/bash/convox-reload-all-envs.sh"
 alias convoxymlreloadall="~/Work/docs/scripts/bash/convox-reload-all-local-ymls.sh"
+
+alias 7zmaxcompression="sudo 7z a -t7z -m0=lzma2 -mx=9 -aoa"
+
+alias printnodeapps="netstat -tulpn | grep node"

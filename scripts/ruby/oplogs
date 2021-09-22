@@ -22,33 +22,33 @@ end
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 class OpDeploy < OpBase
 
-  attr_accessor :app, :option_parser, :file, :debug, :open_files, :join_files
+  attr_accessor :opts_op_app, :option_parser, :file, :debug, :open_files, :join_files
 
   def initialize
-    load_settings
+    load_op_severs_config
   end
 
   def go
     parse_opts
 
-    download_log_file(self.app, self.file)
+    download_log_file(self.opts_op_app, self.file)
   end
 
   def download_log_file(app, file)
-    deploy_config = deploy_config(app)
-    src_file = "#{deploy_config[:dst]}/system/logs/#{file}"
+    op_deploy_config = op_deploy_config(app)
+    src_file = "#{op_deploy_config[:dst]}/system/logs/#{file}"
     
     dst_dir = "#{Dir.home}/Work/deploy/logs/#{app}"
     unless Dir.exist?(dst_dir)
       exit_with_error "Destination directory `#{dst_dir}` not found. Please create it."
     end
 
-    server_count = deploy_config[:hostnames].count
+    server_count = op_deploy_config[:hostnames].count
     downloaded_files = []
-    deploy_config[:hostnames].each_with_index do |hostname, index|
+    op_deploy_config[:hostnames].each_with_index do |hostname, index|
       prefix = server_count > 1 ? "FT-#{index + 1}-" : ''
       dst_file = "#{dst_dir}/#{prefix}#{File.basename(file)}"
-      copy_file_via_ssh(deploy_config[:user], hostname, deploy_config[:key], src_file, dst_file)
+      copy_file_via_ssh(op_deploy_config[:user], hostname, op_deploy_config[:key], src_file, dst_file)
       downloaded_files.push(dst_file)
     end
 
@@ -111,11 +111,11 @@ END
     end
     self.option_parser.parse!(ARGV)
 
-    if self.app.nil? 
+    if self.opts_op_app.nil? 
       exit_with_error("app parameter is required")
     end
-    deploy_config = deploy_config(self.app)
-    if deploy_config.nil?
+    op_deploy_config = op_deploy_config(self.opts_op_app)
+    if op_deploy_config.nil?
       exit_with_error("app not found")
     end
 

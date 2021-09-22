@@ -19,7 +19,7 @@ XXX
   exit(1)
 end
 
-class KRubocop
+class KCopy
   attr_accessor :app, :rack, :file, :service_filter, :op, :any, :instance_id
 
   CONVOX_BIN = `which convox`.strip
@@ -54,7 +54,7 @@ class KRubocop
 
     info "Copying file '#{file}'"
     #cmd = build_convox_command("cat '#{file}'") + " | tr -d '\r' > '#{file}'"
-    cmd = build_convox_command('cat "' + file + '"') + " | tr -d '\r' > '#{file}'"
+    cmd = build_convox_command('cat "' + file + '"') + " | tr -d '\r' > '#{file}.tmp'"
     if exec_command(cmd)
       info "Success. "
     end
@@ -189,4 +189,4 @@ BAN
   end
 end
 
-KRubocop.new.go
+KCopy.new.go
