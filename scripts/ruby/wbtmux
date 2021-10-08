@@ -147,7 +147,7 @@ class Wbtmux < OpBase
         end 
 
         path = convox_app_path(convox_app)
-        app_command = "kk start -- local #{app}"
+        app_command = "startconvoxapp"
       elsif np_service_is_on_local_kraken(convox_app)
         exec_command "install-node-app -a #{app}" unless convox_app_path_exists?(convox_app)
         app_command = "npmstartservice"
