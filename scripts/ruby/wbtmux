@@ -146,7 +146,7 @@ class Wbtmux < OpBase
           create_convox_app(convox_app)
         end 
 
-        app_command = "env-builder -w -a #{app} && kk refresh-yml -- local falkor && kk refresh-env -- local #{app} no-confirm && startconvoxapp"
+        app_command = "env-builder -w -a #{app} && kk refresh-yml -- local #{app} && kk refresh-env -- local #{app} no-confirm && startconvoxapp"
       elsif np_service_is_on_local_kraken(convox_app)
         exec_command "install-node-app -a #{app}" unless convox_app_path_exists?(convox_app)
         app_command = "npmstartservice"
