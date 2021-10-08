@@ -204,7 +204,7 @@ class EnvBuilder < OpBase
       if /_PORT$/ =~ key
         /https/ =~ value ? '443' : '80' 
       elsif /_HOST$/ =~ key
-        value.gsub(/http(s)?\:\/\//, '')
+        value.gsub(/http(s)?\:\/\//, '').gsub(/\:[0-9]+/, '')
       end
     elsif /_DB_HOST$/ =~ key && /^192/ =~ value
       get_local_ip 
