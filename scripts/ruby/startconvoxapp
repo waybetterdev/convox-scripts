@@ -38,7 +38,7 @@ class StartConvoxApp < OpBase
 
   def prepare_start_script
     script = <<~END
-wget https://dev.dietbet.com/files/convox/office-dev-convox-local-rack.crt -O "/usr/share/ca-certificates/convox.crt" 
+wget --no-check-certificate https://dev.dietbet.com/files/convox/office-dev-convox-local-rack.crt -O "/usr/share/ca-certificates/convox.crt" 
 echo "convox.crt" >> "/etc/ca-certificates.conf"
 update-ca-certificates
 cat "/usr/share/ca-certificates/convox.crt"
