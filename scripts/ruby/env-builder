@@ -4,6 +4,7 @@ public
 
 require 'optparse'
 require 'open3'
+require 'uri/http'
 
 begin
   require 'highline'
@@ -196,15 +197,17 @@ class EnvBuilder < OpBase
   private 
 
   def call_val_proc(key, value)
-    url_key = key.gsub(/_(HOST|PORT)$/, '_URL')
+    url_key = key.gsub(/_(HOST|PORT|SCHEME)$/, '_URL')
     if val_procs[key]
       val_procs[key].call
     elsif val_procs[url_key]
       value = val_procs[url_key].call
       if /_PORT$/ =~ key
-        /https/ =~ value ? '443' : '80' 
+        URI.parse(value).port
       elsif /_HOST$/ =~ key
-        value.gsub(/http(s)?\:\/\//, '').gsub(/\:[0-9]+/, '')
+        URI.parse(value).hostname
+      elsif /_SCHEME$/ =~ key
+        URI.parse(value).scheme
       end
     elsif /_DB_HOST$/ =~ key && /^192/ =~ value
       get_local_ip 
