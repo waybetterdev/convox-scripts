@@ -61,6 +61,8 @@ alias cdstepbetmobile='cd ~/Work/mobile-apps/stepbet-mobile;lcd'
 #utils
 alias notepad=sublime-text.subl
 
+alias editnpconfig="gedit ~/Work/docs/local-settings/np-services-config.rb"
+
 alias npmstartservice="lrun bash -ic 'nvm use && nvm ls && npm start'"
 alias npminstallservice="bash -ic 'nvm install && nvm ls && lrun npm install'"
 alias npmmigrate="lrun bash -ic 'NODE_ENV=test ./node_modules/.bin/sequelize db:migrate'"
