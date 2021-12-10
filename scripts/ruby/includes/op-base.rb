@@ -3,6 +3,12 @@ class OpBase
 
   attr_accessor :option_parser, :debug, :opts_write, :opts_delete
 
+  LOCATION_KRAKEN_LOCAL = 'kraken'
+  LOCATION_CONVOX_LOCAL = 'convox-local'
+  LOCATION_OFFICE_CONVOX = 'remote-convox-office'
+  LOCATION_APACHE_LOCAL = 'apache-local'
+
+
   ################ OP SERVERS ###################
   def load_op_severs_config
     if File.exists?("#{path_local_settings}/op-servers-config.rb")
@@ -46,16 +52,22 @@ class OpBase
     end
     @__np_services ||= begin
       [
-        NpServices::NP_SERVICES[:local_kraken].map          { |s| s.merge(location: 'kraken') },
-        NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: 'convox-local') },
-        NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: 'remote-convox-office') },
-        NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: 'apache-local') },
+        NpServices::NP_SERVICES[:local_kraken].map          { |s| s.merge(location: LOCATION_KRAKEN_LOCAL) },
+        NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: LOCATION_CONVOX_LOCAL) },
+        NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: LOCATION_OFFICE_CONVOX) },
+        NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) },
       ]
       .flatten
       .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
         folder_name = service_data[:name]
-        service_data[:path] ||= (service_data[:location] == 'kraken') ? "#{path_kraken}/#{folder_name}" : "#{path_wb_services}/#{folder_name}"
+        service_data[:path] ||= begin 
+          if service_data[:location] == LOCATION_KRAKEN_LOCAL
+            "#{path_kraken}/#{folder_name}"
+          else
+            "#{path_wb_services}/#{folder_name}"
+          end
+        end
         
         if hash[name]
           exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
@@ -69,13 +81,13 @@ class OpBase
 
   def local_kraken_np_services
     @__local_kraken_np_services ||= begin
-      np_services.map { |k, v| v[:location] == 'kraken' ? v[:name] : nil }.compact
+      np_services.map { |k, v| v[:location] == LOCATION_KRAKEN_LOCAL ? v[:name] : nil }.compact
     end
   end
 
   def local_convox_np_services
     @__local_convox_np_services ||= begin
-      np_services.map { |k, v| v[:location] == 'convox-local' ? v[:name] : nil }.compact
+      np_services.map { |k, v| v[:location] == LOCATION_CONVOX_LOCAL ? v[:name] : nil }.compact
     end
   end
 
@@ -204,19 +216,27 @@ class OpBase
   end
 
   def np_service_is_on_convox_office(name)
-    np_service_location(name) == 'remote-convox-office'
+    np_service_location(name) == LOCATION_OFFICE_CONVOX
   end
 
   def np_service_is_on_local_kraken(name)
-    np_service_location(name) == 'kraken'
+    np_service_location(name) == LOCATION_KRAKEN_LOCAL
   end
 
   def np_service_is_on_local_convox(name)
-    np_service_location(name) == 'convox-local'
+    np_service_location(name) == LOCATION_CONVOX_LOCAL
   end
 
   def np_service_is_on_local_apache(name)
-    np_service_location(name) == 'apache-local'
+    np_service_location(name) == LOCATION_APACHE_LOCAL
+  end
+
+  def np_service_is_ruby(name)
+    np_service_config(name)[:type] == 'ruby'
+  end  
+  
+  def np_service_is_node(name)
+    np_service_config(name)[:type] == 'node'
   end
 
   ################ NP SERVICES ###################
@@ -353,7 +373,7 @@ class OpBase
       domain_part = 'office'
     else
       location ||= np_service_location(name)
-      domain_part = (location == 'remote-convox-office') ? 'office' : 'local'
+      domain_part = (location == LOCATION_OFFICE_CONVOX) ? 'office' : 'local'
     end
     
     domain.gsub(/(local|office)/, domain_part)

@@ -85,3 +85,4 @@ alias convoxymlreloadall="~/Work/docs/scripts/bash/convox-reload-all-local-ymls.
 alias 7zmaxcompression="sudo 7z a -t7z -m0=lzma2 -mx=9 -aoa"
 
 alias printnodeapps="netstat -tulpn | grep node"
+alias printrailsapps="netstat -tulpn | grep puma"
