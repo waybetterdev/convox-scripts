@@ -1,7 +1,6 @@
-
 class OpBase
 
-  attr_accessor :option_parser, :debug, :opts_write, :opts_delete
+  attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_exec
 
   LOCATION_KRAKEN_LOCAL = 'kraken'
   LOCATION_CONVOX_LOCAL = 'convox-local'
@@ -11,9 +10,9 @@ class OpBase
 
   ################ OP SERVERS ###################
   def load_op_severs_config
-    if File.exists?("#{path_local_settings}/op-servers-config.rb")
+    if File.exist?("#{path_local_settings}/op-servers-config.rb")
       require "#{path_local_settings}/op-servers-config.rb" 
-    elsif File.exists?("#{path_templates}/op-servers-config.rb")
+    elsif File.exist?("#{path_templates}/op-servers-config.rb")
       require "#{path_templates}/op-servers-config.rb"
     else
       exit_with_error("Could not find 'op-servers-config.rb' either in local-settings or templates")
@@ -37,9 +36,9 @@ class OpBase
   def load_np_services_config
     return if defined?(NpServices)
 
-    if File.exists?("#{path_local_settings}/np-services-config.rb")
+    if File.exist?("#{path_local_settings}/np-services-config.rb")
       require "#{path_local_settings}/np-services-config.rb" 
-    elsif File.exists?("#{path_templates}/np-services-config.rb")
+    elsif File.exist?("#{path_templates}/np-services-config.rb")
       require "#{path_templates}/np-services-config.rb"
     else
       exit_with_error("Could not find 'np-services-config.rb' either in local-settings or templates")
@@ -61,13 +60,7 @@ class OpBase
       .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
         folder_name = service_data[:name]
-        service_data[:path] ||= begin 
-          if service_data[:location] == LOCATION_KRAKEN_LOCAL
-            "#{path_kraken}/#{folder_name}"
-          else
-            "#{path_wb_services}/#{folder_name}"
-          end
-        end
+        service_data[:path] ||= "#{path_wb_services}/#{folder_name}"
         
         if hash[name]
           exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
@@ -81,13 +74,13 @@ class OpBase
 
   def local_kraken_np_services
     @__local_kraken_np_services ||= begin
-      np_services.map { |k, v| v[:location] == LOCATION_KRAKEN_LOCAL ? v[:name] : nil }.compact
+      np_services.map { |_k, v| v[:location] == LOCATION_KRAKEN_LOCAL ? v[:name] : nil }.compact
     end
   end
 
   def local_convox_np_services
     @__local_convox_np_services ||= begin
-      np_services.map { |k, v| v[:location] == LOCATION_CONVOX_LOCAL ? v[:name] : nil }.compact
+      np_services.map { |_k, v| v[:location] == LOCATION_CONVOX_LOCAL ? v[:name] : nil }.compact
     end
   end
 
@@ -279,6 +272,17 @@ class OpBase
       self.opts_print = true
     end
   end
+
+  def add_exec_option(opts)
+    opts.on("-e", "--exec=E", "Command to execute") do |x|
+      self.opts_exec = x
+    end
+  end
+
+  def np_service_env_path(app)
+    "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local"
+  end
+
 
   def add_np_app_option(opts)
     opts.on("-a", "--app=A", "Required, NP application name") do |x|

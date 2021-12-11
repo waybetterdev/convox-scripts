@@ -21,7 +21,7 @@ end
 
 require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
 
-class InstallNodeApp < OpBase
+class PrepareLocalService < OpBase
 
   attr_accessor :opts_np_app
 
@@ -89,8 +89,13 @@ class InstallNodeApp < OpBase
     else
       throw "Could not detect whether '#{opts_np_app}' is a ruby or node app." 
     end
-
   end
+
+  def ruby_version
+    
+  end
+
+
 end
 
-InstallNodeApp.new.go
+PrepareLocalService.new.go

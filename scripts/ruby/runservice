@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError => x
+  puts <<-END
+To run this utility:
+  gem install 'highline'
+  gem install 'colored'
+  gem install 'ruby-terminfo'
+END
+  exit(1)
+end
+
+require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+require File.expand_path('../', __FILE__) + "/includes/kenv.rb"
+
+class RunService < OpBase
+
+  attr_accessor :opts_np_app
+
+  ENV_OVERRIDES = {
+    'WB_LOCAL_STANDALONE' => 'true',
+    'RAILS_ENV' => "development",
+    'WB_NOTIFY_SERVICE_DAEMON_THREADS' => "1",
+    'WB_NOTIFY_SERVICE_MAX_HTTP_THREADS' => "1"
+  }
+
+  def go
+    parse_opts
+
+    Kenv.exec_with_env(
+      app: File.basename(np_service_path(opts_np_app)),
+      service: "web",
+      args: [opts_exec],
+      extra_env: ENV_OVERRIDES,
+      global_env_fn: np_service_env_path(opts_np_app)
+    )
+  end
+
+  HELP = <<-BAN
+  Execute commands either on local rails and node apps with all ENV variables preloaded.
+  Ex:
+    prepare-node-app -a wb-user-service
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+
+      opts.banner = HELP
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      self.add_debug_option(opts)
+      self.add_exec_option(opts)
+
+      add_np_app_option(opts)
+
+      add_help_option(opts)
+    end
+    self.option_parser.parse!(ARGV)
+
+    if opts_np_app.nil? 
+      exit_with_error("app parameter is required")
+    end
+  end
+
+end
+
+RunService.new.go

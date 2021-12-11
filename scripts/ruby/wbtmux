@@ -152,10 +152,10 @@ class Wbtmux < OpBase
         app_path = np_service_path(convox_app)
 
         if np_service_is_node(convox_app)
-          exec_command "install-node-app -a #{app}" unless convox_app_path_exists?(convox_app)
+          exec_command "prepare-local-service -a #{app}" unless convox_app_path_exists?(convox_app)
           app_command = "npmstartservice"
         elsif np_service_is_ruby(convox_app)
-          exec_command "install-node-app -a #{app}" unless convox_app_path_exists?(convox_app)
+          exec_command "prepare-local-service -a #{app}" unless convox_app_path_exists?(convox_app)
           app_command = "cd #{app_path} && lrun bin/start_web_server.sh"
         else
           throw "Could not detect whether '#{convox_app}' is a ruby or node app." 
