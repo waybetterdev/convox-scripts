@@ -44,8 +44,8 @@ class NpServiceConfig < OpBase
   end
 
   def prepare_local_convox_services
-    old_apps = list_convox_apps
-    new_apps = local_convox_np_services
+    old_apps = ConvoxUtil.list_convox_apps
+    new_apps = local_convox_np_services_names
 
     puts "Local convox apps: #{new_apps.inspect.green}"
     apps_to_delete = old_apps - new_apps
@@ -80,9 +80,9 @@ class NpServiceConfig < OpBase
   end
 
   def prepare_local_kraken_services
-    puts "Local kraken apps: #{local_kraken_np_services.inspect.green}"
+    puts "Local kraken apps: #{local_kraken_np_service_names.inspect.green}"
 
-    local_kraken_np_services.each do |app|
+    local_kraken_np_service_names.each do |app|
       if convox_app_path_exists?(app)
         next unless opts_write
 

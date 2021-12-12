@@ -8,7 +8,7 @@ class ReloadEnv < OpBase
   def go
     app = File.basename(Dir.getwd)
 
-    unless np_service_on_local_convox?(app)
+    unless np_service_is_on_local_convox?(app)
       warn "Error: app '".red + app.to_s.green + "' is not on local convox".red
       exit 1
     end

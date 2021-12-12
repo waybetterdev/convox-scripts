@@ -68,7 +68,7 @@ class ApacheConfig < OpBase
   end
 
   def np_service_domains_conf
-    np_services.values.map { |s| { name: s[:name], external: false } } + [
+    np_services.values.map { |s| { name: s.name, external: false } } + [
       { name: 'wb-auth-service',          external: true },
       { name: 'wb-graphql-service',       external: true },
       { name: 'wb-graphql-service',       external: true, variant: 'ninja' },
@@ -81,11 +81,13 @@ class ApacheConfig < OpBase
   def generate_config
     np_service_domains_conf.map do |data|
       name = data[:name]
-      next if np_service_is_on_convox_office(name)
+      np_service = np_service_config(name, true)
+
+      next if np_service.on_convox_office?
 
       domain = get_proxy_from_url(name, external: data[:external], variant: data[:variant])
 
-      is_proxy = !np_service_is_on_local_apache(name)
+      is_proxy = !np_service.on_local_apache?
       path = is_proxy ? "/var/www/#{name}" : np_service_path(name)
       www_directory = is_proxy ? nil : path
 
@@ -216,14 +218,16 @@ class ApacheConfig < OpBase
   end
 
   def get_proxy_to_url(name)
-    domain = np_service_domain(name)
-    if np_service_is_on_local_kraken(name)
-      port = np_service_port(name)
+    np_service = np_service_config(name, true)
+
+    domain = np_service.domain
+    if np_service.on_local_kraken?
+      port = np_service.port
       "http://#{domain}#{':' + port.to_s if port}"
-    elsif np_service_on_local_convox?(name)
-      domain = np_service_convox_domain(name)
+    elsif np_service.on_local_convox?
+      domain = np_service.domain
       "https://#{domain}"
-    elsif np_service_is_on_convox_office(name)
+    elsif np_service.on_convox_office?
       "https://#{domain}"
     end
   end

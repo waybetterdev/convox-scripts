@@ -2,28 +2,19 @@
 # frozen_string_literal: true
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
-require File.expand_path(__dir__) + '/includes/kenv.rb'
 
 class RunService < OpBase
   attr_accessor :opts_exec
-
-  ENV_OVERRIDES = {
-    'WB_LOCAL_STANDALONE' => 'true',
-    'RAILS_ENV' => 'development',
-    'WB_NOTIFY_SERVICE_DAEMON_THREADS' => '1',
-    'WB_NOTIFY_SERVICE_MAX_HTTP_THREADS' => '1'
-  }.freeze
-
+  
   def go
     parse_opts
 
-    Kenv.exec_with_env(
-      app: File.basename(np_service_path(opts_np_app)),
-      service: 'web',
-      args: [opts_exec],
-      extra_env: ENV_OVERRIDES,
-      global_env_fn: np_service_env_path(opts_np_app)
-    )
+    if opts_exec
+      opts_np_app.run_command(opts_exec)
+    else
+      opts_np_app.run_connect_command
+    end
+
   end
 
   HELP = <<-BAN
@@ -48,15 +39,13 @@ class RunService < OpBase
     end
     option_parser.parse!(ARGV)
 
-    exit_with_error('app parameter is required') if opts_np_app.nil?
+    exit_with_error('app parameter is required') if opts_np_app_name.nil?
   end
 
   def add_exec_option(opts)
     opts.on('-e', '--exec=e', 'Command to execute') do |x|
-      self.opts_exec = "bash -ic '#{x}'"
+      self.opts_exec = x
     end
-
-    self.opts_exec ||= "echo \"Entering #{opts_np_app} bash with env=$RAILS_ENV\" && bash -i"
   end
 
 end

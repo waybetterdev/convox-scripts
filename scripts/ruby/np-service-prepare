@@ -35,7 +35,7 @@ class PrepareLocalService < OpBase
     end
     option_parser.parse!(ARGV)
 
-    exit_with_error('app parameter is required') if opts_np_app.nil?
+    exit_with_error('app parameter is required') if opts_np_app_name.nil?
   end
 
   def prepare_kraken
@@ -50,16 +50,16 @@ class PrepareLocalService < OpBase
   end
 
   def prepare_app
-    app_path = np_service_path(opts_np_app)
-    checkout_app(name: opts_np_app, path: File.expand_path('../', app_path)) unless Dir.exist?(app_path)
+    app_path = np_service_path(opts_np_app_name)
+    checkout_app(name: opts_np_app_name, path: File.expand_path('../', app_path)) unless Dir.exist?(app_path)
 
-    exec_command "env-builder -w -a #{opts_np_app}"
-    if np_service_is_node(opts_np_app)
+    exec_command "env-builder -w -a #{opts_np_app_name}"
+    if np_service_is_node(opts_np_app_name)
       exec_command "cd #{app_path} && np-service-run -e 'cd #{app_path} && nvm install && nvm ls && npm install'"
-    elsif np_service_is_ruby(opts_np_app)
+    elsif np_service_is_ruby(opts_np_app_name)
       exec_command "cd #{app_path} && np-service-run -e 'cd #{app_path} && gem install bundler && bundle install && be rails db:migrate'"
     else
-      throw "Could not detect whether '#{opts_np_app}' is a ruby or node app."
+      throw "Could not detect whether '#{opts_np_app_name}' is a ruby or node app."
     end
   end
 

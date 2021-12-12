@@ -18,8 +18,16 @@ rescue LoadError
   exit(1)
 end
 
-class OpBase
-  attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_np_app
+require_relative 'np_paths.rb'
+require_relative 'np_service.rb'
+require_relative 'np_rails_service.rb'
+require_relative 'np_node_service.rb'
+require_relative 'np_convox_service.rb'
+require_relative 'np_docker_service.rb'
+require_relative 'convox_util.rb'
+
+class OpBase < NpPaths
+  attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_np_app_name, :opts_np_app
 
   LOCATION_KRAKEN_LOCAL = 'kraken'
   LOCATION_CONVOX_LOCAL = 'convox-local'
@@ -72,29 +80,42 @@ class OpBase
       ]
         .flatten
         .each_with_object({}) do |service_data, hash|
-        name = dashed_app_name(service_data[:name]).to_sym
-        folder_name = service_data[:name]
-        service_data[:path] ||= "#{path_wb_services}/#{folder_name}"
+          name = dashed_app_name(service_data[:name]).to_sym
+          folder_name = service_data[:name]
+          service_data[:path] ||= "#{path_wb_services}/#{folder_name}"
 
-        if hash[name]
-          exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
-        end
+          if hash[name]
+            exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
+          end
 
-        hash[name] = service_data
-      end
+          if service_data[:location].eql?(LOCATION_CONVOX_LOCAL)
+            hash[name] = NpConvoxService.new(**service_data)
+          elsif service_data[:location].eql?(LOCATION_KRAKEN_LOCAL)
+            if service_data[:type].eql?("ruby")
+              hash[name] = NpRailsService.new(**service_data)
+            elsif service_data[:type].eql?("node")
+              hash[name] = NpNodeService.new(**service_data)
+            end
+          else
+            hash[name] = NpService.new(**service_data)
+          end
+        end.merge(
+          mysql: NpDockerService.new(name: :mysql, gitname: nil, type: "mysql", port: "3306", path: "#{path_kraken}/superlocal", location: "local-docker")
+        )
+
     end
     @_np_services
   end
 
-  def local_kraken_np_services
-    @_local_kraken_np_services ||= begin
-      np_services.map { |_k, v| v[:location] == LOCATION_KRAKEN_LOCAL ? v[:name] : nil }.compact
+  def local_kraken_np_service_names
+    @_local_kraken_np_service_names ||= begin
+      np_services.map { |_k, v| v.on_local_kraken? ? v.name : nil }.compact
     end
   end
 
-  def local_convox_np_services
-    @_local_convox_np_services ||= begin
-      np_services.map { |_k, v| v[:location] == LOCATION_CONVOX_LOCAL ? v[:name] : nil }.compact
+  def local_convox_np_services_names
+    @_local_convox_np_services_names ||= begin
+      np_services.map { |_k, v| v.on_local_convox? ? v.name : nil }.compact
     end
   end
 
@@ -126,39 +147,9 @@ class OpBase
   end
   ################ NP SERVICES ###################
 
+
+
   protected
-
-  def base_path
-    @base_path ||= File.expand_path('../../..', __dir__)
-  end
-
-  def path_templates
-    "#{base_path}/configs/templates"
-  end
-
-  def path_local_settings
-    "#{base_path}/local-settings"
-  end
-
-  def path_secrets
-    "#{base_path}/secrets"
-  end
-
-  def path_install_scripts
-    "#{base_path}/scripts/installs"
-  end
-
-  def path_wb_services
-    "#{Dir.home}/Work/wb-services"
-  end
-
-  def path_kraken
-    "#{Dir.home}/Work/wb-services/kraken"
-  end
-
-  def path_ruby_bin
-    "#{Dir.home}/Work/docs/scripts/ruby"
-  end
 
   def hyphenated_app_name(name)
     name.to_s.gsub(/[ _]+/, '-').downcase
@@ -199,51 +190,47 @@ class OpBase
   ################ OP SERVERS ###################
 
   ################ NP SERVICES ###################
-  def np_service_config(name, _exit_on_fail = false)
+  def np_service_config(name, exit_on_fail = false)
     config = np_services[dashed_app_name(name).to_sym]
-    exit_with_error "NP service config for #{name} not found" unless config
+    exit_with_error "NP service config for #{name} not found" unless config || !exit_on_fail
 
     config
   end
 
   def np_service_app_name(name)
-    np_service_config(name)[:name]
+    np_service_config(name).name
   end
 
   def np_service_path(name)
-    np_service_config(name)[:path]
+    np_service_config(name).path
   end
 
   def np_service_location(name)
-    np_service_config(name)[:location]
+    np_service_config(name).location
   end
 
   def np_service_port(name)
-    np_service_config(name)[:port]
+    np_service_config(name).port
   end
 
-  def np_service_is_on_convox_office(name)
-    np_service_location(name) == LOCATION_OFFICE_CONVOX
+  def np_service_is_on_local_kraken?(name)
+    np_service_config(name).on_local_kraken?
   end
 
-  def np_service_is_on_local_kraken(name)
-    np_service_location(name) == LOCATION_KRAKEN_LOCAL
+  def np_service_is_on_local_convox?(name)
+    np_service_config(name).on_local_convox?
   end
 
-  def np_service_on_local_convox?(name)
-    np_service_location(name) == LOCATION_CONVOX_LOCAL
-  end
-
-  def np_service_is_on_local_apache(name)
-    np_service_location(name) == LOCATION_APACHE_LOCAL
+  def np_service_is_on_local_apache?(name)
+    np_service_config(name).on_local_apache?
   end
 
   def np_service_is_ruby(name)
-    np_service_config(name)[:type] == 'ruby'
+    np_service_config(name).type_is_ruby?
   end
 
   def np_service_is_node(name)
-    np_service_config(name)[:type] == 'node'
+    np_service_config(name).type_is_node?
   end
 
   ################ NP SERVICES ###################
@@ -287,20 +274,21 @@ class OpBase
     end
   end
 
-  def np_service_env_path(app)
-    "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local"
-  end
-
   def add_np_app_option(opts)
-    dir_name = File.basename(Dir.getwd)
-    self.opts_np_app = dir_name if np_service_config(dir_name)
+    app = np_service_config(File.basename(Dir.getwd))
+    if app
+      self.opts_np_app = app
+      self.opts_np_app_name = app.name
+    end
 
     opts.on('-a', '--app=A', 'Required, NP application name') do |x|
       x = 'wb-auth-service' if x == 'auth'
       pattern = Regexp.new(x)
-      res = np_services.find { |_k, v| pattern =~ v[:name] }
-      exit_with_error "Did not find any NP services for pattern '*#{x}*'" unless res
-      self.opts_np_app = res[1][:name]
+
+      app = (np_services.find { |_k, v| pattern =~ v.name } || [])[1]
+      exit_with_error "Did not find any NP services for pattern '*#{x}*'" unless app
+      self.opts_np_app = app
+      self.opts_np_app_name = app.name
     end
   end
 
@@ -349,7 +337,7 @@ class OpBase
   def checkout_app(name:, path:)
     name = hyphenated_app_name(name)
 
-    gitname = name == 'kraken' ? 'kraken' : np_service_config(name)[:gitname]
+    gitname = name == 'kraken' ? 'kraken' : np_service_config(name).gitname
 
     exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{gitname}.git #{name}",
                  message: "Cloning #{name} from git"
@@ -415,29 +403,12 @@ class OpBase
   end
 
   def convox_app_path(convox_app)
-    path = np_service_path(convox_app) unless convox_app == 'kraken/superlocal'
+    path = np_service_path(convox_app) unless convox_app == 'mysql'
     path || "#{@path}/#{convox_app}"
   end
 
   def convox_app_path_exists?(convox_app)
     File.directory?(convox_app_path(convox_app))
-  end
-
-  def convox_app_exists?(convox_app, use_cache: false)
-    return false if convox_app.nil?
-
-    list_convox_apps(use_cache: use_cache).include?(convox_app)
-  end
-
-  def list_convox_apps(use_cache: false)
-    @_convox_apps = nil unless use_cache
-    @_convox_apps ||= begin
-      exec_command('convox apps')
-    end
-
-    return [] unless @_convox_apps
-
-    @_convox_apps.scan(/\n([\w-]+)/).flatten
   end
 
   def create_convox_app(convox_app)

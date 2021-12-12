@@ -26,7 +26,7 @@ class StartConvoxApp < OpBase
       cat "/usr/share/ca-certificates/convox.crt"
     SCRIPT
 
-    local_kraken_np_services.each do |app|
+    local_kraken_np_service_names.each do |app|
       script << "echo '#{find_local_ip} #{np_service_domain(app)}' >> /etc/hosts\n"
     end
     script << "/app/bin/start_web_server.sh\n"

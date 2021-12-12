@@ -43,24 +43,21 @@ class EnvBuilder < OpBase
     end
     option_parser.parse!(ARGV)
 
-    exit_with_error('app parameter is required') if opts_np_app.nil?
+    exit_with_error('app parameter is required') if opts_np_app_name.nil?
   end
 
   def read_src_env_file
     env_values = {}
-    app = opts_np_app
+    app = opts_np_app_name
 
-    if np_service_on_local_convox?(app)
-      files = ["#{np_service_app_name(app)}.env.local"]
-    elsif np_service_is_on_local_kraken(app)
-      files = NpServices::NP_SERVICES[:local_kraken].map { |s| "#{np_service_app_name(s[:name])}.env.local" }
+    if opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
+      files = [opts_np_app.env_src_path]
     else
       exit_with_error "App `#{app}` location `#{np_service_location(app)}` not supported"
     end
 
-    files.each do |file|
-      env_path = "#{path_local_settings}/convox-env/#{file}"
-      exit_with_error "No env path found for app `#{opts_np_app}`" unless env_path
+    files.each do |env_path|
+      exit_with_error "No env path found for app `#{opts_np_app.name}`" unless env_path
       exit_with_error "Env file '#{env_path}' not found" unless File.exist?(env_path)
 
       puts "Reading env from #{env_path.green}"
@@ -78,7 +75,7 @@ class EnvBuilder < OpBase
     exit_with_error "No env variables found in file '#{env_path}'" unless env_values
 
     # force GEMFURY_SECRET and NPM_CONFIG_REGISTRY to be always present on local node apps
-    env_values.merge!('GEMFURY_SECRET' => nil, 'NPM_CONFIG_REGISTRY' => nil) if np_service_is_on_local_kraken(app)
+    env_values.merge!('GEMFURY_SECRET' => nil, 'NPM_CONFIG_REGISTRY' => nil) if opts_np_app.on_local_kraken?
 
     env_values.sort.to_h
   end
@@ -100,39 +97,37 @@ class EnvBuilder < OpBase
   end
 
   def write_env_to_file(str_env)
-    env_path = service_dst_env_path(opts_np_app)
+    env_path = service_dst_env_path(opts_np_app_name)
 
     puts "Writing env file to #{env_path.green}"
     File.open(env_path, 'w') { |file| file.write(str_env) }
   end
 
   def np_service_internal_url(name)
-    service_data = np_service_config(name)
-
-    exit_with_error "Missing NP service config for #{name}" unless service_data
+    np_service = np_service_config(name, true)
 
     url = np_service_domain(name)
     return '' unless url
 
-    if np_service_is_on_convox_office(name)
+    if np_service.on_convox_office?
       "https://#{url}"
-    elsif np_service_on_local_convox?(name)
+    elsif np_service.on_local_convox?
       if use_convox_rack_internal_urls
         url = np_service_convox_domain(name)
-        port = service_data[:port]
-        return "http://#{url}:#{port}" if convox_local_dev_rack? && np_service_on_local_convox?(opts_np_app) && port
+        port = np_service.port
+        return "http://#{url}:#{port}" if convox_local_dev_rack? && np_service_is_on_local_convox?(opts_np_app_name) && port
       end
       "https://#{url}#{':' + port.to_s if port}"
-    elsif np_service_is_on_local_kraken(name)
-      port = service_data[:port]
+    elsif np_service.on_local_kraken?
+      port = np_service.port
       "http://#{url}#{':' + port.to_s if port}"
-    elsif np_service_is_on_local_apache(name)
+    elsif np_service.on_local_apache?
       "https://#{url}"
     end
   end
 
   def np_service_internal_domain(name)
-    if np_service_on_local_convox?(name)
+    if np_service_is_on_local_convox?(name)
       np_service_convox_domain(name)
     else
       np_service_domain(name)
@@ -140,27 +135,21 @@ class EnvBuilder < OpBase
   end
 
   def np_service_external_url(name, domain_only: false, variant: nil)
-    service_data = np_service_config(name)
+    np_service = np_service_config(name, true)
 
-    exit_with_error "Missing NP service config for #{name}" unless service_data
-
-    url = get_service_external_domain(service_data[:name], variant: variant)
+    url = get_service_external_domain(np_service.name, variant: variant)
     return url if domain_only
     return '' unless url
 
     "https://#{url}"
   end
 
-  def service_dst_env_path(app)
-    if np_service_on_local_convox?(app)
-      "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local.tmp"
-    elsif np_service_is_on_local_kraken(app)
-      "#{path_kraken}/.env.g2"
-    end
+  def service_dst_env_path(name)
+    np_service_config(name, true).env_dst_path
   end
 
   def use_convox_rack_internal_urls
-    np_service_on_local_convox?(opts_np_app)
+    np_service_is_on_local_convox?(opts_np_app_name)
   end
 
   private

@@ -1,29 +1,28 @@
-# frozen_string_literal: true
+class Kenv
 
-require_relative '../../../../wb-services/kraken/lib/wb/kenv'
+  ENV_OVERRIDES = {
+    'WB_LOCAL_STANDALONE' => 'true',
+    'RAILS_ENV' => 'development'
+  }.freeze
 
-class Kenv < Wb::Kenv
-  def self.convox_yml_file(app)
-    "#{Dir.home}/Work/docs/local-settings/convox-yml/#{app}.convox.local.yml"
-  end
 
-  def self.exec_with_env(app:, service:, args: [], extra_env: {}, global_env_fn: nil)
-    defaults = global_env(global_env_fn)
-    # precedence:
-    # - shell ENV
-    # - extra_env, which overwrites:
-    # - convox env for service, which overwrites:
-    #
-    #
-    env = compile_local_env(
-      app: app,
-      service: service,
-      defaults: defaults
-    ).merge(extra_env).merge(ENV.to_h)
-    if args.empty?
-      env.keys.sort.each { |k| puts "#{k}=#{env[k]}" }
-    elsif !system(env, *args)
-      raise "Error running command: #{$CHILD_STATUS.inspect}"
+  def self.exec_with_env(cmd=nil, path: nil, env_path: nil)
+    env_args = []
+    if env_path
+      env_args.push "$(cat #{env_path} | xargs)"
+      env_args.push ENV_OVERRIDES.map { |k, v| "#{k}=#{v}" }.join(' ')
     end
+
+    if cmd
+      env_args.push "bash -ic '#{cmd}'"
+    else
+      env_args.push "bash -i"
+    end
+
+    env_opts = []
+    env_opts.push("--chdir='#{path}'") if path
+    cmd = "env #{env_opts.join(' ')} #{env_args.join(' ')}"
+    
+    exec(cmd)
   end
 end

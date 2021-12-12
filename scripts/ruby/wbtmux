@@ -10,7 +10,7 @@ class Wbtmux < OpBase
 
   DEFAULT_SERVICES = %w[mysql user].freeze
   SERVICE_MAP = {
-    'mysql' => 'kraken/superlocal',
+    'mysql' => 'mysql',
     'user' => 'wb-user-service',
     'auth' => 'wb-auth-service',
     'bill' => 'wb-billing-service',
@@ -96,8 +96,8 @@ class Wbtmux < OpBase
       next if active_windows.include?(app)
 
       convox_app = app_full_name(app)
-      path = convox_app_path(convox_app)
-      queue.new_window(app, path)
+      np_service = np_service_config(convox_app, true)
+      queue.new_window(app, np_service.path)
     end
 
     queue.run
@@ -113,28 +113,10 @@ class Wbtmux < OpBase
       next unless active_windows.include?(app)
 
       convox_app = app_full_name(app)
-      app_command = ''
-      if app == 'mysql'
-        app_command = 'docker-compose up'
-      elsif np_service_on_local_convox?(convox_app)
-        # create the app if it does not exist
-        create_convox_app(convox_app) if convox_app_path_exists?(convox_app) && opts_wait_convox && !convox_app_exists?(convox_app, use_cache: true)
+      np_service = np_service_config(convox_app, true)
 
-        app_command = "env-builder -w -a #{app} && kk refresh-yml -- local #{app} && kk refresh-env -- local #{app} no-confirm && startconvoxapp"
-      elsif np_service_is_on_local_kraken(convox_app)
-
-        app_path = np_service_path(convox_app)
-
-        if np_service_is_node(convox_app)
-          exec_command "np-service-prepare -a #{app}" unless convox_app_path_exists?(convox_app)
-          app_command = 'npmstartservice'
-        elsif np_service_is_ruby(convox_app)
-          exec_command "np-service-prepare -a #{app}" unless convox_app_path_exists?(convox_app)
-          app_command = "cd #{app_path} && lrun bin/start_web_server.sh"
-        else
-          throw "Could not detect whether '#{convox_app}' is a ruby or node app."
-        end
-      end
+      np_service.prepare_service
+      app_command = np_service.start_command
 
       queue = CommandQueue.new(session_name)
       queue.attach_session
@@ -234,7 +216,7 @@ class Wbtmux < OpBase
         name = app_full_name(s)
         next unless name
 
-        np_service_on_local_convox?(name)
+        np_service_is_on_local_convox?(name)
       end
       !res.nil?
     end
@@ -293,7 +275,7 @@ class Wbtmux < OpBase
 
     def exec_command_inside_screen(screen, pane, command)
       _add "select-window -t #{screen}"
-      _add "send-keys -t #{pane} C-z '#{command}' Enter"
+      _add "send-keys -t #{pane} C-z '#{command.gsub("'", "\\\\'")}' Enter"
     end
 
     def swap_panes(src, dst)
