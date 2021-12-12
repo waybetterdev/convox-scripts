@@ -1,5 +1,6 @@
-class ConvoxUtil
+# frozen_string_literal: true
 
+class ConvoxUtil
   def self.convox_app_exists?(convox_app, use_cache: false)
     return false if convox_app.nil?
 
@@ -23,5 +24,4 @@ class ConvoxUtil
     cmd.gsub("'", "\\\\'")
     `#{cmd}`
   end
-
 end

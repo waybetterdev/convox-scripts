@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require_relative 'np_service.rb'
 
 class NpDockerService < NpService
-
   def initialize(**args)
     super(**args)
   end

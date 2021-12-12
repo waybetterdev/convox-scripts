@@ -91,18 +91,17 @@ class OpBase < NpPaths
           if service_data[:location].eql?(LOCATION_CONVOX_LOCAL)
             hash[name] = NpConvoxService.new(**service_data)
           elsif service_data[:location].eql?(LOCATION_KRAKEN_LOCAL)
-            if service_data[:type].eql?("ruby")
+            if service_data[:type].eql?('ruby')
               hash[name] = NpRailsService.new(**service_data)
-            elsif service_data[:type].eql?("node")
+            elsif service_data[:type].eql?('node')
               hash[name] = NpNodeService.new(**service_data)
             end
           else
             hash[name] = NpService.new(**service_data)
           end
         end.merge(
-          mysql: NpDockerService.new(name: :mysql, gitname: nil, type: "mysql", port: "3306", path: "#{path_kraken}/superlocal", location: "local-docker")
+          mysql: NpDockerService.new(name: :mysql, gitname: nil, type: 'mysql', port: '3306', path: "#{path_kraken}/superlocal", location: 'local-docker')
         )
-
     end
     @_np_services
   end
@@ -146,8 +145,6 @@ class OpBase < NpPaths
     convox_local_rack == 'dev'
   end
   ################ NP SERVICES ###################
-
-
 
   protected
 

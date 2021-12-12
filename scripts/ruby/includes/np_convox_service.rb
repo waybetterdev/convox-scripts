@@ -1,17 +1,17 @@
+# frozen_string_literal: true
+
 require_relative 'np_service.rb'
 
 class NpConvoxService < NpService
-
   def initialize(**args)
     super(**args)
   end
 
-
   def prepare_service
     return if on_local_convox?
-    
+
     super
-    prepare_local_service 
+    prepare_local_service
   end
 
   def prepare_local_service
@@ -40,5 +40,4 @@ class NpConvoxService < NpService
   def run_command(cmd)
     Kenv.exec_with_env(cmd, path: path, env_path: env_path)
   end
-
 end

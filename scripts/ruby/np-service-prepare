@@ -4,7 +4,6 @@
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class PrepareLocalService < OpBase
-
   def initialize; end
 
   def go

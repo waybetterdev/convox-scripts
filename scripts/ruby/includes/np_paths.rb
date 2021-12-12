@@ -1,6 +1,6 @@
+# frozen_string_literal: true
 
 class NpPaths
-
   def base_path
     @base_path ||= File.expand_path('../../..', __dir__)
   end
@@ -32,5 +32,4 @@ class NpPaths
   def path_ruby_bin
     "#{Dir.home}/Work/docs/scripts/ruby"
   end
-  
 end

@@ -1,12 +1,12 @@
-
+# frozen_string_literal: true
 
 class NpService < NpPaths
   attr_accessor :name, :gitname, :type, :port, :path, :location, :domain
 
-  LOCATION_KRAKEN_LOCAL = 'kraken'.freeze
-  LOCATION_CONVOX_LOCAL = 'convox-local'.freeze
-  LOCATION_OFFICE_CONVOX = 'remote-convox-office'.freeze
-  LOCATION_APACHE_LOCAL = 'apache-local'.freeze
+  LOCATION_KRAKEN_LOCAL = 'kraken'
+  LOCATION_CONVOX_LOCAL = 'convox-local'
+  LOCATION_OFFICE_CONVOX = 'remote-convox-office'
+  LOCATION_APACHE_LOCAL = 'apache-local'
 
   def initialize(name:, path:, location:, type: nil, port: nil, gitname: nil, domain: nil)
     @name = name
@@ -18,23 +18,22 @@ class NpService < NpPaths
     @domain = domain
   end
 
-
   def on_local_kraken?
     @location.eql?(LOCATION_KRAKEN_LOCAL)
   end
 
   def on_local_convox?
     @location.eql?(LOCATION_CONVOX_LOCAL)
-  end  
-  
+  end
+
   def on_convox_office?
     @location.eql?(LOCATION_OFFICE_CONVOX)
-  end  
-  
+  end
+
   def on_local_apache?
     @location.eql?(LOCATION_APACHE_LOCAL)
-  end  
-  
+  end
+
   def type_is_ruby?
     @type.eql?('ruby')
   end
@@ -56,9 +55,9 @@ class NpService < NpPaths
   end
 
   def parent_path
-    File.expand_path("..", path)
+    File.expand_path('..', path)
   end
-  
+
   def checkout_from_git
     exec_command(
       "cd #{parent_path} && git clone git@github.com:wbetterdev/#{gitname}.git #{name}",
@@ -81,5 +80,4 @@ class NpService < NpPaths
   def env_dst_path
     "#{path_local_settings}/convox-env/#{name}.env.local.tmp"
   end
-
 end
