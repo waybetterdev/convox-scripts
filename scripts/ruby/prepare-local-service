@@ -1,33 +1,12 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-public
-
-require 'optparse'
-require 'open3'
-
-begin
-  require 'highline'
-  require 'colored'
-  require 'terminfo'
-rescue LoadError => x
-  puts <<-XXX
-To run this utility:
-  gem install 'highline'
-  gem install 'colored'
-  gem install 'ruby-terminfo'
-XXX
-  exit(1)
-end
-
-require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class PrepareLocalService < OpBase
-
   attr_accessor :opts_np_app
 
-  def initialize
-    
-  end
+  def initialize; end
 
   def go
     parse_opts
@@ -44,42 +23,36 @@ class PrepareLocalService < OpBase
 
   def parse_opts
     self.option_parser = OptionParser.new do |opts|
-
       opts.banner = HELP
 
-      opts.separator ""
-      opts.separator "Specific options:"
+      opts.separator ''
+      opts.separator 'Specific options:'
 
-      self.add_debug_option(opts)
+      add_debug_option(opts)
 
       add_np_app_option(opts)
 
       add_help_option(opts)
     end
-    self.option_parser.parse!(ARGV)
+    option_parser.parse!(ARGV)
 
-    if opts_np_app.nil? 
-      exit_with_error("app parameter is required")
-    end
+    exit_with_error('app parameter is required') if opts_np_app.nil?
   end
 
   def prepare_kraken
-    unless Dir.exist?(path_kraken)
-      checkout_app(name: 'kraken', path: path_wb_services)
+    return if Dir.exist?(path_kraken)
 
-      exec_bash_command "cd #{path_kraken} && nvm install --lts && npm install", 
-          message: "Installing kraken node modules", exit_on_fail: false
-      exec_bash_command "cd #{path_kraken} && bundle config --global gem.fury.io $GEMFURY_SECRET && gem install bundler && bundle install", 
-          message: "Installing kraken ruby gems", exit_on_fail: false
-    end
+    checkout_app(name: 'kraken', path: path_wb_services)
+
+    exec_bash_command "cd #{path_kraken} && nvm install --lts && npm install",
+                      message: 'Installing kraken node modules', exit_on_fail: false
+    exec_bash_command "cd #{path_kraken} && bundle config --global gem.fury.io $GEMFURY_SECRET && gem install bundler && bundle install",
+                      message: 'Installing kraken ruby gems', exit_on_fail: false
   end
-
 
   def prepare_app
     app_path = np_service_path(opts_np_app)
-    unless Dir.exist?(app_path)
-      checkout_app(name: opts_np_app, path: File.expand_path('../', app_path))
-    end
+    checkout_app(name: opts_np_app, path: File.expand_path('../', app_path)) unless Dir.exist?(app_path)
 
     exec_command "env-builder -w -a #{opts_np_app}"
     if np_service_is_node(opts_np_app)
@@ -87,15 +60,11 @@ class PrepareLocalService < OpBase
     elsif np_service_is_ruby(opts_np_app)
       exec_command "cd #{app_path} && lrun bash -ic 'cd #{app_path} && gem install bundler && bundle install && be rails db:migrate'"
     else
-      throw "Could not detect whether '#{opts_np_app}' is a ruby or node app." 
+      throw "Could not detect whether '#{opts_np_app}' is a ruby or node app."
     end
   end
 
-  def ruby_version
-    
-  end
-
-
+  def ruby_version; end
 end
 
 PrepareLocalService.new.go

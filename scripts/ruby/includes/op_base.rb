@@ -1,5 +1,23 @@
-class OpBase
+# frozen_string_literal: true
 
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError
+  puts <<~XXX
+    To run this utility:
+      gem install 'highline'
+      gem install 'colored'
+      gem install 'ruby-terminfo'
+  XXX
+  exit(1)
+end
+
+class OpBase
   attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_exec
 
   LOCATION_KRAKEN_LOCAL = 'kraken'
@@ -7,11 +25,10 @@ class OpBase
   LOCATION_OFFICE_CONVOX = 'remote-convox-office'
   LOCATION_APACHE_LOCAL = 'apache-local'
 
-
   ################ OP SERVERS ###################
   def load_op_severs_config
     if File.exist?("#{path_local_settings}/op-servers-config.rb")
-      require "#{path_local_settings}/op-servers-config.rb" 
+      require "#{path_local_settings}/op-servers-config.rb"
     elsif File.exist?("#{path_templates}/op-servers-config.rb")
       require "#{path_templates}/op-servers-config.rb"
     else
@@ -20,9 +37,7 @@ class OpBase
   end
 
   def servers
-    unless defined?(OpServers) == 'constant'
-      load_op_severs_config
-    end
+    load_op_severs_config unless defined?(OpServers) == 'constant'
 
     OpServers::SERVERS
   end
@@ -37,7 +52,7 @@ class OpBase
     return if defined?(NpServices)
 
     if File.exist?("#{path_local_settings}/np-services-config.rb")
-      require "#{path_local_settings}/np-services-config.rb" 
+      require "#{path_local_settings}/np-services-config.rb"
     elsif File.exist?("#{path_templates}/np-services-config.rb")
       require "#{path_templates}/np-services-config.rb"
     else
@@ -46,22 +61,20 @@ class OpBase
   end
 
   def np_services
-    unless defined?(NpServices) == 'constant'
-      load_np_services_config
-    end
-    @__np_services ||= begin
+    load_np_services_config unless defined?(NpServices) == 'constant'
+    @_np_services ||= begin
       [
         NpServices::NP_SERVICES[:local_kraken].map          { |s| s.merge(location: LOCATION_KRAKEN_LOCAL) },
         NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: LOCATION_CONVOX_LOCAL) },
         NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: LOCATION_OFFICE_CONVOX) },
-        NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) },
+        NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) }
       ]
-      .flatten
-      .each_with_object({}) do |service_data, hash|
+        .flatten
+        .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
         folder_name = service_data[:name]
         service_data[:path] ||= "#{path_wb_services}/#{folder_name}"
-        
+
         if hash[name]
           exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
         end
@@ -69,24 +82,24 @@ class OpBase
         hash[name] = service_data
       end
     end
-    @__np_services
+    @_np_services
   end
 
   def local_kraken_np_services
-    @__local_kraken_np_services ||= begin
+    @_local_kraken_np_services ||= begin
       np_services.map { |_k, v| v[:location] == LOCATION_KRAKEN_LOCAL ? v[:name] : nil }.compact
     end
   end
 
   def local_convox_np_services
-    @__local_convox_np_services ||= begin
+    @_local_convox_np_services ||= begin
       np_services.map { |_k, v| v[:location] == LOCATION_CONVOX_LOCAL ? v[:name] : nil }.compact
     end
   end
 
-  def is_convox_office_server
+  def convox_office_server?
     @_conf_type ||= begin
-      load_np_services_config 
+      load_np_services_config
       NpServices::CONFING_TYPE
     end
 
@@ -95,27 +108,27 @@ class OpBase
 
   def convox_local_rack
     @_convox_local_rack ||= begin
-      load_np_services_config 
+      load_np_services_config
       NpServices::LOCAL_CONVOX_RACK
     end
   end
 
   def convox_racks
     @_convox_racks ||= begin
-      load_np_services_config 
+      load_np_services_config
       NpServices::CONVOX_RACKS
     end
   end
 
-  def is_convox_local_dev_rack
+  def convox_local_dev_rack?
     convox_local_rack == 'dev'
   end
   ################ NP SERVICES ###################
 
-
   protected
+
   def base_path
-    @base_path ||= File.expand_path('../../../../', __FILE__)
+    @base_path ||= File.expand_path('../../..', __dir__)
   end
 
   def path_templates
@@ -147,36 +160,36 @@ class OpBase
   end
 
   def hyphenated_app_name(name)
-    name.to_s.gsub(/[ _]+/, "-").downcase
+    name.to_s.gsub(/[ _]+/, '-').downcase
   end
 
   def dashed_app_name(name)
-    name.to_s.gsub(/[ -]+/, "_").downcase
+    name.to_s.gsub(/[ -]+/, '_').downcase
   end
 
   ################ OP SERVERS ###################
   def op_deploy_config(name)
     name = dashed_app_name(name).to_sym
-    @__op_deploy_config ||= {}
-    @__op_deploy_config[name] ||= begin
+    @_op_deploy_config ||= {}
+    @_op_deploy_config[name] ||= begin
       res = servers[name].clone
-      res[:hostnames].map!{ |h| hostnames[h] }
+      res[:hostnames].map! { |h| hostnames[h] }
       res
     end
-    @__op_deploy_config[name]
+    @_op_deploy_config[name]
   end
 
   def ssh_config(name)
     name = dashed_app_name(name).to_sym
-    @__ssh_config ||= {}
-    @__ssh_config[name] ||= begin
-      conf = servers.map{ |k, v| v[:hostnames].include?(name) ? v : nil }.compact.first
+    @_ssh_config ||= {}
+    @_ssh_config[name] ||= begin
+      conf = servers.map { |_k, v| v[:hostnames].include?(name) ? v : nil }.compact.first
 
       throw "Config for #{name} not found" if conf.nil?
-      conf.merge({hostname: hostnames[name]})
+      conf.merge(hostname: hostnames[name])
           .slice(:user, :key, :hostname, :dst, :port, :deploy_path, :zip_name)
     end
-    @__ssh_config[name]
+    @_ssh_config[name]
   end
 
   def server_names
@@ -185,7 +198,7 @@ class OpBase
   ################ OP SERVERS ###################
 
   ################ NP SERVICES ###################
-  def np_service_config(name, exit_on_fail = false)
+  def np_service_config(name, _exit_on_fail = false)
     config = np_services[dashed_app_name(name).to_sym]
     exit_with_error "NP service config for #{name} not found" unless config
 
@@ -226,8 +239,8 @@ class OpBase
 
   def np_service_is_ruby(name)
     np_service_config(name)[:type] == 'ruby'
-  end  
-  
+  end
+
   def np_service_is_node(name)
     np_service_config(name)[:type] == 'node'
   end
@@ -235,46 +248,46 @@ class OpBase
   ################ NP SERVICES ###################
 
   def add_debug_option(opts)
-    opts.on("-z", "--debug", "Optional: load pry") do |x|
-      puts "Loaded pry in debug mode".red
+    opts.on('-z', '--debug', 'Optional: load pry') do |_x|
+      puts 'Loaded pry in debug mode'.red
       require 'pry'
       self.debug = true
     end
   end
 
   def add_help_option(opts)
-    opts.on("-h", "--help", "Prints this help") do
+    opts.on('-h', '--help', 'Prints this help') do
       puts opts
       exit
     end
   end
 
   def add_op_app_option(opts)
-    opts.on("-a", "--app=A", "Application Name (website name)") do |x|
+    opts.on('-a', '--app=A', 'Application Name (website name)') do |x|
       self.opts_op_app = x
     end
-  end  
-  
+  end
+
   def add_write_option(opts, message)
-    opts.on("-w", "--write", message) do |x|
+    opts.on('-w', '--write', message) do |_x|
       self.opts_write = true
     end
   end
 
   def add_delete_option(opts, message)
-    opts.on("-d", "--delete", message) do |x|
+    opts.on('-d', '--delete', message) do |_x|
       self.opts_delete = true
     end
   end
 
   def add_print_option(opts, message)
-    opts.on("-p", "--print", message) do |x|
+    opts.on('-p', '--print', message) do |_x|
       self.opts_print = true
     end
   end
 
   def add_exec_option(opts)
-    opts.on("-e", "--exec=E", "Command to execute") do |x|
+    opts.on('-e', '--exec=E', 'Command to execute') do |x|
       self.opts_exec = x
     end
   end
@@ -283,23 +296,22 @@ class OpBase
     "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local"
   end
 
-
   def add_np_app_option(opts)
-    opts.on("-a", "--app=A", "Required, NP application name") do |x|
-      x  = 'wb-auth-service' if x == 'auth'
+    opts.on('-a', '--app=A', 'Required, NP application name') do |x|
+      x = 'wb-auth-service' if x == 'auth'
       pattern = Regexp.new(x)
-      res = np_services.find { |k,v| pattern =~ v[:name] }
+      res = np_services.find { |_k, v| pattern =~ v[:name] }
       exit_with_error "Did not find any NP services for pattern '*#{x}*'" unless res
       self.opts_np_app = res[1][:name]
     end
   end
 
   def exec_command(cmd, message: nil)
-    puts "Running command: '#{cmd}'"  if self.debug 
+    puts "Running command: '#{cmd}'" if debug
     puts message  if message
 
     cmd.gsub("'", "\\\\'")
-    %x[ #{cmd} ]
+    `#{cmd}`
   end
 
   ##
@@ -321,14 +333,13 @@ class OpBase
     exec_ic_command(cmd, exit_on_fail: exit_on_fail, message: message)
   end
 
-
   def exit_with_error(msg)
     puts "Error: #{msg}".red
     exit(1)
   end
 
   def show_help
-    puts self.option_parser.nil? ? HELP : self.option_parser
+    puts option_parser.nil? ? HELP : option_parser
   end
 
   def run_ssh_command(user, host, key, command, port = 22)
@@ -340,10 +351,10 @@ class OpBase
   def checkout_app(name:, path:)
     name = hyphenated_app_name(name)
 
-    gitname = (name == 'kraken') ? 'kraken' : np_service_config(name)[:gitname]
+    gitname = name == 'kraken' ? 'kraken' : np_service_config(name)[:gitname]
 
-    exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{gitname}.git #{name}", 
-      message: "Cloning #{name} from git"
+    exec_command "cd #{path} && git clone git@github.com:wbetterdev/#{gitname}.git #{name}",
+                 message: "Cloning #{name} from git"
   end
 
   def np_service_domain(name, location: nil)
@@ -352,20 +363,19 @@ class OpBase
   end
 
   def np_service_convox_domain(name)
-    return is_convox_local_dev_rack ? "web.#{name}.dev.convox" : "web.#{name}.convox" 
+    convox_local_dev_rack? ? "web.#{name}.dev.convox" : "web.#{name}.convox"
   end
-  
 
   def get_service_external_domain(name, variant: nil, location: nil)
     name = hyphenated_app_name(name)
     urls = {
-      'wb-auth-service'       => { 'default' => 'accounts-local.waybetterdev.com' },
-      'wb-graphql-service'    => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja'},
-      'wb-hub'                => { 'default' => 'hub-local.waybetterdev.com' },
+      'wb-auth-service' => { 'default' => 'accounts-local.waybetterdev.com' },
+      'wb-graphql-service' => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja' },
+      'wb-hub' => { 'default' => 'hub-local.waybetterdev.com' },
       'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
-      'wb-admin-web'          => { 'default' => 'www-local.waybetter.ninja' },
+      'wb-admin-web' => { 'default' => 'www-local.waybetter.ninja' }
     }
-    variant = 'default' unless variant
+    variant ||= 'default'
     url = urls[name][variant]
     return unless url
 
@@ -373,13 +383,13 @@ class OpBase
   end
 
   def apply_location_to_np_service_domain(domain, name, location = nil)
-    if is_convox_office_server
+    if convox_office_server?
       domain_part = 'office'
     else
       location ||= np_service_location(name)
-      domain_part = (location == LOCATION_OFFICE_CONVOX) ? 'office' : 'local'
+      domain_part = location == LOCATION_OFFICE_CONVOX ? 'office' : 'local'
     end
-    
+
     domain.gsub(/(local|office)/, domain_part)
   end
 
@@ -387,28 +397,28 @@ class OpBase
     "web.#{name}.convox"
   end
 
-  def get_local_ip
-    @__get_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').gsub("\n", "")
+  def find_local_ip
+    @_find_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').gsub("\n", '')
   end
 
   ################ CONVOX ###################
   def convox_ready?
-    @__convox_ready ||= begin
+    @_convox_ready ||= begin
       exec_command("cd #{@path} && convox apps").match(/RELEASE/)
     end
   end
 
   def kubernetes_ready?
-    exec_command("microk8s.status").match(/microk8s is running/)
+    exec_command('microk8s.status').match(/microk8s is running/)
   end
 
   def start_kubernetes
-    exec_command("microk8s.start && microk8s.status --wait-ready")
+    exec_command('microk8s.start && microk8s.status --wait-ready')
   end
 
   def convox_app_path(convox_app)
     path = np_service_path(convox_app) unless convox_app == 'kraken/superlocal'
-    path ? path : "#{@path}/#{convox_app}"
+    path || "#{@path}/#{convox_app}"
   end
 
   def convox_app_path_exists?(convox_app)
@@ -417,27 +427,28 @@ class OpBase
 
   def convox_app_exists?(convox_app, use_cache: false)
     return false if convox_app.nil?
+
     list_convox_apps(use_cache: use_cache).include?(convox_app)
   end
 
   def list_convox_apps(use_cache: false)
-    @__convox_apps = nil unless use_cache
-    @__convox_apps ||= begin
-      exec_command("convox apps")
+    @_convox_apps = nil unless use_cache
+    @_convox_apps ||= begin
+      exec_command('convox apps')
     end
 
-    return [] unless @__convox_apps
-    @__convox_apps.scan(/\n([\w-]+)/).flatten
+    return [] unless @_convox_apps
+
+    @_convox_apps.scan(/\n([\w-]+)/).flatten
   end
 
   def create_convox_app(convox_app)
     exec_command([
-        "cd #{convox_app_path(convox_app)}",
-        "convox apps create #{convox_app}",
-        "#{path_ruby_bin}/kmd-local refresh-env -- local #{convox_app} no-confirm",
-        "#{path_ruby_bin}/kmd-local refresh-yml -- local #{convox_app} no-confirm"
-      ].join(" && ")
-    )
+      "cd #{convox_app_path(convox_app)}",
+      "convox apps create #{convox_app}",
+      "#{path_ruby_bin}/kmd-local refresh-env -- local #{convox_app} no-confirm",
+      "#{path_ruby_bin}/kmd-local refresh-yml -- local #{convox_app} no-confirm"
+    ].join(' && '))
   end
 
   def delete_convox_app(convox_app)

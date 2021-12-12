@@ -1,25 +1,7 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-public
-
-require 'optparse'
-require 'open3'
-
-begin
-  require 'highline'
-  require 'colored'
-  require 'terminfo'
-rescue LoadError => x
-  puts <<-XXX
-To run this utility:
-  gem install 'highline'
-  gem install 'colored'
-  gem install 'ruby-terminfo'
-XXX
-  exit(1)
-end
-
-require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 # CLI script which will start local convox app
 class StartConvoxApp < OpBase
@@ -37,27 +19,26 @@ class StartConvoxApp < OpBase
   end
 
   def prepare_start_script
-    script = <<~END
-wget --no-check-certificate https://dev.dietbet.com/files/convox/office-dev-convox-local-rack.crt -O "/usr/share/ca-certificates/convox.crt" 
-echo "convox.crt" >> "/etc/ca-certificates.conf"
-update-ca-certificates
-cat "/usr/share/ca-certificates/convox.crt"
-END
+    script = <<~SCRIPT
+      wget --no-check-certificate https://dev.dietbet.com/files/convox/office-dev-convox-local-rack.crt -O "/usr/share/ca-certificates/convox.crt"
+      echo "convox.crt" >> "/etc/ca-certificates.conf"
+      update-ca-certificates
+      cat "/usr/share/ca-certificates/convox.crt"
+    SCRIPT
 
     local_kraken_np_services.each do |app|
-      script << "echo '#{get_local_ip} #{np_service_domain(app)}' >> /etc/hosts\n"
+      script << "echo '#{find_local_ip} #{np_service_domain(app)}' >> /etc/hosts\n"
     end
     script << "/app/bin/start_web_server.sh\n"
-  
+
     # hide the script from git via the .env path (that is set in every gitignore)
     script_path = '.env.start_local_web_server'
 
     File.write(script_path, script, mode: 'w+')
     exec_ic_command "chmod u+x #{script_path}"
     exec_ic_command "sed -i 's/bin\\/start_web_server.sh/#{script_path}/' convox.local.yml"
-    exec_ic_command "DEBUG_CONVOX=true convox start -m convox.local.yml"
+    exec_ic_command 'DEBUG_CONVOX=true convox start -m convox.local.yml'
   end
-
 end
 
 StartConvoxApp.new.go

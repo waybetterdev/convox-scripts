@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 public
 
@@ -9,17 +10,17 @@ begin
   require 'highline'
   require 'colored'
   require 'terminfo'
-rescue LoadError => x
-  puts <<-XXX
-To run this utility:
-  gem install 'highline'
-  gem install 'colored'
-  gem install 'ruby-terminfo'
-XXX
+rescue LoadError
+  puts <<~XXX
+    To run this utility:
+      gem install 'highline'
+      gem install 'colored'
+      gem install 'ruby-terminfo'
+  XXX
   exit(1)
 end
 
-require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 # CLI script which will start tmux
 class BuildAndroidApp < OpBase
@@ -29,56 +30,49 @@ class BuildAndroidApp < OpBase
     self.android_app_path = Dir.getwd
 
     unless File.directory?('./android')
-      puts "Android directory not found.".red
+      puts 'Android directory not found.'.red
       exit
     end
 
-    prepare_secret_file("keystore.properties")
-    prepare_secret_file("app/DietbetterApp.keystore")
-    prepare_secret_file("app/upload-keystore.jks")
-    
+    prepare_secret_file('keystore.properties')
+    prepare_secret_file('app/DietbetterApp.keystore')
+    prepare_secret_file('app/upload-keystore.jks')
+
     # exec_command_in_path("nvm use && npm install",
-    #   path: "#{android_app_path}", 
+    #   path: "#{android_app_path}",
     #   message: "Running gradle"
     # )
 
-    exec_command_in_path("./gradlew clean assembleStagingDebug -Pcredentialssource=properties",
-      path: "#{android_app_path}/android", 
-      message: "Running gradle"
-    )
+    exec_command_in_path('./gradlew clean assembleStagingDebug -Pcredentialssource=properties',
+                         path: "#{android_app_path}/android",
+                         message: 'Running gradle')
 
-    exec_command_in_path( "adb install app-staging-debug.apk",
-      path: "#{android_app_path}/android/app/build/outputs/apk/staging/debug",
-      message: "Sending the APK file to the phone"
-    )
+    exec_command_in_path('adb install app-staging-debug.apk',
+                         path: "#{android_app_path}/android/app/build/outputs/apk/staging/debug",
+                         message: 'Sending the APK file to the phone')
 
-    cleanup_secret_file("keystore.properties")
-    cleanup_secret_file("app/DietbetterApp.keystore")
-    cleanup_secret_file("app/upload-keystore.jks")
-
+    cleanup_secret_file('keystore.properties')
+    cleanup_secret_file('app/DietbetterApp.keystore')
+    cleanup_secret_file('app/upload-keystore.jks')
   end
 
   def cleanup_secret_file(file)
     exec_ic_command("rm -f #{android_app_path}/android/#{file}",
-      exit_on_fail: false, 
-      message: "Deleting #{file}".green
-    )
+                    exit_on_fail: false,
+                    message: "Deleting #{file}".green)
   end
 
   def prepare_secret_file(file)
     exec_ic_command("cp -f #{path_secrets}/mobile-app/android/#{file} #{android_app_path}/android/#{file}",
-      exit_on_fail: true, 
-      message: "Copying #{file}".green
-    )
+                    exit_on_fail: true,
+                    message: "Copying #{file}".green)
   end
 
   def exec_command_in_path(cmd, path:, message:)
     exec_ic_command("cd #{path} && #{cmd}",
-      exit_on_fail: true, 
-      message: message.green
-    )
+                    exit_on_fail: true,
+                    message: message.green)
   end
-
 end
 
 BuildAndroidApp.new.go

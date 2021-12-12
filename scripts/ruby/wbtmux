@@ -1,124 +1,100 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-public
-
-require 'optparse'
-require 'open3'
-
-begin
-  require 'highline'
-  require 'colored'
-  require 'terminfo'
-rescue LoadError => x
-  puts <<-XXX
-To run this utility:
-  gem install 'highline'
-  gem install 'colored'
-  gem install 'ruby-terminfo'
-XXX
-  exit(1)
-end
-
-require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 # CLI script which will start tmux
 class Wbtmux < OpBase
-  attr_accessor :option_parser, :apps_to_run, :apps_to_open, :opt_exit_tmux, :opts_fix_dns, :opts_wait_convox
+  attr_accessor :option_parser, :apps_to_run, :apps_to_open,
+                :opt_exit_tmux, :opts_fix_dns, :opts_wait_convox
 
-  DEFAULT_SERVICES = ['mysql', 'user']
+  DEFAULT_SERVICES = %w[mysql user].freeze
   SERVICE_MAP = {
-    "mysql"       => 'kraken/superlocal',
-    "user"        => 'wb-user-service',
-    "auth"        => 'wb-auth-service',
-    "bill"        => 'wb-billing-service',
-    "graphql"     => 'wb-graphql-service',
-    "dietbet"     => 'dietbet-game-service',
-    "hub"         => 'wb-hub',
-    "admin-auth"  => 'wb-admin-auth-service',
-    "admin-web"   => 'wb-admin-web',
-    "metric"      => 'wb-metric-service',
-    "notify"      => 'wb-notify-service',
-    "member"      => 'wb-membership-service',
-    "falkor"      => 'falkor-game-service',
-    "runbet"      => 'runbet-game-service',
-    "quitbet"     => 'quitbet-game-service',
-    "social"      => 'wb-social-service',
-  }
+    'mysql' => 'kraken/superlocal',
+    'user' => 'wb-user-service',
+    'auth' => 'wb-auth-service',
+    'bill' => 'wb-billing-service',
+    'graphql' => 'wb-graphql-service',
+    'dietbet' => 'dietbet-game-service',
+    'hub' => 'wb-hub',
+    'admin-auth' => 'wb-admin-auth-service',
+    'admin-web' => 'wb-admin-web',
+    'metric' => 'wb-metric-service',
+    'notify' => 'wb-notify-service',
+    'member' => 'wb-membership-service',
+    'falkor' => 'falkor-game-service',
+    'runbet' => 'runbet-game-service',
+    'quitbet' => 'quitbet-game-service',
+    'social' => 'wb-social-service'
+  }.freeze
   ALL_SERVICES = SERVICE_MAP.keys
-  def initialize()
+  def initialize
     @path = "#{Dir.home}/Work/wb-services"
     @bin_path = "#{Dir.home}/Work/docs/scripts/ruby"
     @apps_to_open = []
-    @apps_to_run = [] 
+    @apps_to_run = []
   end
 
   def go
-
     parse_opts
 
-    run_tmux_session()
+    run_tmux_session
   end
 
   def app_full_name(name)
     SERVICE_MAP[name]
   end
 
-  def run_tmux_session()
-
-    fix_dns_and_aws if self.opts_fix_dns
+  def run_tmux_session
+    fix_dns_and_aws if opts_fix_dns
 
     if convox_required? && !kubernetes_ready?
-      puts "Kubernetes (microk8s) not running. Starting it"
-      start_kubernetes 
+      puts 'Kubernetes (microk8s) not running. Starting it'
+      start_kubernetes
     end
 
-    wait_for_convox if self.opts_wait_convox 
+    wait_for_convox if opts_wait_convox
     if convox_required?
-      exit_with_error("Convox not ready. Aborting.") unless convox_ready?
+      exit_with_error('Convox not ready. Aborting.') unless convox_ready?
     end
 
     session_name = 'lconvox'
 
-    all_apps = self.apps_to_run + self.apps_to_open.uniq
+    all_apps = apps_to_run + apps_to_open.uniq
 
-    if all_apps.count > 0 
+    if all_apps.count.positive?
       prepare_session(session_name)
 
       open_apps(session_name, all_apps)
-      run_apps(session_name, self.apps_to_run)
+      run_apps(session_name, apps_to_run)
 
-      unless self.opt_exit_tmux
-        enter_tmux_session(session_name)
-      end
+      enter_tmux_session(session_name) unless opt_exit_tmux
     end
 
-    if self.opt_exit_tmux
-      exit_tmux_session(session_name)
-    end
+    exit_tmux_session(session_name) if opt_exit_tmux
   end
 
   def prepare_session(session_name)
-
     if session_exists?(session_name)
       exit_tmux_session(session_name)
     else
       queue = CommandQueue.new(session_name)
-      queue.create_session("info", @path)
+      queue.create_session('info', @path)
       queue.run
     end
   end
 
   def open_apps(session_name, apps)
-
     return if apps.nil?
 
     active_windows = list_windows(session_name)
 
     queue = CommandQueue.new(session_name)
-    queue.attach_session()
+    queue.attach_session
 
     apps.each do |app|
       next if active_windows.include?(app)
+
       convox_app = app_full_name(app)
       path = convox_app_path(convox_app)
       queue.new_window(app, path)
@@ -142,9 +118,7 @@ class Wbtmux < OpBase
         app_command = 'docker-compose up'
       elsif np_service_is_on_local_convox(convox_app)
         # create the app if it does not exist
-        if convox_app_path_exists?(convox_app) && self.opts_wait_convox && !convox_app_exists?(convox_app, use_cache: true)
-          create_convox_app(convox_app)
-        end 
+        create_convox_app(convox_app) if convox_app_path_exists?(convox_app) && opts_wait_convox && !convox_app_exists?(convox_app, use_cache: true)
 
         app_command = "env-builder -w -a #{app} && kk refresh-yml -- local #{app} && kk refresh-env -- local #{app} no-confirm && startconvoxapp"
       elsif np_service_is_on_local_kraken(convox_app)
@@ -153,19 +127,19 @@ class Wbtmux < OpBase
 
         if np_service_is_node(convox_app)
           exec_command "prepare-local-service -a #{app}" unless convox_app_path_exists?(convox_app)
-          app_command = "npmstartservice"
+          app_command = 'npmstartservice'
         elsif np_service_is_ruby(convox_app)
           exec_command "prepare-local-service -a #{app}" unless convox_app_path_exists?(convox_app)
           app_command = "cd #{app_path} && lrun bin/start_web_server.sh"
         else
-          throw "Could not detect whether '#{convox_app}' is a ruby or node app." 
+          throw "Could not detect whether '#{convox_app}' is a ruby or node app."
         end
       end
 
       queue = CommandQueue.new(session_name)
       queue.attach_session
       queue.exec_command_inside_screen(app, 1, app_command)
-      
+
       queue.swap_panes(0, 1)
       queue.run
     end
@@ -181,46 +155,44 @@ class Wbtmux < OpBase
 
   def parse_opts
     self.option_parser = OptionParser.new do |opts|
-
       opts.banner = HELP
 
-      opts.separator ""
-      opts.separator "Specific options:"
+      opts.separator ''
+      opts.separator 'Specific options:'
 
-      opts.on("-z", "--debug", "Optional: load pry") do |x|
+      opts.on('-z', '--debug', 'Optional: load pry') do |_x|
         require 'pry'
       end
 
-      opts.on("-r", "--run=S", "Optional, the apps to run") do |x|
-        self.apps_to_run = x.split(",").collect(&:strip)
+      opts.on('-r', '--run=S', 'Optional, the apps to run') do |x|
+        self.apps_to_run = x.split(',').collect(&:strip)
       end
 
-      opts.on("-o", "--open=O", "Optional, the apps to open") do |x|
-        self.apps_to_open = x.split(",").collect(&:strip)
+      opts.on('-o', '--open=O', 'Optional, the apps to open') do |x|
+        self.apps_to_open = x.split(',').collect(&:strip)
       end
 
-      opts.on("-x", "--exit", "Optional, exit current tmux session without killing it") do |x|
+      opts.on('-x', '--exit', 'Optional, exit current tmux session without killing it') do |_x|
         self.opt_exit_tmux = true
       end
 
-      opts.on("-f", "--fixdns", "Optional, Fix convox dns") do |x|
+      opts.on('-f', '--fixdns', 'Optional, Fix convox dns') do |_x|
         self.opts_fix_dns = true
       end
 
-      opts.on("-w", "--wait", "Optional, wait for convox") do |x|
+      opts.on('-w', '--wait', 'Optional, wait for convox') do |_x|
         self.opts_wait_convox = true
       end
 
-      opts.on("-h", "--help", "Prints this help") do
+      opts.on('-h', '--help', 'Prints this help') do
         puts opts
         exit
       end
-
     end
-    self.option_parser.parse!(ARGV)
+    option_parser.parse!(ARGV)
 
-    validate_service_names(self.apps_to_run)
-    validate_service_names(self.apps_to_open)
+    validate_service_names(apps_to_run)
+    validate_service_names(apps_to_open)
   end
 
   def validate_service_names(services)
@@ -231,10 +203,9 @@ class Wbtmux < OpBase
     end
   end
 
-
   def exit_with_error(msg)
     puts msg
-    puts "See help:"
+    puts 'See help:'
     show_help
     exit(1)
   end
@@ -249,18 +220,20 @@ class Wbtmux < OpBase
   end
 
   def exec_command(cmd)
-    puts "Running Command:"
+    puts 'Running Command:'
     puts cmd.blue
     cmd.gsub("'", "\\\\'")
-    %x[ #{cmd} ]
+    `#{cmd}`
   end
 
   def convox_required?
-    @__convox_required ||= begin
-      res = self.apps_to_run.find do |s| 
+    @_convox_required ||= begin
+      res = apps_to_run.find do |s|
         next if s == 'mysql'
+
         name = app_full_name(s)
         next unless name
+
         np_service_is_on_local_convox(name)
       end
       !res.nil?
@@ -268,32 +241,31 @@ class Wbtmux < OpBase
   end
 
   def wait_for_convox
-    12.times do 
+    12.times do
       break if convox_ready?
 
-      puts "Convox not ready. Waiting 10 seconds"
-      exec_command("sleep 10")
+      puts 'Convox not ready. Waiting 10 seconds'
+      exec_command('sleep 10')
     end
   end
 
   def fix_dns_and_aws
     puts 'Fixing iptables'
-    exec_command("sudo iptables -P FORWARD ACCEPT")
+    exec_command('sudo iptables -P FORWARD ACCEPT')
 
     puts 'Fixing aws'
-    pass = exec_command("aws ecr get-login-password --region us-west-2 --profile prod")
+    pass = exec_command('aws ecr get-login-password --region us-west-2 --profile prod')
     exec_command("convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS #{pass}")
   end
-  
-  HELP = <<-END
-wbtmux
-  Wrapper script for tmux. Can run any of the following services #{SERVICE_MAP.keys.join(",")}
-  Ex:
-    
-    or 
-    wbtmux -r mysql,user -o auth,falkor
-  
-  END
+
+  HELP = <<~HELP
+    wbtmux
+      Wrapper script for tmux. Can run any of the following services #{SERVICE_MAP.keys.join(',')}
+      Ex:
+
+        or
+        wbtmux -r mysql,user -o auth,falkor
+  HELP
 
   def show_help
     puts HELP
@@ -335,26 +307,24 @@ wbtmux
 
     def run
       exit_session
-      exec_command("tmux " + commands.join(" \\; \\\n    ") + "\\;")
+      exec_command('tmux ' + commands.join(" \\; \\\n    ") + '\\;')
     end
 
     def exec_command(cmd)
-      puts "Running Command:"
+      puts 'Running Command:'
       puts cmd.blue
       cmd.gsub("'", "\\\\'")
-      %x[ #{cmd} ]
+      `#{cmd}`
     end
 
     private
+
     def _add(cmd)
       commands.push(cmd)
     end
 
     # Time.now.strftime('%Y-%m-%d %H:%M:%S')
   end
-
 end
 
 Wbtmux.new.go
-
-

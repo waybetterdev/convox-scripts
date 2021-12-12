@@ -1,25 +1,7 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
-public
-
-require 'optparse'
-require 'open3'
-
-begin
-  require 'highline'
-  require 'colored'
-  require 'terminfo'
-rescue LoadError => x
-  puts <<-XXX
-To run this utility:
-  gem install 'highline'
-  gem install 'colored'
-  gem install 'ruby-terminfo'
-XXX
-  exit(1)
-end
-
-require File.expand_path('../', __FILE__) + "/includes/op-base.rb"
+require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 # CLI script which will start tmux
 class ReloadEnv < OpBase
@@ -30,7 +12,7 @@ class ReloadEnv < OpBase
       warn "Error: app '".red + app.to_s.green + "' is not on local convox".red
       exit 1
     end
-    
+
     exec_ic_command "env-builder -w -a #{app}"
     exec_ic_command "kmd-local refresh-env -- local #{app} no-confirm"
   end
