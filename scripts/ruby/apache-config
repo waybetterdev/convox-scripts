@@ -220,7 +220,7 @@ class ApacheConfig < OpBase
     if np_service_is_on_local_kraken(name)
       port = np_service_port(name)
       "http://#{domain}#{':' + port.to_s if port}"
-    elsif np_service_is_on_local_convox(name)
+    elsif np_service_on_local_convox?(name)
       domain = np_service_convox_domain(name)
       "https://#{domain}"
     elsif np_service_is_on_convox_office(name)

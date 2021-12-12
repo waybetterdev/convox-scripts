@@ -4,7 +4,7 @@
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class EnvBuilder < OpBase
-  attr_accessor :opts_write, :opts_print, :opts_np_app
+  attr_accessor :opts_write, :opts_print
 
   def initialize; end
 
@@ -50,7 +50,7 @@ class EnvBuilder < OpBase
     env_values = {}
     app = opts_np_app
 
-    if np_service_is_on_local_convox(app)
+    if np_service_on_local_convox?(app)
       files = ["#{np_service_app_name(app)}.env.local"]
     elsif np_service_is_on_local_kraken(app)
       files = NpServices::NP_SERVICES[:local_kraken].map { |s| "#{np_service_app_name(s[:name])}.env.local" }
@@ -116,11 +116,11 @@ class EnvBuilder < OpBase
 
     if np_service_is_on_convox_office(name)
       "https://#{url}"
-    elsif np_service_is_on_local_convox(name)
+    elsif np_service_on_local_convox?(name)
       if use_convox_rack_internal_urls
         url = np_service_convox_domain(name)
         port = service_data[:port]
-        return "http://#{url}:#{port}" if convox_local_dev_rack? && np_service_is_on_local_convox(opts_np_app) && port
+        return "http://#{url}:#{port}" if convox_local_dev_rack? && np_service_on_local_convox?(opts_np_app) && port
       end
       "https://#{url}#{':' + port.to_s if port}"
     elsif np_service_is_on_local_kraken(name)
@@ -132,7 +132,7 @@ class EnvBuilder < OpBase
   end
 
   def np_service_internal_domain(name)
-    if np_service_is_on_local_convox(name)
+    if np_service_on_local_convox?(name)
       np_service_convox_domain(name)
     else
       np_service_domain(name)
@@ -152,7 +152,7 @@ class EnvBuilder < OpBase
   end
 
   def service_dst_env_path(app)
-    if np_service_is_on_local_convox(app)
+    if np_service_on_local_convox?(app)
       "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local.tmp"
     elsif np_service_is_on_local_kraken(app)
       "#{path_kraken}/.env.g2"
@@ -160,7 +160,7 @@ class EnvBuilder < OpBase
   end
 
   def use_convox_rack_internal_urls
-    np_service_is_on_local_convox(opts_np_app)
+    np_service_on_local_convox?(opts_np_app)
   end
 
   private

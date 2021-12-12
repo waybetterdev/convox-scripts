@@ -2,6 +2,7 @@
 
 require 'optparse'
 require 'open3'
+require 'uri/http'
 
 begin
   require 'highline'
@@ -18,7 +19,7 @@ rescue LoadError
 end
 
 class OpBase
-  attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_exec
+  attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_np_app
 
   LOCATION_KRAKEN_LOCAL = 'kraken'
   LOCATION_CONVOX_LOCAL = 'convox-local'
@@ -229,7 +230,7 @@ class OpBase
     np_service_location(name) == LOCATION_KRAKEN_LOCAL
   end
 
-  def np_service_is_on_local_convox(name)
+  def np_service_on_local_convox?(name)
     np_service_location(name) == LOCATION_CONVOX_LOCAL
   end
 
@@ -286,17 +287,14 @@ class OpBase
     end
   end
 
-  def add_exec_option(opts)
-    opts.on('-e', '--exec=E', 'Command to execute') do |x|
-      self.opts_exec = x
-    end
-  end
-
   def np_service_env_path(app)
     "#{path_local_settings}/convox-env/#{np_service_app_name(app)}.env.local"
   end
 
   def add_np_app_option(opts)
+    dir_name = File.basename(Dir.getwd)
+    self.opts_np_app = dir_name if np_service_config(dir_name)
+
     opts.on('-a', '--app=A', 'Required, NP application name') do |x|
       x = 'wb-auth-service' if x == 'auth'
       pattern = Regexp.new(x)

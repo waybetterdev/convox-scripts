@@ -94,7 +94,7 @@ class NpServiceConfig < OpBase
         puts "Local kraken app #{app.green} needs to be installed to #{convox_app_path(app).green}."
       else
         puts "Installing local kraken app #{app.green}"
-        exec_ic_command "prepare-local-service -a #{app}"
+        exec_ic_command "np-service-prepare -a #{app}"
       end
     end
   end

@@ -5,7 +5,7 @@ require File.expand_path(__dir__) + '/includes/op_base.rb'
 require File.expand_path(__dir__) + '/includes/kenv.rb'
 
 class RunService < OpBase
-  attr_accessor :opts_np_app
+  attr_accessor :opts_exec
 
   ENV_OVERRIDES = {
     'WB_LOCAL_STANDALONE' => 'true',
@@ -29,7 +29,7 @@ class RunService < OpBase
   HELP = <<-BAN
   Execute commands either on local rails and node apps with all ENV variables preloaded.
   Ex:
-    prepare-node-app -a wb-user-service
+    np-service-run -a wb-user-service
   BAN
 
   def parse_opts
@@ -50,6 +50,15 @@ class RunService < OpBase
 
     exit_with_error('app parameter is required') if opts_np_app.nil?
   end
+
+  def add_exec_option(opts)
+    opts.on('-e', '--exec=e', 'Command to execute') do |x|
+      self.opts_exec = "bash -ic '#{x}'"
+    end
+
+    self.opts_exec ||= "echo \"Entering #{opts_np_app} bash with env=$RAILS_ENV\" && bash -i"
+  end
+
 end
 
 RunService.new.go

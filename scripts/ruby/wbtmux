@@ -116,7 +116,7 @@ class Wbtmux < OpBase
       app_command = ''
       if app == 'mysql'
         app_command = 'docker-compose up'
-      elsif np_service_is_on_local_convox(convox_app)
+      elsif np_service_on_local_convox?(convox_app)
         # create the app if it does not exist
         create_convox_app(convox_app) if convox_app_path_exists?(convox_app) && opts_wait_convox && !convox_app_exists?(convox_app, use_cache: true)
 
@@ -126,10 +126,10 @@ class Wbtmux < OpBase
         app_path = np_service_path(convox_app)
 
         if np_service_is_node(convox_app)
-          exec_command "prepare-local-service -a #{app}" unless convox_app_path_exists?(convox_app)
+          exec_command "np-service-prepare -a #{app}" unless convox_app_path_exists?(convox_app)
           app_command = 'npmstartservice'
         elsif np_service_is_ruby(convox_app)
-          exec_command "prepare-local-service -a #{app}" unless convox_app_path_exists?(convox_app)
+          exec_command "np-service-prepare -a #{app}" unless convox_app_path_exists?(convox_app)
           app_command = "cd #{app_path} && lrun bin/start_web_server.sh"
         else
           throw "Could not detect whether '#{convox_app}' is a ruby or node app."
@@ -234,7 +234,7 @@ class Wbtmux < OpBase
         name = app_full_name(s)
         next unless name
 
-        np_service_is_on_local_convox(name)
+        np_service_on_local_convox?(name)
       end
       !res.nil?
     end
