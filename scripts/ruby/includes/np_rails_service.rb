@@ -19,11 +19,11 @@ class NpRailsService < NpService
     "np-service-run -a #{name} -e bin/start_web_server.sh"
   end
 
-  def run_connect_command
-    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path)
+  def run_connect_command(override_envs: {})
+    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs)
   end
 
-  def run_command(cmd)
-    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path)
+  def run_command(cmd, override_envs: {})
+    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path, override_envs: override_envs)
   end
 end

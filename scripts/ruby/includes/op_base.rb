@@ -81,40 +81,28 @@ class OpBase < NpPaths
         .flatten
         .each_with_object({}) do |service_data, hash|
           name = dashed_app_name(service_data[:name]).to_sym
-          folder_name = service_data[:name]
-          service_data[:path] ||= "#{path_wb_services}/#{folder_name}"
-
           if hash[name]
             exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
           end
 
-          if service_data[:location].eql?(LOCATION_CONVOX_LOCAL)
-            hash[name] = NpConvoxService.new(**service_data)
-          elsif service_data[:location].eql?(LOCATION_KRAKEN_LOCAL)
-            if service_data[:type].eql?('ruby')
-              hash[name] = NpRailsService.new(**service_data)
-            elsif service_data[:type].eql?('node')
-              hash[name] = NpNodeService.new(**service_data)
-            end
-          else
-            hash[name] = NpService.new(**service_data)
-          end
-        end.merge(
-          mysql: NpDockerService.new(name: :mysql, gitname: nil, type: 'mysql', port: '3306', path: "#{path_kraken}/superlocal", location: 'local-docker')
-        )
+          hash[name] = build_service_from_config(service_data)
+        end.merge(mysql: NpDockerService.new(
+          name: 'mysql', gitname: nil, type: 'mysql', port: '3306', 
+          path: "#{path_kraken}/superlocal", location: 'local-docker'
+        ))
     end
     @_np_services
   end
 
-  def local_kraken_np_service_names
-    @_local_kraken_np_service_names ||= begin
-      np_services.map { |_k, v| v.on_local_kraken? ? v.name : nil }.compact
+  def local_kraken_np_services
+    @_local_kraken_np_services ||= begin
+      np_services.map { |_k, v| v.on_local_kraken? ? v : nil }.compact
     end
   end
 
-  def local_convox_np_services_names
-    @_local_convox_np_services_names ||= begin
-      np_services.map { |_k, v| v.on_local_convox? ? v.name : nil }.compact
+  def local_convox_np_services
+    @_local_convox_np_services ||= begin
+      np_services.map { |_k, v| v.on_local_convox? ? v : nil }.compact
     end
   end
 
@@ -150,10 +138,6 @@ class OpBase < NpPaths
 
   def hyphenated_app_name(name)
     name.to_s.gsub(/[ _]+/, '-').downcase
-  end
-
-  def dashed_app_name(name)
-    name.to_s.gsub(/[ -]+/, '_').downcase
   end
 
   ################ OP SERVERS ###################
@@ -421,4 +405,28 @@ class OpBase < NpPaths
     exec_command("convox apps delete #{convox_app}")
   end
   ################ CONVOX ###################
+
+
+  private
+
+  def build_service_from_config(service_data)
+
+    service_data[:path] ||= "#{path_wb_services}/#{service_data[:name]}"
+
+    if service_data[:location].eql?(LOCATION_CONVOX_LOCAL)
+      NpConvoxService.new(**service_data)
+    elsif service_data[:location].eql?(LOCATION_KRAKEN_LOCAL)
+      if service_data[:type].eql?('ruby')
+        NpRailsService.new(**service_data)
+      elsif service_data[:type].eql?('node')
+        NpNodeService.new(**service_data)
+      end
+    else
+      NpService.new(**service_data)
+    end
+  end
+
+  def dashed_app_name(name)
+    name.to_s.gsub(/[ -]+/, '_').downcase
+  end
 end

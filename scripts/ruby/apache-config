@@ -68,14 +68,17 @@ class ApacheConfig < OpBase
   end
 
   def np_service_domains_conf
-    np_services.values.map { |s| { name: s.name, external: false } } + [
-      { name: 'wb-auth-service',          external: true },
-      { name: 'wb-graphql-service',       external: true },
-      { name: 'wb-graphql-service',       external: true, variant: 'ninja' },
-      { name: 'wb-hub',                   external: true },
-      { name: 'wb-admin-auth-service',    external: true },
-      { name: 'wb-admin-web',             external: true }
-    ]
+    np_services
+      .reject {|_k, v| v.name.eql?("mysql") }
+      .values.map { |s| { name: s.name, external: false } }
+      .concat([
+        { name: 'wb-auth-service',          external: true },
+        { name: 'wb-graphql-service',       external: true },
+        { name: 'wb-graphql-service',       external: true, variant: 'ninja' },
+        { name: 'wb-hub',                   external: true },
+        { name: 'wb-admin-auth-service',    external: true },
+        { name: 'wb-admin-web',             external: true }
+      ])
   end
 
   def generate_config
@@ -107,6 +110,7 @@ class ApacheConfig < OpBase
 
   def get_np_service_vhost_config(domain, name, path, is_proxy:, use_ssl:)
     service = get_proxy_to_url(name)
+
     conf = {
       'ServerAdmin' => 'mihai@waybetter.com',
       'ServerName' => domain,
@@ -220,12 +224,12 @@ class ApacheConfig < OpBase
   def get_proxy_to_url(name)
     np_service = np_service_config(name, true)
 
-    domain = np_service.domain
+    domain = np_service_domain(name)
     if np_service.on_local_kraken?
       port = np_service.port
       "http://#{domain}#{':' + port.to_s if port}"
     elsif np_service.on_local_convox?
-      domain = np_service.domain
+      domain = np_service_convox_domain(name)
       "https://#{domain}"
     elsif np_service.on_convox_office?
       "https://#{domain}"

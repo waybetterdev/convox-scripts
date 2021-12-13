@@ -44,8 +44,10 @@ class NpServiceConfig < OpBase
   end
 
   def prepare_local_convox_services
+    new_apps = local_convox_np_services.map(&:name)
+    return unless new_apps || opts_delete
+
     old_apps = ConvoxUtil.list_convox_apps
-    new_apps = local_convox_np_services_names
 
     puts "Local convox apps: #{new_apps.inspect.green}"
     apps_to_delete = old_apps - new_apps
@@ -80,22 +82,11 @@ class NpServiceConfig < OpBase
   end
 
   def prepare_local_kraken_services
-    puts "Local kraken apps: #{local_kraken_np_service_names.inspect.green}"
+    puts "Local apps: #{local_kraken_np_services.map(&:name).inspect.green}"
 
-    local_kraken_np_service_names.each do |app|
-      if convox_app_path_exists?(app)
-        next unless opts_write
-
-        exec_ic_command "env-builder -w -a #{app}"
-        break
-      end
-
-      if opts_print
-        puts "Local kraken app #{app.green} needs to be installed to #{convox_app_path(app).green}."
-      else
-        puts "Installing local kraken app #{app.green}"
-        exec_ic_command "np-service-prepare -a #{app}"
-      end
+    local_kraken_np_services.each do |np_service|
+      np_service.prepare_service
+      exec_ic_command("env-builder -w -a #{np_service.name}") if opts_write 
     end
   end
 end

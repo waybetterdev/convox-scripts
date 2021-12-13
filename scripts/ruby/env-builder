@@ -47,7 +47,7 @@ class EnvBuilder < OpBase
   end
 
   def read_src_env_file
-    env_values = {}
+    env_values = default_empty_env_values
     app = opts_np_app_name
 
     if opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
@@ -66,16 +66,12 @@ class EnvBuilder < OpBase
 
         next unless key
         next if value.nil? || value == ''
-        next if /^(___|#)/ =~ key
-        next if key == 'PORT'
+        next if /^(_|#)/ =~ key
 
         env_values[key] = value
       end
     end
     exit_with_error "No env variables found in file '#{env_path}'" unless env_values
-
-    # force GEMFURY_SECRET and NPM_CONFIG_REGISTRY to be always present on local node apps
-    env_values.merge!('GEMFURY_SECRET' => nil, 'NPM_CONFIG_REGISTRY' => nil) if opts_np_app.on_local_kraken?
 
     env_values.sort.to_h
   end
@@ -154,6 +150,26 @@ class EnvBuilder < OpBase
 
   private
 
+  def default_empty_env_values
+    defaults = [
+      'PORT', 'VERIFY_CERTS', 'WB_INTERNAL_URL_SCHEME', 'WB_ENFORCE_HTTPS', 
+      'WB_JWT_COOKIE', 'WB_ENV', 'GEMFURY_SECRET', 'RBENV_VERSION', 'GEN2'
+    ]
+
+    if opts_np_app.type_is_ruby?
+      defaults.concat(['RAILS_ENV', 'USE_STANDARD_LOGGING'])
+    end    
+    if opts_np_app.type_is_node?
+      defaults.concat([
+        'NODE_TLS_REJECT_UNAUTHORIZED', 'NODE_ENV', 'NPM_CONFIG_REGISTRY'
+      ])
+    end
+
+    defaults
+      .each_with_object({}) {|v, hash| hash[v] = ''}
+      .merge(Kenv.read_env_from_file("#{opts_np_app.path}/convox.yml"))
+  end
+
   def call_val_proc(key, value)
     url_key = key.gsub(/_(HOST|PORT|SCHEME)$/, '_URL')
     if val_procs[key]
@@ -184,6 +200,9 @@ class EnvBuilder < OpBase
       'NODE_TLS_REJECT_UNAUTHORIZED' => -> { '0' },
       'WB_INTERNAL_URL_SCHEME' => -> { 'http' },
       'WB_ENFORCE_HTTPS' => -> { 'false' },
+      'PORT' => -> { opts_np_app.port },
+      'RBENV_VERSION' => -> { File.read("#{opts_np_app.path}/.ruby-version") },
+      'USE_STANDARD_LOGGING' => -> { 'true' },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },

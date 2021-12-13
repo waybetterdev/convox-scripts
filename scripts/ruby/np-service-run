@@ -4,15 +4,15 @@
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class RunService < OpBase
-  attr_accessor :opts_exec
+  attr_accessor :opts_command, :opts_environment
 
   def go
     parse_opts
 
-    if opts_exec
-      opts_np_app.run_command(opts_exec)
+    if opts_command
+      opts_np_app.run_command(opts_command, override_envs: override_envs)
     else
-      opts_np_app.run_connect_command
+      opts_np_app.run_connect_command(override_envs: override_envs)
     end
   end
 
@@ -30,7 +30,8 @@ class RunService < OpBase
       opts.separator 'Specific options:'
 
       add_debug_option(opts)
-      add_exec_option(opts)
+      add_command_option(opts)
+      add_env_option(opts)
 
       add_np_app_option(opts)
 
@@ -41,9 +42,27 @@ class RunService < OpBase
     exit_with_error('app parameter is required') if opts_np_app_name.nil?
   end
 
-  def add_exec_option(opts)
-    opts.on('-e', '--exec=e', 'Command to execute') do |x|
-      self.opts_exec = x
+  def add_command_option(opts)
+    opts.on('-c', '--command=c', 'Command to execute') do |x|
+      self.opts_command = x
+    end
+  end  
+  
+  def add_env_option(opts)
+    opts.on('-e', '--env=e', 'Environment name') do |x|
+      self.opts_environment = x
+    end
+  end
+
+  def override_envs
+    if self.opts_environment.eql?('test')
+      {
+        'RAILS_ENV' => 'test'
+      }
+    else
+      {
+        'RAILS_ENV' => 'development'
+      }
     end
   end
 end
