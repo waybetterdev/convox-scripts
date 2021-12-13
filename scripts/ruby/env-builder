@@ -157,7 +157,7 @@ class EnvBuilder < OpBase
     ]
 
     if opts_np_app.type_is_ruby?
-      defaults.concat(['RAILS_ENV', 'USE_STANDARD_LOGGING'])
+      defaults.concat(['USE_STANDARD_LOGGING'])
     end    
     if opts_np_app.type_is_node?
       defaults.concat([
@@ -202,7 +202,9 @@ class EnvBuilder < OpBase
       'WB_ENFORCE_HTTPS' => -> { 'false' },
       'PORT' => -> { opts_np_app.port },
       'RBENV_VERSION' => -> { File.read("#{opts_np_app.path}/.ruby-version") },
-      'USE_STANDARD_LOGGING' => -> { 'true' },
+      'USE_STANDARD_LOGGING' => -> { '' },
+      'DISABLE_SPRING' => -> { '1' },
+      'RAILS_ENV' => -> { '' },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },

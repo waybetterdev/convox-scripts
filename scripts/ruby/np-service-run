@@ -57,7 +57,7 @@ class RunService < OpBase
   def override_envs
     if self.opts_environment.eql?('test')
       {
-        'RAILS_ENV' => 'test'
+        
       }
     else
       {

@@ -4,8 +4,8 @@ require 'yaml'
 
 class Kenv
   ENV_OVERRIDES = {
-    'WB_LOCAL_STANDALONE' => 'true',
-    'RAILS_ENV' => 'development'
+    # 'WB_LOCAL_STANDALONE' => 'true',
+    # 'RAILS_ENV' => 'development'
   }.freeze
 
 
@@ -32,7 +32,7 @@ class Kenv
     env_args = []
     if env_path
       env_args.push "$(cat #{env_path} | xargs)"
-      env_args.push ENV_OVERRIDES.merge(override_envs).map { |k, v| "#{k}=#{v}" }.join(' ')
+      env_args.push ENV_OVERRIDES.merge(override_envs || {}).map { |k, v| "#{k}=#{v}" }.join(' ')
     end
 
     if cmd
