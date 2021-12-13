@@ -20,10 +20,10 @@ class NpRailsService < NpService
   end
 
   def run_connect_command
-    run_connect_command(nil)
+    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path)
   end
 
   def run_command(cmd)
-    Kenv.exec_with_env(cmd, path: path, env_path: env_path)
+    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path)
   end
 end
