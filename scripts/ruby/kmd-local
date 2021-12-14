@@ -331,8 +331,8 @@ class Kmd < OpBase
 
     choices = APPS.keys.grep Regexp.new(app_filter || '.*')
     choices = APPS.keys if choices.empty?
-    msg = 'App'
-    msg << " (default: #{dir})" if default
+
+    msg = "App #{"(default: #{dir})" if default}"
     app = choose(msg: msg, field: :command, choices: choices, default: default)
     APPS[app]
   end
