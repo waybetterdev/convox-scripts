@@ -6,6 +6,7 @@ class Kenv
   ENV_OVERRIDES = {
     # 'WB_LOCAL_STANDALONE' => 'true',
     # 'RAILS_ENV' => 'development'
+    'TZ' => 'UTC', # all rails apps run in UTC time
   }.freeze
 
 
