@@ -8,7 +8,10 @@ class NpNodeService < NpService
   end
 
   def prepare_service
-    prepare_local_service if on_local_kraken?
+    return unless on_local_kraken?
+
+    super
+    prepare_local_service
   end
 
   def prepare_local_service; end

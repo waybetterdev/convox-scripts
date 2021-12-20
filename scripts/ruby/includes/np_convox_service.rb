@@ -8,7 +8,7 @@ class NpConvoxService < NpService
   end
 
   def prepare_service
-    return if on_local_convox?
+    return unless on_local_convox?
 
     super
     prepare_local_service

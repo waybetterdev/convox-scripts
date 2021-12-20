@@ -49,8 +49,8 @@ class PrepareLocalService < OpBase
   end
 
   def prepare_app
-    app_path = np_service_path(opts_np_app_name)
-    checkout_app(name: opts_np_app_name, path: File.expand_path('../', app_path)) unless Dir.exist?(app_path)
+    np_service = np_service_config(opts_np_app_name)
+    np_service.prepare_service
 
     exec_command "env-builder -w -a #{opts_np_app_name}"
     if np_service_is_node(opts_np_app_name)

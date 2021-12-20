@@ -11,6 +11,9 @@ class EnvBuilder < OpBase
   def go
     parse_opts
 
+    np_service = np_service_config(opts_np_app_name)
+    np_service.prepare_service
+
     if opts_write
       str_env = generate_env
       write_env_to_file(str_env)
@@ -22,7 +25,7 @@ class EnvBuilder < OpBase
   HELP = <<-BAN
   Env builder script for local NP services
   Ex:
-    prepare-node-app -w -a user
+    env-builder -w -a user
   BAN
 
   def parse_opts
@@ -153,11 +156,13 @@ class EnvBuilder < OpBase
   def default_empty_env_values
     defaults = [
       'PORT', 'VERIFY_CERTS', 'WB_INTERNAL_URL_SCHEME', 'WB_ENFORCE_HTTPS', 
-      'WB_JWT_COOKIE', 'WB_ENV', 'GEMFURY_SECRET', 'RBENV_VERSION', 'GEN2'
+      'WB_JWT_COOKIE', 'WB_ENV', 'GEMFURY_SECRET', 'GEN2'
     ]
 
     if opts_np_app.type_is_ruby?
-      defaults.concat(['USE_STANDARD_LOGGING'])
+      defaults.concat(
+        ['USE_STANDARD_LOGGING', 'RBENV_VERSION']
+      )
     end    
     if opts_np_app.type_is_node?
       defaults.concat([

@@ -51,7 +51,7 @@ class NpService < NpPaths
   end
 
   def prepare_service
-    checkout_from_git unless Dir.exist?(path)
+    checkout_from_git unless path.nil? || Dir.exist?(path)
   end
 
   def parent_path
