@@ -63,9 +63,9 @@ alias notepad=sublime-text.subl
 
 alias editnpconfig="gedit ~/Work/docs/local-settings/np-services-config.rb"
 
-alias npmstartservice="lrun bash -ic 'nvm use && nvm ls && npm start'"
-alias npminstallservice="bash -ic 'nvm install && nvm ls && lrun npm install'"
-alias npmmigrate="lrun bash -ic 'NODE_ENV=test ./node_modules/.bin/sequelize db:migrate'"
+alias npmstartservice="np-service-run -e development -c \"nvm use && nvm ls && npm start\""
+alias npminstallservice="np-service-run -e development -c \"nvm install && nvm ls && npm install\""
+alias npmmigrate="np-service-run -e test -c \"./node_modules/.bin/sequelize db:migrate\""
 
 alias lintfix="npx eslint ./src --fix"
 

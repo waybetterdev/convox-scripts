@@ -10,9 +10,9 @@ class RunService < OpBase
     parse_opts
 
     if opts_command
-      opts_np_app.run_command(opts_command, override_envs: override_envs)
+      opts_np_app.run_command(opts_command, environment: opts_environment)
     else
-      opts_np_app.run_connect_command(override_envs: override_envs)
+      opts_np_app.run_connect_command(environment: opts_environment)
     end
   end
 
@@ -51,18 +51,6 @@ class RunService < OpBase
   def add_env_option(opts)
     opts.on('-e', '--env=e', 'Environment name') do |x|
       self.opts_environment = x
-    end
-  end
-
-  def override_envs
-    if self.opts_environment.eql?('test')
-      {
-        
-      }
-    else
-      {
-        'RAILS_ENV' => 'development'
-      }
     end
   end
 end

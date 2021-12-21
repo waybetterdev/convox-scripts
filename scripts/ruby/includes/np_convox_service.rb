@@ -36,8 +36,4 @@ class NpConvoxService < NpService
   def run_connect_command
     exec_command("kk kon -- local #{name}")
   end
-
-  def run_command(cmd)
-    Kenv.exec_with_env(cmd, path: path, env_path: env_path)
-  end
 end

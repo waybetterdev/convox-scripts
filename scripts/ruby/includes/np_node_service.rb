@@ -14,27 +14,21 @@ class NpNodeService < NpService
     prepare_local_service
   end
 
+  def override_envs(environment)
+    environment.eql?('development') ? { 'RAILS_ENV' => 'development' } : {}
+  end
+
   def prepare_local_service; end
 
   def start_command
-    'npmstartservice'
+    "np-service-run -a #{name} -e development -c \"nvm use && nvm ls && npm start\""
   end
 
-  # elsif np_service.on_local_convox?
-  #   # create the app if it does not exist
-  #   create_convox_app(convox_app) if convox_app_path_exists?(convox_app) && opts_wait_convox && !ConvoxUtil.convox_app_exists?(convox_app, use_cache: true)
+  def run_command(cmd, environment: 'development')
+    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path, override_envs: override_envs(environment))
+  end
 
-  #   app_command =
-  # elsif np_service.on_local_kraken?
-
-  #   if np_service.type_is_node?
-  #     exec_command "np-service-prepare -a #{app}" unless convox_app_path_exists?(convox_app)
-  #     app_command = 'npmstartservice'
-  #   elsif np_service.type_is_ruby?
-  #     exec_command "np-service-prepare -a #{app}" unless convox_app_path_exists?(convox_app)
-  #     app_command = "cd #{np_service.path} && lrun bin/start_web_server.sh"
-  #   else
-  #     throw "Could not detect whether '#{convox_app}' is a ruby or node app."
-  #   end
-  # end
+  def run_connect_command(environment: 'development')
+    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs(environment))
+  end
 end

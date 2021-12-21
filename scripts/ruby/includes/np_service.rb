@@ -73,6 +73,10 @@ class NpService < NpPaths
     `#{cmd}`
   end
 
+  def convox_yml_path
+    "#{path}/convox.yml"
+  end
+
   def env_src_path
     "#{path_local_settings}/convox-env/#{name}.env.local"
   end

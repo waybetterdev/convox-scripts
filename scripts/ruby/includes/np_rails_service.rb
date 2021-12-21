@@ -10,22 +10,26 @@ class NpRailsService < NpService
 
   def prepare_service
     return unless on_local_kraken?
-    
+
     super
     prepare_local_service
+  end
+
+  def override_envs(environment)
+    environment.eql?('development') ? { 'RAILS_ENV' => 'development' } : {}
   end
 
   def prepare_local_service; end
 
   def start_command
-    "np-service-run -a #{name} -e bin/start_web_server.sh"
+    "np-service-run -a #{name} -e development -c bin/start_web_server.sh"
   end
 
-  def run_connect_command(override_envs: {})
-    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs)
+  def run_command(cmd, environment: 'development')
+    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path, override_envs: override_envs(environment))
   end
 
-  def run_command(cmd, override_envs: {})
-    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path, override_envs: override_envs)
+  def run_connect_command(environment: 'development')
+    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs(environment))
   end
 end

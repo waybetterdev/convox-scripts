@@ -4,15 +4,14 @@
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class EnvBuilder < OpBase
-  attr_accessor :opts_write, :opts_print
+  attr_accessor :opts_write, :opts_print, :env_from_convox_yml
 
   def initialize; end
 
   def go
     parse_opts
 
-    np_service = np_service_config(opts_np_app_name)
-    np_service.prepare_service
+    opts_np_app.prepare_service
 
     if opts_write
       str_env = generate_env
@@ -49,8 +48,26 @@ class EnvBuilder < OpBase
     exit_with_error('app parameter is required') if opts_np_app_name.nil?
   end
 
+  def read_env_from_convox_yml
+    yml = YAML.load(File.read(opts_np_app.convox_yml_path))
+    @env_from_convox_yml = self.class.parse_environment_section(yml.dig('environment')).merge(
+      self.class.parse_environment_section(yml.dig('services', 'web', "environment"))
+    )
+  end
+
+  def self.parse_environment_section(environment = [])
+    pairs = (environment || []).map do |entry|
+      pair = entry.split("=", 2)
+      pair[1] = pair[1].nil? || pair[1].empty? ? nil : pair[1]
+      pair
+    end
+    Hash[pairs]
+  end
+
   def read_src_env_file
-    env_values = default_empty_env_values
+    read_env_from_convox_yml
+
+    env_values = @env_from_convox_yml.merge(default_empty_env_values)
     app = opts_np_app_name
 
     if opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
@@ -80,19 +97,19 @@ class EnvBuilder < OpBase
   end
 
   def generate_env
-    env_values = read_src_env_file
-    rebuilt_file = []
-    env_values.each do |key, value|
+    env_values = read_src_env_file.each_with_object({}) do |(key, value), hash|
       if (proc_val = call_val_proc(key, value))
         value = proc_val
       end
       value = '_not_needed_locally_' if value == '_set_me_'
-
-      line = "#{key}=#{value}"
-      rebuilt_file.push line
+      hash[key] = value
     end
 
-    rebuilt_file.join("\n")
+    env_from_convox_yml.keys.each do |key|
+      exit_with_error("#{key} is required to have a value by #{opts_np_app.path}/convox.yml") if env_values[key].to_s.eql?('')
+    end
+
+    env_values.map { |key, value| "#{key}=#{value}" }.join("\n")
   end
 
   def write_env_to_file(str_env)
@@ -170,9 +187,7 @@ class EnvBuilder < OpBase
       ])
     end
 
-    defaults
-      .each_with_object({}) {|v, hash| hash[v] = ''}
-      .merge(Kenv.read_env_from_file("#{opts_np_app.path}/convox.yml"))
+    defaults.each_with_object({}) {|v, hash| hash[v] = ''}
   end
 
   def call_val_proc(key, value)
@@ -278,7 +293,12 @@ class EnvBuilder < OpBase
       # loads global secrets from env varibles on the host machine
       'REDSHIFT_URL' => -> { get_system_env('REDSHIFT_URL') },
       'GEMFURY_SECRET' => -> { get_system_env('GEMFURY_SECRET') },
-      'NPM_CONFIG_REGISTRY' => -> { get_system_env('NPM_CONFIG_REGISTRY') }
+      'NPM_CONFIG_REGISTRY' => -> { get_system_env('NPM_CONFIG_REGISTRY') },
+
+      # set convox scale to minimum
+      'CONVOX_SCALE_WEB_COUNT' => -> { '1' },
+      'CONVOX_SCALE_WEB_MEMORY' => -> { '128' },
+      'CONVOX_SCALE_WEB_CPU' => -> { '1' },
     }
   end
 
