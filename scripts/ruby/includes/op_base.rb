@@ -326,7 +326,14 @@ class OpBase < NpPaths
 
   def np_service_domain(name, location: nil)
     name = hyphenated_app_name(name)
-    apply_location_to_np_service_domain("#{name}.convox.local", name, location)
+
+    transformations = {
+      "dietbet-game-service" => "dietbet",
+      "stepbet-game-service" => "stepbet",
+    }
+    domain = transformations[name] || name
+
+    apply_location_to_np_service_domain("#{domain}.convox.local", name, location)
   end
 
   def np_service_convox_domain(name)
