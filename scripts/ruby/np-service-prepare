@@ -49,16 +49,15 @@ class PrepareLocalService < OpBase
   end
 
   def prepare_app
-    np_service = np_service_config(opts_np_app_name)
-    np_service.prepare_service
+    opts_np_app.prepare_service
 
-    exec_command "env-builder -w -a #{opts_np_app_name}"
-    if np_service_is_node(opts_np_app_name)
+    exec_command "env-builder -w -a #{opts_np_app.name}"
+    if opts_np_app.type_is_node?
       exec_command "cd #{app_path} && np-service-run -c 'cd #{app_path} && nvm install && nvm ls && npm install'"
-    elsif np_service_is_ruby(opts_np_app_name)
+    elsif opts_np_app.type_is_ruby?
       exec_command "cd #{app_path} && np-service-run -c 'cd #{app_path} && gem install bundler && bundle install && be rails db:migrate'"
     else
-      throw "Could not detect whether '#{opts_np_app_name}' is a ruby or node app."
+      throw "Could not detect whether '#{opts_np_app.name}' is a ruby or node app."
     end
   end
 

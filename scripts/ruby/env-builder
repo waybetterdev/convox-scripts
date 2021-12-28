@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'fileutils'
+
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class EnvBuilder < OpBase
@@ -52,12 +54,11 @@ class EnvBuilder < OpBase
 
   def read_src_env_file
     env_values = env_from_convox_yml.merge(default_empty_env_values)
-    app = opts_np_app_name
 
     if opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
       files = [opts_np_app.env_src_path]
     else
-      exit_with_error "App `#{app}` location `#{np_service_location(app)}` not supported"
+      exit_with_error "App `#{opts_np_app.name}` location `#{opts_np_apps.location}` not supported"
     end
 
     files.each do |env_path|
@@ -97,7 +98,10 @@ class EnvBuilder < OpBase
   end
 
   def write_env_to_file(str_env)
-    env_path = service_dst_env_path(opts_np_app_name)
+    env_path = opts_np_app.env_dst_path
+
+    dirname = File.dirname(env_path)
+    FileUtils.mkdir_p(dirname) unless File.directory?(dirname)
 
     puts "Writing env file to #{env_path.green}"
     File.open(env_path, 'w') { |file| file.write(str_env) }
@@ -115,7 +119,7 @@ class EnvBuilder < OpBase
       if use_convox_rack_internal_urls
         url = np_service_convox_domain(name)
         port = np_service.port
-        return "http://#{url}:#{port}" if convox_local_dev_rack? && np_service_is_on_local_convox?(opts_np_app_name) && port
+        return "http://#{url}:#{port}" if convox_local_dev_rack? && opts_np_app.on_local_convox? && port
       end
       "https://#{url}#{':' + port.to_s if port}"
     elsif np_service.on_local_kraken?
@@ -144,12 +148,8 @@ class EnvBuilder < OpBase
     "https://#{url}"
   end
 
-  def service_dst_env_path(name)
-    np_service_config(name, true).env_dst_path
-  end
-
   def use_convox_rack_internal_urls
-    np_service_is_on_local_convox?(opts_np_app_name)
+    opts_np_app.on_local_convox?
   end
 
   def default_empty_env_values
@@ -182,8 +182,12 @@ class EnvBuilder < OpBase
     end
   end
 
+  def optional_env_fields
+    ['DD_APM_IGNORE_RESOURCES']
+  end
+
   def required_convox_yml_fields
-    env_from_convox_yml.keys.reject {|key| key =~ /GEM_PATH$/}
+    env_from_convox_yml.keys.reject {|key| key =~ /GEM_PATH$/} - optional_env_fields
   end
 
   def self.parse_environment_section(environment = [])
@@ -217,6 +221,7 @@ class EnvBuilder < OpBase
     @_val_procs ||= {
       'GEN2' => -> { 'false' },
       'REDIS_HOST' => -> { find_local_ip },
+      'REDIS_QUEUE_HOST' => -> { find_local_ip },
       'NODE_ENV' => -> { 'development' },
       'WB_ENV' => -> { 'local' },
       'VERIFY_CERTS' => -> { 'false' },
