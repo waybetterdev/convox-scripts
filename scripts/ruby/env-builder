@@ -4,7 +4,7 @@
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class EnvBuilder < OpBase
-  attr_accessor :opts_write, :opts_print, :env_from_convox_yml
+  attr_accessor :opts_write, :opts_print
 
   def initialize; end
 
@@ -27,6 +27,8 @@ class EnvBuilder < OpBase
     env-builder -w -a user
   BAN
 
+  private
+
   def parse_opts
     self.option_parser = OptionParser.new do |opts|
       opts.banner = HELP
@@ -48,26 +50,8 @@ class EnvBuilder < OpBase
     exit_with_error('app parameter is required') if opts_np_app_name.nil?
   end
 
-  def read_env_from_convox_yml
-    yml = YAML.load(File.read(opts_np_app.convox_yml_path))
-    @env_from_convox_yml = self.class.parse_environment_section(yml.dig('environment')).merge(
-      self.class.parse_environment_section(yml.dig('services', 'web', "environment"))
-    )
-  end
-
-  def self.parse_environment_section(environment = [])
-    pairs = (environment || []).map do |entry|
-      pair = entry.split("=", 2)
-      pair[1] = pair[1].nil? || pair[1].empty? ? nil : pair[1]
-      pair
-    end
-    Hash[pairs]
-  end
-
   def read_src_env_file
-    read_env_from_convox_yml
-
-    env_values = @env_from_convox_yml.merge(default_empty_env_values)
+    env_values = env_from_convox_yml.merge(default_empty_env_values)
     app = opts_np_app_name
 
     if opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
@@ -105,7 +89,7 @@ class EnvBuilder < OpBase
       hash[key] = value
     end
 
-    env_from_convox_yml.keys.each do |key|
+    required_convox_yml_fields.each do |key|
       exit_with_error("#{key} is required to have a value by #{opts_np_app.path}/convox.yml") if env_values[key].to_s.eql?('')
     end
 
@@ -168,8 +152,6 @@ class EnvBuilder < OpBase
     np_service_is_on_local_convox?(opts_np_app_name)
   end
 
-  private
-
   def default_empty_env_values
     defaults = [
       'PORT', 'VERIFY_CERTS', 'WB_INTERNAL_URL_SCHEME', 'WB_ENFORCE_HTTPS', 
@@ -188,6 +170,29 @@ class EnvBuilder < OpBase
     end
 
     defaults.each_with_object({}) {|v, hash| hash[v] = ''}
+  end
+
+  def env_from_convox_yml
+    @_env_from_convox_yml ||= begin
+      yml = YAML.load(File.read(opts_np_app.convox_yml_path))
+      {
+        **self.class.parse_environment_section(yml.dig('environment')),
+        **self.class.parse_environment_section(yml.dig('services', 'web', "environment"))
+      }
+    end
+  end
+
+  def required_convox_yml_fields
+    env_from_convox_yml.keys.reject {|key| key =~ /GEM_PATH$/}
+  end
+
+  def self.parse_environment_section(environment = [])
+    pairs = (environment || []).map do |entry|
+      pair = entry.split("=", 2)
+      pair[1] = pair[1].nil? || pair[1].empty? ? nil : pair[1]
+      pair
+    end
+    Hash[pairs]
   end
 
   def call_val_proc(key, value)
@@ -281,11 +286,11 @@ class EnvBuilder < OpBase
       'WB_HUB_EXTERNAL_URL' => -> { np_service_external_url('wb-hub') },
       'WB_HUB_DOMAIN' => -> { np_service_external_url('wb-hub', domain_only: true) },
 
-      'STEPBET_GAME_SERVICE_URL' => -> { np_service_internal_url('stepbet') },
-      'WB_STEPBET_ADMIN_URL' => -> { np_service_internal_url('stepbet') + '/admin' },
+      'STEPBET_GAME_SERVICE_URL' => -> { np_service_internal_url('stepbet-game-service') + '/api/game-service' },
+      'WB_STEPBET_ADMIN_URL' => -> { np_service_internal_url('stepbet-game-service') + '/admin' },
 
-      'DIETBET_GAME_SERVICE_URL' => -> { np_service_internal_url('dietbet') },
-      'WB_DIETBET_ADMIN_URL' => -> { np_service_internal_url('dietbet') + 'admin' },
+      'DIETBET_GAME_SERVICE_URL' => -> { np_service_internal_url('dietbet-game-service') + '/api/game-service' },
+      'WB_DIETBET_ADMIN_URL' => -> { np_service_internal_url('dietbet-game-service') + '/admin' },
 
       # TODO: this is a hack. Needs to be fixed properly
       'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service', variant: 'ninja') },

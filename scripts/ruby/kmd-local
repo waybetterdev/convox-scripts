@@ -284,8 +284,8 @@ class Kmd < OpBase
   end
 
   def find_env_file
-    if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{app}.env.local.tmp")
-      "#{Dir.home}/Work/docs/local-settings/convox-env/#{app}.env.local.tmp"
+    if File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/generated/#{app}.env.local")
+      "#{Dir.home}/Work/docs/local-settings/convox-env/generated/#{app}.env.local"
     elsif File.file?("#{Dir.home}/Work/docs/local-settings/convox-env/#{app}.env.local")
       "#{Dir.home}/Work/docs/local-settings/convox-env/#{app}.env.local"
     elsif File.file?("#{Dir.home}/Work/docs/configs/templates/convox-env/#{app}.env.local")

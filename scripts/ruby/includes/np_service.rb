@@ -82,6 +82,6 @@ class NpService < NpPaths
   end
 
   def env_dst_path
-    "#{path_local_settings}/convox-env/#{name}.env.local.tmp"
+    "#{path_local_settings}/convox-env/generated/#{name}.env.local"
   end
 end
