@@ -19,7 +19,7 @@ class OpDeploy < OpBase
     deploy_changes_since_commit(opts_op_app, commit)
   end
 
-  def export_from_git(commit_hash, source_path, export_path)
+  def export_since_commit_from_git(commit_hash, source_path, export_path)
     # git -C /var/www/stepbet diff --name-only --diff-filter=ACdMRTub --diff-algorithm=myers --relative 16961e04f886e5da42350771acf4333560b14d20
     git = "git -C #{source_path}"
     cmd = "#{git} diff --name-only --diff-filter=ACdMRTub --diff-algorithm=myers --relative #{commit_hash}"
@@ -34,6 +34,21 @@ class OpDeploy < OpBase
 
     exec_command("rm -f #{zip_path}")
     exec_command("#{git} archive -o #{zip_path} HEAD " + files.gsub(/\n/, ' '))
+
+    prepare_export_path(export_path)
+    unzip(zip_path, export_path)
+    exec_command("rm -f #{zip_path}")
+  end
+
+  def export_all_from_git(source_path, export_path)
+    puts "You are about to deploy to #{opts_op_app.red}"
+    puts 'Files modified: All'
+    puts 'Continue? y/n'
+    exit unless STDIN.getc == 'y'
+
+    zip_path = "#{source_path}/archive.zip"
+    exec_command("rm -f #{zip_path}")
+    exec_command("git -C #{source_path} archive -o #{zip_path} HEAD")
 
     prepare_export_path(export_path)
     unzip(zip_path, export_path)
@@ -119,7 +134,12 @@ class OpDeploy < OpBase
     zip_path = "#{temp_path}/#{zip_name}"
     src_path = config[:src]
 
-    export_from_git(commit, src_path, temp_path)
+    if commit
+      export_since_commit_from_git(commit, src_path, temp_path)
+    else
+      export_all_from_git(src_path, temp_path)
+    end
+
     remove_unwanted_files(temp_path)
     compress_css(temp_path)
     compress_js(temp_path)
@@ -185,8 +205,6 @@ class OpDeploy < OpBase
     @op_deploy_config = op_deploy_config(opts_op_app)
     @op_deploy_config = op_deploy_config(opts_op_app)
     exit_with_error('app not found') if @op_deploy_config.nil?
-
-    exit_with_error('commit parameter is required') if commit.nil?
   end
 end
 
