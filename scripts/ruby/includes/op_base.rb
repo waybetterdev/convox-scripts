@@ -82,7 +82,7 @@ class OpBase < NpPaths
         .each_with_object({}) do |service_data, hash|
           name = dashed_app_name(service_data[:name]).to_sym
           if hash[name]
-            exit_with_error "App #{name} can't have two locations: #{hash[name][:location].green}#{' and '.red}#{service_data[:location].green}"
+            exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}"
           end
 
           hash[name] = build_service_from_config(service_data)
