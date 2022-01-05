@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
@@ -26,8 +26,8 @@ class StartConvoxApp < OpBase
       cat "/usr/share/ca-certificates/convox.crt"
     SCRIPT
 
-    local_kraken_np_service_names.each do |app|
-      script << "echo '#{find_local_ip} #{np_service_domain(app)}' >> /etc/hosts\n"
+    local_kraken_np_services.each do |np_service|
+      script << "echo '#{find_local_ip} #{np_service_domain(np_service.name)}' >> /etc/hosts\n"
     end
     script << "/app/bin/start_web_server.sh\n"
 

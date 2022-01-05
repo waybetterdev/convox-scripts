@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/np_service.rb'
 require File.expand_path(__dir__) + '/kenv.rb'

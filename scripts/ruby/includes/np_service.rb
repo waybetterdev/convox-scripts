@@ -1,12 +1,12 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 class NpService < NpPaths
   attr_accessor :name, :gitname, :type, :port, :path, :location, :domain
 
-  LOCATION_KRAKEN_LOCAL = 'kraken'
-  LOCATION_CONVOX_LOCAL = 'convox-local'
-  LOCATION_OFFICE_CONVOX = 'remote-convox-office'
-  LOCATION_APACHE_LOCAL = 'apache-local'
+  LOCATION_KRAKEN_LOCAL = 'kraken'.freeze
+  LOCATION_CONVOX_LOCAL = 'convox-local'.freeze
+  LOCATION_OFFICE_CONVOX = 'remote-convox-office'.freeze
+  LOCATION_APACHE_LOCAL = 'apache-local'.freeze
 
   def initialize(name:, path:, location:, type: nil, port: nil, gitname: nil, domain: nil)
     @name = name

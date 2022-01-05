@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
@@ -20,7 +20,7 @@ class ApacheConfig < OpBase
     end
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
   Script for generating apache proxy config
   Ex:
     apache-config -p
@@ -69,16 +69,16 @@ class ApacheConfig < OpBase
 
   def np_service_domains_conf
     np_services
-      .reject {|_k, v| v.name.eql?("mysql") }
+      .reject { |_k, v| v.name.eql?('mysql') }
       .values.map { |s| { name: s.name, external: false } }
       .concat([
-        { name: 'wb-auth-service',          external: true },
-        { name: 'wb-graphql-service',       external: true },
-        { name: 'wb-graphql-service',       external: true, variant: 'ninja' },
-        { name: 'wb-hub',                   external: true },
-        { name: 'wb-admin-auth-service',    external: true },
-        { name: 'wb-admin-web',             external: true }
-      ])
+                { name: 'wb-auth-service', external: true },
+                { name: 'wb-graphql-service',       external: true },
+                { name: 'wb-graphql-service',       external: true, variant: 'ninja' },
+                { name: 'wb-hub',                   external: true },
+                { name: 'wb-admin-auth-service',    external: true },
+                { name: 'wb-admin-web',             external: true }
+              ])
   end
 
   def generate_config

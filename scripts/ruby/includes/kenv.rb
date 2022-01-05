@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require 'yaml'
 
@@ -6,7 +6,7 @@ class Kenv
   ENV_OVERRIDES = {
     # 'WB_LOCAL_STANDALONE' => 'true',
     # 'RAILS_ENV' => 'development'
-    'TZ' => 'UTC', # all rails apps run in UTC time
+    'TZ' => 'UTC' # all rails apps run in UTC time
   }.freeze
 
   def self.exec_with_env(cmd = nil, path: nil, env_path: nil, override_envs: {})
@@ -30,7 +30,6 @@ class Kenv
 
     exec(cmd)
   end
-
 
   def self.exit_with_error(msg)
     puts "Error: #{msg}".red

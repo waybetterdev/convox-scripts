@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require_relative 'np_service.rb'
 
@@ -15,7 +15,7 @@ class NpConvoxService < NpService
   end
 
   def prepare_local_service
-    return if ConvoxUtil.convox_app_exists?(convox_app, use_cache: true)
+    return if ConvoxUtil.convox_app_exists?(name, use_cache: true)
 
     create_convox_app
   end

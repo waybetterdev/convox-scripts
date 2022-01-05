@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 class ConvoxUtil
   def self.convox_app_exists?(convox_app, use_cache: false)

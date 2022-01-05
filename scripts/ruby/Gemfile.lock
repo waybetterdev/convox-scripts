@@ -1,4 +1,5 @@
 GEM
+  remote: https://gem.fury.io/waybetter/
   specs:
     ast (2.4.2)
     jaro_winkler (1.5.4)
@@ -23,10 +24,6 @@ GEM
       rubocop (>= 0.60.0)
     ruby-progressbar (1.11.0)
     unicode-display_width (1.6.1)
-
-GEM
-  remote: https://gem.fury.io/waybetter/
-  specs:
     wb-rubocop (1.0.0)
       rubocop (~> 0.74.0)
       rubocop-performance (~> 1.4.1)

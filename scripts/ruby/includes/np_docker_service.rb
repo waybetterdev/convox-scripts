@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require_relative 'np_service.rb'
 
@@ -9,7 +9,7 @@ class NpDockerService < NpService
 
   def prepare_service
     return unless on_local_kraken?
-    
+
     super
     prepare_local_service
   end

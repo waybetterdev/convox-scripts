@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
@@ -21,7 +21,7 @@ class OpKonnect < OpBase
     end
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
   A ssh connect script for old platform websites
   Ex:
     opkonnect -s stepbet-dev

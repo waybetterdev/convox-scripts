@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 public
 
@@ -53,7 +53,7 @@ class OpDeploy < OpBase
     exec_command('gedit ' + downloaded_files.join(' ')) if open_files
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
 
   A deploy script for old platform websites
   Ex:

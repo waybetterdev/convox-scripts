@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
@@ -16,7 +16,7 @@ class RunService < OpBase
     end
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
   Execute commands either on local rails and node apps with all ENV variables preloaded.
   Ex:
     np-service-run -a wb-user-service
@@ -46,8 +46,8 @@ class RunService < OpBase
     opts.on('-c', '--command=c', 'Command to execute') do |x|
       self.opts_command = x
     end
-  end  
-  
+  end
+
   def add_env_option(opts)
     opts.on('-e', '--env=e', 'Environment name') do |x|
       self.opts_environment = x

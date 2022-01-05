@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
@@ -240,7 +240,7 @@ class Wbtmux < OpBase
     exec_command("convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS #{pass}")
   end
 
-  HELP = <<~HELP
+  HELP = <<~HELP.freeze
     wbtmux
       Wrapper script for tmux. Can run any of the following services #{SERVICE_MAP.keys.join(',')}
       Ex:

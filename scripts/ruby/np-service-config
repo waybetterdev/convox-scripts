@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
@@ -20,7 +20,7 @@ class NpServiceConfig < OpBase
     end
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
   Script that creates, installs or deletes local convox/node apps based on np-services.config.rb
   Ex:
     np-service-config -w
@@ -86,7 +86,7 @@ class NpServiceConfig < OpBase
 
     local_kraken_np_services.each do |np_service|
       np_service.prepare_service
-      exec_ic_command("env-builder -w -a #{np_service.name}") if opts_write 
+      exec_ic_command("env-builder -w -a #{np_service.name}") if opts_write
     end
   end
 end

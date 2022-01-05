@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class OpDeploy < OpBase
   attr_accessor :opts_op_app, :option_parser, :commit, :debug, :make_backup
-  TEMP_PATH = '~/Work/deploy/_files'
+  TEMP_PATH = '~/Work/deploy/_files'.freeze
   # we are in `docs/scripts/ruby/`
   YUI_PATH = File.expand_path('../..', __dir__) + '/libraries/yuicompressor-2.4.7.jar'
 
@@ -170,7 +170,7 @@ class OpDeploy < OpBase
     print response.green
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
 
   A deploy script for old platform websites
   Ex:

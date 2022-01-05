@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require 'fileutils'
 
@@ -23,7 +23,7 @@ class EnvBuilder < OpBase
     end
   end
 
-  HELP = <<-BAN
+  HELP = <<-BAN.freeze
   Env builder script for local NP services
   Ex:
     env-builder -w -a user
@@ -153,31 +153,31 @@ class EnvBuilder < OpBase
   end
 
   def default_empty_env_values
-    defaults = [
-      'PORT', 'VERIFY_CERTS', 'WB_INTERNAL_URL_SCHEME', 'WB_ENFORCE_HTTPS', 
-      'WB_JWT_COOKIE', 'WB_ENV', 'GEMFURY_SECRET', 'GEN2'
+    defaults = %w[
+      PORT VERIFY_CERTS WB_INTERNAL_URL_SCHEME WB_ENFORCE_HTTPS
+      WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2
     ]
 
     if opts_np_app.type_is_ruby?
       defaults.concat(
-        ['USE_STANDARD_LOGGING', 'RBENV_VERSION']
+        %w[USE_STANDARD_LOGGING RBENV_VERSION]
       )
-    end    
+    end
     if opts_np_app.type_is_node?
-      defaults.concat([
-        'NODE_TLS_REJECT_UNAUTHORIZED', 'NODE_ENV', 'NPM_CONFIG_REGISTRY'
-      ])
+      defaults.concat(%w[
+                        NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
+                      ])
     end
 
-    defaults.each_with_object({}) {|v, hash| hash[v] = ''}
+    defaults.each_with_object({}) { |v, hash| hash[v] = '' }
   end
 
   def env_from_convox_yml
     @_env_from_convox_yml ||= begin
-      yml = YAML.load(File.read(opts_np_app.convox_yml_path))
+      yml = YAML.safe_load(File.read(opts_np_app.convox_yml_path))
       {
         **self.class.parse_environment_section(yml.dig('environment')),
-        **self.class.parse_environment_section(yml.dig('services', 'web', "environment"))
+        **self.class.parse_environment_section(yml.dig('services', 'web', 'environment'))
       }
     end
   end
@@ -187,12 +187,12 @@ class EnvBuilder < OpBase
   end
 
   def required_convox_yml_fields
-    env_from_convox_yml.keys.reject {|key| key =~ /GEM_PATH$/} - optional_env_fields
+    env_from_convox_yml.keys.reject { |key| key =~ /GEM_PATH$/ } - optional_env_fields
   end
 
   def self.parse_environment_section(environment = [])
     pairs = (environment || []).map do |entry|
-      pair = entry.split("=", 2)
+      pair = entry.split('=', 2)
       pair[1] = pair[1].nil? || pair[1].empty? ? nil : pair[1]
       pair
     end
@@ -308,7 +308,7 @@ class EnvBuilder < OpBase
       # set convox scale to minimum
       'CONVOX_SCALE_WEB_COUNT' => -> { '1' },
       'CONVOX_SCALE_WEB_MEMORY' => -> { '128' },
-      'CONVOX_SCALE_WEB_CPU' => -> { '1' },
+      'CONVOX_SCALE_WEB_CPU' => -> { '1' }
     }
   end
 

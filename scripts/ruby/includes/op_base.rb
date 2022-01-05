@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# frozen_string_literal: false
 
 require 'optparse'
 require 'open3'
@@ -29,10 +29,10 @@ require_relative 'convox_util.rb'
 class OpBase < NpPaths
   attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_np_app_name, :opts_np_app
 
-  LOCATION_KRAKEN_LOCAL = 'kraken'
-  LOCATION_CONVOX_LOCAL = 'convox-local'
-  LOCATION_OFFICE_CONVOX = 'remote-convox-office'
-  LOCATION_APACHE_LOCAL = 'apache-local'
+  LOCATION_KRAKEN_LOCAL = 'kraken'.freeze
+  LOCATION_CONVOX_LOCAL = 'convox-local'.freeze
+  LOCATION_OFFICE_CONVOX = 'remote-convox-office'.freeze
+  LOCATION_APACHE_LOCAL = 'apache-local'.freeze
 
   ################ OP SERVERS ###################
   def load_op_severs_config
@@ -87,7 +87,7 @@ class OpBase < NpPaths
 
           hash[name] = build_service_from_config(service_data)
         end.merge(mysql: NpDockerService.new(
-          name: 'mysql', gitname: nil, type: 'mysql', port: '3306', 
+          name: 'mysql', gitname: nil, type: 'mysql', port: '3306',
           path: "#{path_kraken}/superlocal", location: 'local-docker'
         ))
     end
@@ -328,8 +328,8 @@ class OpBase < NpPaths
     name = hyphenated_app_name(name)
 
     transformations = {
-      "dietbet-game-service" => "dietbet",
-      "stepbet-game-service" => "stepbet",
+      'dietbet-game-service' => 'dietbet',
+      'stepbet-game-service' => 'stepbet'
     }
     domain = transformations[name] || name
 
@@ -365,10 +365,6 @@ class OpBase < NpPaths
     end
 
     domain.gsub(/(local|office)/, domain_part)
-  end
-
-  def get_convox_service_domain(name)
-    "web.#{name}.convox"
   end
 
   def find_local_ip
@@ -413,11 +409,9 @@ class OpBase < NpPaths
   end
   ################ CONVOX ###################
 
-
   private
 
   def build_service_from_config(service_data)
-
     service_data[:path] ||= "#{path_wb_services}/#{service_data[:name]}"
 
     if service_data[:location].eql?(LOCATION_CONVOX_LOCAL)
