@@ -183,7 +183,7 @@ class EnvBuilder < OpBase
   end
 
   def optional_env_fields
-    ['DD_APM_IGNORE_RESOURCES', 'BS_WB_RUBOCOP']
+    ['DD_APM_IGNORE_RESOURCES', 'BS_WB_RUBOCOP', 'BS_WEBSPRAY']
   end
 
   def required_convox_yml_fields
