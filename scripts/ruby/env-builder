@@ -175,10 +175,10 @@ class EnvBuilder < OpBase
   def env_from_convox_yml
     @_env_from_convox_yml ||= begin
       yml = YAML.safe_load(File.read(opts_np_app.convox_yml_path))
-      {
-        **self.class.parse_environment_section(yml.dig('environment')),
-        **self.class.parse_environment_section(yml.dig('services', 'web', 'environment'))
-      }
+
+      self.class.parse_environment_section(yml.dig('environment')).merge!(
+        self.class.parse_environment_section(yml.dig('services', 'web', 'environment'))
+      )
     end
   end
 
@@ -235,6 +235,7 @@ class EnvBuilder < OpBase
       'USE_STANDARD_LOGGING' => -> { '' },
       'DISABLE_SPRING' => -> { '1' },
       'RAILS_ENV' => -> { '' },
+      'ALLOW_UNCONFIGURED_SERVICES' => -> { 'true' },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },
