@@ -165,7 +165,8 @@ class EnvBuilder < OpBase
     elsif opts_np_app.type_is_node?
       defaults.concat(
         %w[
-          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
+          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY 
+          NPM_GEMFURY_REGISTRY NPM_GEMFURY_TOKEN
         ]
       )
     end
@@ -237,7 +238,6 @@ class EnvBuilder < OpBase
       'DISABLE_SPRING' => -> { '1' },
       'RAILS_ENV' => -> { '' },
       'ALLOW_UNCONFIGURED_SERVICES' => -> { 'true' },
-      'NPM_GEMFURY_REGISTRY'=> -> { '//npm.fury.io/waybetter/' },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },
@@ -306,7 +306,9 @@ class EnvBuilder < OpBase
       # loads global secrets from env varibles on the host machine
       'REDSHIFT_URL' => -> { get_system_env('REDSHIFT_URL') },
       'GEMFURY_SECRET' => -> { get_system_env('GEMFURY_SECRET') },
-      'NPM_CONFIG_REGISTRY' => -> { get_system_env('NPM_CONFIG_REGISTRY') },
+      'NPM_CONFIG_REGISTRY' => -> { "https://npm-proxy.fury.io/#{get_system_env('GEMFURY_SECRET')}/waybetter" },
+      'NPM_GEMFURY_REGISTRY'=> -> { '//npm.fury.io/waybetter/' },
+      'NPM_GEMFURY_TOKEN' => -> { get_system_env('GEMFURY_SECRET') },
 
       # set convox scale to minimum
       'CONVOX_SCALE_WEB_COUNT' => -> { '1' },
