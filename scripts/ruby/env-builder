@@ -162,12 +162,10 @@ class EnvBuilder < OpBase
       defaults.concat(
         %w[USE_STANDARD_LOGGING RBENV_VERSION]
       )
-    end
-    if opts_np_app.type_is_node?
+    elsif opts_np_app.type_is_node?
       defaults.concat(
         %w[
-          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV 
-          NPM_CONFIG_REGISTRY NPM_GEMFURY_REGISTRY
+          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
         ]
       )
     end
