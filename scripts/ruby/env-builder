@@ -160,18 +160,7 @@ class EnvBuilder < OpBase
 
     if opts_np_app.type_is_ruby?
       defaults.concat(
-        %w[
-          USE_STANDARD_LOGGING 
-          RBENV_VERSION
-          GAME_SERVICE_DB_HOST 
-          GAME_SERVICE_DB_USER
-          GAME_SERVICE_DB_PASS
-          GAME_SERVICE_DB_PORT
-          WB_GAME_DB_HOST
-          WB_GAME_DB_PORT
-          WB_GAME_DB_USERNAME
-          WB_GAME_DB_PASSWORD
-        ]
+        %w[USE_STANDARD_LOGGING RBENV_VERSION]
       )
     elsif opts_np_app.type_is_node?
       defaults.concat(
@@ -196,7 +185,19 @@ class EnvBuilder < OpBase
   end
 
   def optional_env_fields
-    ['DD_APM_IGNORE_RESOURCES', 'BS_WB_RUBOCOP', 'BS_WEBSPRAY']
+    %w[
+      DD_APM_IGNORE_RESOURCES 
+      BS_WB_RUBOCOP
+      BS_WEBSPRAY
+      GAME_SERVICE_DB_HOST 
+      GAME_SERVICE_DB_USER
+      GAME_SERVICE_DB_PASS
+      GAME_SERVICE_DB_PORT
+      WB_GAME_DB_HOST
+      WB_GAME_DB_PORT
+      WB_GAME_DB_USERNAME
+      WB_GAME_DB_PASSWORD
+    ]
   end
 
   def required_convox_yml_fields
