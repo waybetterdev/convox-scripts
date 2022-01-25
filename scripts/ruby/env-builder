@@ -155,7 +155,7 @@ class EnvBuilder < OpBase
   def default_empty_env_values
     defaults = %w[
       PORT VERIFY_CERTS WB_INTERNAL_URL_SCHEME WB_ENFORCE_HTTPS
-      WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2 NPM_GEMFURY_REGISTRY
+      WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2
     ]
 
     if opts_np_app.type_is_ruby?
@@ -164,9 +164,12 @@ class EnvBuilder < OpBase
       )
     end
     if opts_np_app.type_is_node?
-      defaults.concat(%w[
-                        NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
-                      ])
+      defaults.concat(
+        %w[
+          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV 
+          NPM_CONFIG_REGISTRY NPM_GEMFURY_REGISTRY
+        ]
+      )
     end
 
     defaults.each_with_object({}) { |v, hash| hash[v] = '' }
