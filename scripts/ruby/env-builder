@@ -155,7 +155,7 @@ class EnvBuilder < OpBase
   def default_empty_env_values
     defaults = %w[
       PORT VERIFY_CERTS WB_INTERNAL_URL_SCHEME WB_ENFORCE_HTTPS
-      WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2
+      WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2 NPM_GEMFURY_REGISTRY
     ]
 
     if opts_np_app.type_is_ruby?
@@ -236,6 +236,7 @@ class EnvBuilder < OpBase
       'DISABLE_SPRING' => -> { '1' },
       'RAILS_ENV' => -> { '' },
       'ALLOW_UNCONFIGURED_SERVICES' => -> { 'true' },
+      'NPM_GEMFURY_REGISTRY'=> -> { '//npm.fury.io/waybetter/' },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },
