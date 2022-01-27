@@ -67,7 +67,7 @@ class EnvBuilder < OpBase
 
       puts "Reading env from #{env_path.green}"
       File.foreach(env_path) do |line|
-        key, value = line.gsub(/\n|\r/, '').split('=')
+        key, value = line.gsub(/\n|\r/, '').split('=', 2)
 
         next unless key
         next if value.nil? || value == ''
