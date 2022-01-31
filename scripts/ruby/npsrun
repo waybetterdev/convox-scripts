@@ -3,7 +3,7 @@
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
-class RunService < OpBase
+class NpsRun < OpBase
   attr_accessor :opts_command, :opts_environment
 
   def go
@@ -19,7 +19,7 @@ class RunService < OpBase
   HELP = <<-BAN.freeze
   Execute commands either on local rails and node apps with all ENV variables preloaded.
   Ex:
-    np-service-run -a wb-user-service
+    npsrun -a wb-user-service
   BAN
 
   def parse_opts
@@ -55,4 +55,4 @@ class RunService < OpBase
   end
 end
 
-RunService.new.go
+NpsRun.new.go

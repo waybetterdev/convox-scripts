@@ -30,7 +30,7 @@ class NpConvoxService < NpService
   end
 
   def start_command
-    "env-builder -w -a #{name} && kk refresh-yml -- local #{name} && kk refresh-env -- local #{name} no-confirm && startconvoxapp"
+    "npsenv -w -a #{name} && kk refresh-yml -- local #{name} && kk refresh-env -- local #{name} no-confirm && startconvoxapp"
   end
 
   def run_connect_command

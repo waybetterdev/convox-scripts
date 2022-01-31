@@ -5,7 +5,7 @@ require 'fileutils'
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
-class EnvBuilder < OpBase
+class NpsEnv < OpBase
   attr_accessor :opts_write, :opts_print
 
   def initialize; end
@@ -26,7 +26,7 @@ class EnvBuilder < OpBase
   HELP = <<-BAN.freeze
   Env builder script for local NP services
   Ex:
-    env-builder -w -a user
+    npsenv -w -a user
   BAN
 
   private
@@ -337,4 +337,4 @@ class EnvBuilder < OpBase
   end
 end
 
-EnvBuilder.new.go
+NpsEnv.new.go

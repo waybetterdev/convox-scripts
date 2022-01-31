@@ -1,4 +1,4 @@
-
+# rubocop:disable all
 class NpServices < OpBase
 
   # local/convox or dev
@@ -47,6 +47,9 @@ class NpServices < OpBase
     :social     => { name: 'wb-social-service',      gitname: 'wb-social-service',       type: 'ruby',        port: 3005 },
   }
 
+  # set this to false if you don't have local convox started
+  LOCAL_CONVOX_ENABLED = true
+
   LOCAL_KRAKEN_SERVICES = []
   LOCAL_CONVOX_SERVICES = []
   REMOTE_SERVICES = [
@@ -72,3 +75,4 @@ class NpServices < OpBase
   }
 
 end
+# rubocop:enable all

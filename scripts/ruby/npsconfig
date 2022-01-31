@@ -3,7 +3,7 @@
 
 require File.expand_path(__dir__) + '/includes/op_base.rb'
 
-class NpServiceConfig < OpBase
+class NpsConfig < OpBase
   attr_accessor :opts_write, :opts_print
 
   def initialize; end
@@ -23,7 +23,7 @@ class NpServiceConfig < OpBase
   HELP = <<-BAN.freeze
   Script that creates, installs or deletes local convox/node apps based on np-services.config.rb
   Ex:
-    np-service-config -w
+    npsconfig -w
   BAN
 
   def parse_opts
@@ -74,7 +74,7 @@ class NpServiceConfig < OpBase
       unchanged_apps = new_apps - apps_to_create
       unchanged_apps.each do |app|
         puts "Rebuilding env for #{app.green}"
-        exec_ic_command "env-builder -w -a #{app}"
+        exec_ic_command "npsenv -w -a #{app}"
         exec_ic_command "#{path_ruby_bin}/kmd-local refresh-env -- local #{app} no-confirm"
         exec_ic_command "#{path_ruby_bin}/kmd-local refresh-yml -- local #{app} no-confirm"
       end
@@ -86,9 +86,9 @@ class NpServiceConfig < OpBase
 
     local_kraken_np_services.each do |np_service|
       np_service.prepare_service
-      exec_ic_command("env-builder -w -a #{np_service.name}") if opts_write
+      exec_ic_command("npsenv -w -a #{np_service.name}") if opts_write
     end
   end
 end
 
-NpServiceConfig.new.go
+NpsConfig.new.go

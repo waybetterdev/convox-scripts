@@ -13,7 +13,7 @@ class ReloadEnv < OpBase
       exit 1
     end
 
-    exec_ic_command "env-builder -w -a #{app}"
+    exec_ic_command "npsenv -w -a #{app}"
     exec_ic_command "kmd-local refresh-env -- local #{app} no-confirm"
   end
 end

@@ -8,6 +8,8 @@ class ConvoxUtil
   end
 
   def self.list_convox_apps(use_cache: false)
+    return [] if NpServices::LOCAL_CONVOX_ENABLED.eql?(false)
+
     @_convox_apps = nil unless use_cache
     @_convox_apps ||= begin
       exec_command('convox apps')

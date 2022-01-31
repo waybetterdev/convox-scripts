@@ -21,7 +21,7 @@ class NpNodeService < NpService
   def prepare_local_service; end
 
   def start_command
-    "np-service-run -a #{name} -e development -c \"nvm use && nvm ls && npm start\""
+    "npsrun -a #{name} -e development -c \"nvm use && nvm ls && npm start\""
   end
 
   def run_command(cmd, environment: 'development')
