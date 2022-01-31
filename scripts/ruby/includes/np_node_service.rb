@@ -25,10 +25,10 @@ class NpNodeService < NpService
   end
 
   def run_command(cmd, environment: 'development')
-    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path, override_envs: override_envs(environment))
+    Kenv.exec_with_env(cmd, path: path, env_path: env_dst_path, override_envs: override_envs(environment), app_name: name)
   end
 
   def run_connect_command(environment: 'development')
-    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs(environment))
+    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs(environment), app_name: name)
   end
 end
