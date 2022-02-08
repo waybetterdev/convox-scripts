@@ -48,9 +48,12 @@ class Kenv
     if env_path
       exit_with_error("env path '#{env_path}' not found") unless File.exist?(env_path)
 
-      @env_vars += File.read(env_path).split("\n")
+      @env_vars += File.read(env_path).split("\n").map do |line|
+        k, v = line.gsub(/\n|\r/, '').split('=', 2)
+        "#{k}='#{v}'"
+      end
     end
-    @env_vars += ENV_OVERRIDES.merge(override_envs || {}).map { |k, v| "#{k}=#{v}" }
+    @env_vars += ENV_OVERRIDES.merge(override_envs || {}).map { |k, v| "#{k}='#{v}'" }
   end
 
   def exit_with_error(msg)
