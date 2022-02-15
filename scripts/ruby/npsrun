@@ -8,6 +8,7 @@ class NpsRun < OpBase
 
   def go
     parse_opts
+    opts_np_app.prepare_service
 
     if opts_command
       opts_np_app.run_command(opts_command, environment: opts_environment)

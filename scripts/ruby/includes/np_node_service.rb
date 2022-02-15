@@ -14,7 +14,10 @@ class NpNodeService < NpService
     environment.eql?('development') ? { 'RAILS_ENV' => 'development' } : {}
   end
 
-  def prepare_local_service; end
+  def prepare_local_service
+    # copy .env file if wb-admin-web since it cannot use system env vars
+    exec_command("cp #{env_dst_path} #{path}/.env") if name.eql?('wb-admin-web')
+  end
 
   def start_command
     "npsrun -a #{name} -e development -c \"nvm use && nvm ls && npm start\""
