@@ -67,6 +67,10 @@ alias npmstartservice="npsrun -e development -c \"nvm use && nvm ls && npm start
 alias npminstallservice="npsrun -e development -c \"nvm install && nvm ls && npm install\""
 alias npmmigrate="npsrun -e test -c \"./node_modules/.bin/sequelize db:migrate\""
 
+alias railsstartservice="npsrun -e development -c bin/start_web_server.sh"
+alias railsinstallservice="npsrun -e development -c  \"bundle install\""
+alias railsmigrateservice="npsrun -e development -c  \"be rails db:migrate\""
+
 alias lintfix="npx eslint ./src --fix"
 
 alias reloadaliases="cp -f ~/Work/docs/configs/linux-user/bash/bash_aliases.sh ~/.bash_aliases && cp -f ~/Work/docs/configs/linux-user/bash/bash_profile.sh ~/.bash_profile && source ~/.bash_aliases && source ~/.bash_profile && echo 'reloaded aliases and profile from linux-user folder'"
