@@ -83,12 +83,18 @@ class OpBase < NpPaths
       exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}" if hash[name]
 
       hash[name] = build_service_from_config(service_data)
-    end.merge(mysql: NpDockerService.new(
-      name: 'mysql', gitname: nil, type: 'mysql', port: '3306',
-      path: "#{path_kraken}/superlocal", location: 'local-docker'
-    ))
+    end.merge(mysql: local_mysql_app)
 
     @_np_services
+  end
+
+  def local_mysql_app
+    @_local_mysql_app ||= begin
+      NpDockerService.new(
+        name: 'mysql', gitname: nil, type: 'mysql', port: '3306',
+        path: "#{path_kraken}/superlocal", location: 'local-docker'
+      )
+    end
   end
 
   def local_kraken_np_services
