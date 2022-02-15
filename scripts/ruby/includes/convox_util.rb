@@ -11,9 +11,7 @@ class ConvoxUtil
     return [] if NpServices::LOCAL_CONVOX_ENABLED.eql?(false)
 
     @_convox_apps = nil unless use_cache
-    @_convox_apps ||= begin
-      exec_command('convox apps')
-    end
+    @_convox_apps ||= exec_command('convox apps')
 
     return [] unless @_convox_apps
 

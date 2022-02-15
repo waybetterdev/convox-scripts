@@ -166,7 +166,7 @@ class NpsEnv < OpBase
     elsif opts_np_app.type_is_node?
       defaults.concat(
         %w[
-          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY 
+          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
           NPM_GEMFURY_REGISTRY GEMFURY_NPM_REGISTRY NPM_GEMFURY_TOKEN
         ]
       )
@@ -187,10 +187,10 @@ class NpsEnv < OpBase
 
   def optional_env_fields
     %w[
-      DD_APM_IGNORE_RESOURCES 
+      DD_APM_IGNORE_RESOURCES
       BS_WB_RUBOCOP
       BS_WEBSPRAY
-      GAME_SERVICE_DB_HOST 
+      GAME_SERVICE_DB_HOST
       GAME_SERVICE_DB_USER
       GAME_SERVICE_DB_PASS
       GAME_SERVICE_DB_PORT
@@ -320,8 +320,8 @@ class NpsEnv < OpBase
       'REDSHIFT_URL' => -> { get_system_env('REDSHIFT_URL') },
       'GEMFURY_SECRET' => -> { get_system_env('GEMFURY_SECRET') },
       'NPM_CONFIG_REGISTRY' => -> { "https://npm-proxy.fury.io/#{get_system_env('GEMFURY_SECRET')}/waybetter" },
-      'NPM_GEMFURY_REGISTRY'=> -> { '//npm.fury.io/waybetter/' },
-      'GEMFURY_NPM_REGISTRY'=> -> { '//npm.fury.io/waybetter/' },
+      'NPM_GEMFURY_REGISTRY' => -> { '//npm.fury.io/waybetter/' },
+      'GEMFURY_NPM_REGISTRY' => -> { '//npm.fury.io/waybetter/' },
       'NPM_GEMFURY_TOKEN' => -> { get_system_env('GEMFURY_SECRET') },
 
       # set convox scale to minimum

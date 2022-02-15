@@ -18,13 +18,13 @@ rescue LoadError
   exit(1)
 end
 
-require_relative 'np_paths.rb'
-require_relative 'np_service.rb'
-require_relative 'np_rails_service.rb'
-require_relative 'np_node_service.rb'
-require_relative 'np_convox_service.rb'
-require_relative 'np_docker_service.rb'
-require_relative 'convox_util.rb'
+require_relative 'np_paths'
+require_relative 'np_service'
+require_relative 'np_rails_service'
+require_relative 'np_node_service'
+require_relative 'np_convox_service'
+require_relative 'np_docker_service'
+require_relative 'convox_util'
 
 class OpBase < NpPaths
   attr_accessor :option_parser, :debug, :opts_write, :opts_delete, :opts_np_app_name, :opts_np_app
@@ -71,39 +71,32 @@ class OpBase < NpPaths
 
   def np_services
     load_np_services_config unless defined?(NpServices) == 'constant'
-    @_np_services ||= begin
-      [
-        NpServices::NP_SERVICES[:local_kraken].map          { |s| s.merge(location: LOCATION_KRAKEN_LOCAL) },
-        NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: LOCATION_CONVOX_LOCAL) },
-        NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: LOCATION_OFFICE_CONVOX) },
-        NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) }
-      ]
-        .flatten
-        .each_with_object({}) do |service_data, hash|
-          name = dashed_app_name(service_data[:name]).to_sym
-          if hash[name]
-            exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}"
-          end
+    @_np_services ||= [
+      NpServices::NP_SERVICES[:local_kraken].map { |s| s.merge(location: LOCATION_KRAKEN_LOCAL) },
+      NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: LOCATION_CONVOX_LOCAL) },
+      NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: LOCATION_OFFICE_CONVOX) },
+      NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) }
+    ]
+                      .flatten
+                      .each_with_object({}) do |service_data, hash|
+      name = dashed_app_name(service_data[:name]).to_sym
+      exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}" if hash[name]
 
-          hash[name] = build_service_from_config(service_data)
-        end.merge(mysql: NpDockerService.new(
-          name: 'mysql', gitname: nil, type: 'mysql', port: '3306',
-          path: "#{path_kraken}/superlocal", location: 'local-docker'
-        ))
-    end
+      hash[name] = build_service_from_config(service_data)
+    end.merge(mysql: NpDockerService.new(
+      name: 'mysql', gitname: nil, type: 'mysql', port: '3306',
+      path: "#{path_kraken}/superlocal", location: 'local-docker'
+    ))
+
     @_np_services
   end
 
   def local_kraken_np_services
-    @_local_kraken_np_services ||= begin
-      np_services.map { |_k, v| v.on_local_kraken? ? v : nil }.compact
-    end
+    @_local_kraken_np_services ||= np_services.map { |_k, v| v.on_local_kraken? ? v : nil }.compact
   end
 
   def local_convox_np_services
-    @_local_convox_np_services ||= begin
-      np_services.map { |_k, v| v.on_local_convox? ? v : nil }.compact
-    end
+    @_local_convox_np_services ||= np_services.map { |_k, v| v.on_local_convox? ? v : nil }.compact
   end
 
   def convox_office_server?
@@ -288,7 +281,7 @@ class OpBase < NpPaths
     puts message if message
     result = system cmd
     if result
-      return result
+      result
     else
       warn "FAIL: '#{cmd}', exiting: #{exit_on_fail}"
       exit 1 if exit_on_fail
@@ -373,9 +366,7 @@ class OpBase < NpPaths
 
   ################ CONVOX ###################
   def convox_ready?
-    @_convox_ready ||= begin
-      exec_command("cd #{@path} && convox apps").match(/RELEASE/)
-    end
+    @_convox_ready ||= exec_command("cd #{@path} && convox apps").match(/RELEASE/)
   end
 
   def kubernetes_ready?

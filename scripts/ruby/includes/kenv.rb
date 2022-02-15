@@ -59,7 +59,7 @@ class Kenv
   end
 
   def env_line(key, value)
-    return if "#{key}".empty?
+    return if key.to_s.empty?
 
     "#{key}='#{value}'"
   end
@@ -73,11 +73,11 @@ class Kenv
     lines = bashrc_envs + env_vars.map { |v| v.empty? ? '' : "declare -x #{v}" } + [cmd_change_color]
 
     lines << cmd_change_path(cwd_path) if cwd_path
-    
+
     dirname = File.dirname(rcfile_path)
     FileUtils.mkdir_p(dirname) unless File.directory?(dirname)
 
-    File.write(rcfile_path, lines.join("\n"), mode: "w")
+    File.write(rcfile_path, lines.join("\n"), mode: 'w')
   end
 
   def rcfile_path

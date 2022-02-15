@@ -5,6 +5,7 @@ require File.expand_path(__dir__) + '/includes/op_base.rb'
 
 class OpDeploy < OpBase
   attr_accessor :opts_op_app, :option_parser, :commit, :debug, :make_backup
+
   TEMP_PATH = '~/Work/deploy/_files'.freeze
   # we are in `docs/scripts/ruby/`
   YUI_PATH = File.expand_path('../..', __dir__) + '/libraries/yuicompressor-2.4.7.jar'

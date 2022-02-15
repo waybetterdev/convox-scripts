@@ -151,10 +151,9 @@ class Konnect
     lines = stdout.lines[1..-1]
 
     # Create a map of instance id to instance name
-    id_to_name_map = Hash[lines.map do |line|
+    Hash[lines.map do |line|
       line.split(/\s{2,}/).first(2)
     end]
-    id_to_name_map
   end
 
   def filtered_id_to_name_map

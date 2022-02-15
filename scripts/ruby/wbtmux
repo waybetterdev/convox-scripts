@@ -54,13 +54,10 @@ class Wbtmux < OpBase
     end
 
     wait_for_convox if opts_wait_convox
-    if convox_required?
-      exit_with_error('Convox not ready. Aborting.') unless convox_ready?
-    end
+    exit_with_error('Convox not ready. Aborting.') if convox_required? && !convox_ready?
 
     session_name = 'lconvox'
-
-    all_apps = apps_to_run + apps_to_open.uniq
+    all_apps = unique_np_apps(apps_to_run + apps_to_open)
 
     if all_apps.count.positive?
       prepare_session(session_name)
@@ -85,7 +82,7 @@ class Wbtmux < OpBase
   end
 
   def open_apps(session_name, apps)
-    return if apps.nil?
+    return if apps.empty?
 
     active_windows = list_windows(session_name)
 
@@ -93,34 +90,29 @@ class Wbtmux < OpBase
     queue.attach_session
 
     apps.each do |app|
-      next if active_windows.include?(app)
+      next if active_windows.include?(app.name)
 
-      convox_app = app_full_name(app)
-      np_service = np_service_config(convox_app, true)
-      queue.new_window(app, np_service.path)
+      queue.new_window(app.name, app.path)
     end
 
     queue.run
   end
 
   def run_apps(session_name, apps)
-    return if apps.nil?
+    return if apps.empty?
 
     # reload window list
     active_windows = list_windows(session_name)
 
     apps.each do |app|
-      next unless active_windows.include?(app)
+      next unless active_windows.include?(app.name)
 
-      convox_app = app_full_name(app)
-      np_service = np_service_config(convox_app, true)
-
-      np_service.prepare_service
-      app_command = np_service.start_command
+      app.prepare_service
+      app_command = app.start_command
 
       queue = CommandQueue.new(session_name)
       queue.attach_session
-      queue.exec_command_inside_screen(app, 1, app_command)
+      queue.exec_command_inside_screen(app.name, 1, app_command)
 
       queue.swap_panes(0, 1)
       queue.run
@@ -142,11 +134,9 @@ class Wbtmux < OpBase
       opts.separator ''
       opts.separator 'Specific options:'
 
-      opts.on('-z', '--debug', 'Optional: load pry') do |_x|
-        require 'pry'
-      end
+      add_debug_option(opts)
 
-      opts.on('-r', '--run=S', 'Optional, the apps to run') do |x|
+      opts.on('-r', '--run=R', 'Optional, the apps to run') do |x|
         self.apps_to_run = x.split(',').collect(&:strip)
       end
 
@@ -173,16 +163,27 @@ class Wbtmux < OpBase
     end
     option_parser.parse!(ARGV)
 
-    validate_service_names(apps_to_run)
-    validate_service_names(apps_to_open)
+    self.apps_to_run = app_names_to_configs(apps_to_run)
+    self.apps_to_open = app_names_to_configs(apps_to_open)
   end
 
-  def validate_service_names(services)
-    return if services.nil?
+  def app_names_to_configs(services)
+    return [] if services.nil?
 
-    services.each do |s|
-      exit_with_error "Service '#{s} 'not found" unless ALL_SERVICES.include?(s)
-    end
+    unique_np_apps(
+      services.map do |service|
+        if service.eql?('all-local')
+          local_kraken_np_services + local_convox_np_services
+        else
+          exit_with_error "Service '#{service} 'not found" unless ALL_SERVICES.include?(service)
+          np_service_config(app_full_name(service))
+        end
+      end.flatten
+    )
+  end
+
+  def unique_np_apps(apps)
+    apps.each_with_object({}) { |a, h| h[a.name] = a }.values
   end
 
   def exit_with_error(msg)
@@ -209,17 +210,7 @@ class Wbtmux < OpBase
   end
 
   def convox_required?
-    @_convox_required ||= begin
-      res = apps_to_run.find do |s|
-        next if s == 'mysql'
-
-        name = app_full_name(s)
-        next unless name
-
-        np_service_is_on_local_convox?(name)
-      end
-      !res.nil?
-    end
+    @_convox_required ||= apps_to_run.find { |s| s.on_local_convox? } != nil
   end
 
   def wait_for_convox
@@ -255,6 +246,7 @@ class Wbtmux < OpBase
 
   class CommandQueue
     attr_accessor :commands, :session_name
+
     def initialize(session_name)
       @commands = []
       @session_name = session_name
