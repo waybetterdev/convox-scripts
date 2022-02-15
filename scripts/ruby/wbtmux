@@ -172,7 +172,7 @@ class Wbtmux < OpBase
 
     unique_np_apps(
       services.map do |service|
-        if service.eql?('all-local')
+        if service.eql?('all')
           [local_mysql_app] + local_kraken_np_services + local_convox_np_services
         else
           exit_with_error "Service '#{service} 'not found" unless ALL_SERVICES.include?(service)

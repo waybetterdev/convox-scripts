@@ -198,6 +198,7 @@ class NpsEnv < OpBase
       WB_GAME_DB_PORT
       WB_GAME_DB_USERNAME
       WB_GAME_DB_PASSWORD
+      WB_USER_SERVICE_NODEMON_EXEC
     ]
   end
 
