@@ -405,12 +405,14 @@ class OpBase < NpPaths
   def build_service_from_config(service_data)
     service_data[:path] ||= "#{path_wb_services}/#{service_data[:name]}"
 
-    if service_data[:location].eql?(LOCATION_CONVOX_LOCAL)
+    case service_data[:location]
+    when LOCATION_CONVOX_LOCAL
       NpConvoxService.new(**service_data)
-    elsif service_data[:location].eql?(LOCATION_KRAKEN_LOCAL)
-      if service_data[:type].eql?('ruby')
+    when LOCATION_KRAKEN_LOCAL
+      case service_data[:type]
+      when 'ruby'
         NpRailsService.new(**service_data)
-      elsif service_data[:type].eql?('node')
+      when 'node'
         NpNodeService.new(**service_data)
       end
     else

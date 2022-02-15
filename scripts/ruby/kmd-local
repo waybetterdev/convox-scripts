@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-
+# frozen_string_literal: true
 
 require 'pry'
 require 'highline'
@@ -90,7 +90,7 @@ PAPERTRAIL_GROUPS = {
   'production' => 'prod-west'
 }.freeze
 
-require File.expand_path(__dir__) + '/includes/op_base.rb'
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
 
 # CLI script which will start tmux
 class Kmd < OpBase
@@ -205,14 +205,12 @@ class Kmd < OpBase
   def add_service_from_ps(expanded_command)
     if (service = choose_service_from_ps).nil?
       exit_with_error 'Could not determine service'
+    elsif expanded_command.include?('konnect')
+      expanded_command << "--service #{service}"
+    elsif 'one-off'.include?(command)
+      expanded_command.map! { |str| str.gsub(/\$\{service\}/, service) }
     else
-      if expanded_command.include?('konnect')
-        expanded_command << "--service #{service}"
-      elsif 'one-off'.include?(command)
-        expanded_command.map! { |str| str.gsub(/\$\{service\}/, service) }
-      else
-        expanded_command << service
-      end
+      expanded_command << service
     end
   end
 
@@ -373,7 +371,7 @@ class Kmd < OpBase
     release.split[0]
   end
 
-  def choose(msg: 'Which?', field:, choices:, default: nil)
+  def choose(field:, choices:, msg: 'Which?', default: nil)
     return choices.first if choices.size.eql?(1)
 
     puts "\n#{msg.yellow}"
@@ -390,7 +388,7 @@ class Kmd < OpBase
   def ok_to_launch?(command)
     return true unless confirm
 
-    needs_a_confirm = !!CONFIRMS.detect { |r| !!(command =~ r) }
+    needs_a_confirm = !CONFIRMS.detect { |r| !(command =~ r).nil? }.nil?
 
     if needs_a_confirm
       msg = production? ? command.bold.red : command.green

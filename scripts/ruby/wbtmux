@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: false
 
-require File.expand_path(__dir__) + '/includes/op_base.rb'
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
 
 # CLI script which will start tmux
 class Wbtmux < OpBase
@@ -194,7 +194,7 @@ class Wbtmux < OpBase
   end
 
   def list_windows(session_name)
-    res = exec_command("tmux list-windows -t '#{session_name}' " + '-F \'#{window_name}\'')
+    res = exec_command("tmux list-windows -t '#{session_name}' -F '#{window_name}'")
     res.split("\n")
   end
 
@@ -210,7 +210,7 @@ class Wbtmux < OpBase
   end
 
   def convox_required?
-    @_convox_required ||= apps_to_run.find { |s| s.on_local_convox? } != nil
+    @_convox_required ||= !apps_to_run.find(&:on_local_convox?).nil?
   end
 
   def wait_for_convox
@@ -281,7 +281,7 @@ class Wbtmux < OpBase
 
     def run
       exit_session
-      exec_command('tmux ' + commands.join(" \\; \\\n    ") + '\\;')
+      exec_command("tmux #{commands.join(" \\; \\\n    ")}\\;")
     end
 
     def exec_command(cmd)

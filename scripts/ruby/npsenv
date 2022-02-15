@@ -4,7 +4,7 @@
 require 'fileutils'
 require 'yaml'
 
-require File.expand_path(__dir__) + '/includes/op_base.rb'
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
 
 class NpsEnv < OpBase
   attr_accessor :opts_write, :opts_print
@@ -122,10 +122,10 @@ class NpsEnv < OpBase
         port = np_service.port
         return "http://#{url}:#{port}" if convox_local_dev_rack? && opts_np_app.on_local_convox? && port
       end
-      "https://#{url}#{':' + port.to_s if port}"
+      "https://#{url}#{":#{port}" if port}"
     elsif np_service.on_local_kraken?
       port = np_service.port
-      "http://#{url}#{':' + port.to_s if port}"
+      "http://#{url}#{":#{port}" if port}"
     elsif np_service.on_local_apache?
       "https://#{url}"
     end
@@ -179,7 +179,7 @@ class NpsEnv < OpBase
     @_env_from_convox_yml ||= begin
       yml = YAML.safe_load(File.read(opts_np_app.convox_yml_path))
 
-      self.class.parse_environment_section(yml.dig('environment')).merge!(
+      self.class.parse_environment_section(yml['environment']).merge!(
         self.class.parse_environment_section(yml.dig('services', 'web', 'environment'))
       )
     end
@@ -220,11 +220,12 @@ class NpsEnv < OpBase
       val_procs[key].call
     elsif val_procs[url_key]
       value = val_procs[url_key].call
-      if /_PORT$/ =~ key
+      case key
+      when /_PORT$/
         URI.parse(value).port
-      elsif /_HOST$/ =~ key
+      when /_HOST$/
         URI.parse(value).hostname
-      elsif /_SCHEME$/ =~ key
+      when /_SCHEME$/
         URI.parse(value).scheme
       end
     elsif /_DB_HOST$/ =~ key && /^192/ =~ value
@@ -281,7 +282,7 @@ class NpsEnv < OpBase
       'WB_ADMIN_AUTH_SERVICE_EXTERNAL_URI' => -> { np_service_external_url('wb-admin-auth-service') },
       'WB_ADMIN_AUTH_SERVICE_DOMAIN' => -> { np_service_external_url('wb-admin-auth-service', domain_only: true) },
       'WB_ADMIN_AUTH_SERVICE_HOST' => -> { np_service_external_url('wb-admin-auth-service', domain_only: true) },
-      'WB_ADMIN_AUTH_SERVICE_BASE_URL' => -> { np_service_external_url('wb-admin-auth-service') + '/auth' },
+      'WB_ADMIN_AUTH_SERVICE_BASE_URL' => -> { "#{np_service_external_url('wb-admin-auth-service')}/auth" },
 
       'WB_ADMIN_WEB_URL' => -> { np_service_internal_url('wb-admin-web') },
       'WB_ADMIN_WEB_DOMAIN' => lambda {
@@ -301,17 +302,17 @@ class NpsEnv < OpBase
         ].join(',')
       },
       'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service') },
-      'GRAPHQL_URL' => -> { np_service_external_url('wb-graphql-service') + '/graphql' }, # https://graphql-office.waybetterdev.com/graphql
+      'GRAPHQL_URL' => -> { "#{np_service_external_url('wb-graphql-service')}/graphql" }, # https://graphql-office.waybetterdev.com/graphql
 
       'WB_HUB_URL' => -> { np_service_external_url('wb-hub') },
       'WB_HUB_EXTERNAL_URL' => -> { np_service_external_url('wb-hub') },
       'WB_HUB_DOMAIN' => -> { np_service_external_url('wb-hub', domain_only: true) },
 
-      'STEPBET_GAME_SERVICE_URL' => -> { np_service_internal_url('stepbet-game-service') + '/api/game-service' },
-      'WB_STEPBET_ADMIN_URL' => -> { np_service_internal_url('stepbet-game-service') + '/admin' },
+      'STEPBET_GAME_SERVICE_URL' => -> { "#{np_service_internal_url('stepbet-game-service')}/api/game-service" },
+      'WB_STEPBET_ADMIN_URL' => -> { "#{np_service_internal_url('stepbet-game-service')}/admin" },
 
-      'DIETBET_GAME_SERVICE_URL' => -> { np_service_internal_url('dietbet-game-service') + '/api/game-service' },
-      'WB_DIETBET_ADMIN_URL' => -> { np_service_internal_url('dietbet-game-service') + '/admin' },
+      'DIETBET_GAME_SERVICE_URL' => -> { "#{np_service_internal_url('dietbet-game-service')}/api/game-service" },
+      'WB_DIETBET_ADMIN_URL' => -> { "#{np_service_internal_url('dietbet-game-service')}/admin" },
 
       # TODO: this is a hack. Needs to be fixed properly
       'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service', variant: 'ninja') },

@@ -1,13 +1,9 @@
 # frozen_string_literal: false
 
-require File.expand_path(__dir__) + '/np_service.rb'
-require File.expand_path(__dir__) + '/kenv.rb'
+require "#{File.expand_path(__dir__)}/np_service.rb"
+require "#{File.expand_path(__dir__)}/kenv.rb"
 
 class NpRailsService < NpService
-  def initialize(**args)
-    super(**args)
-  end
-
   def prepare_service
     return unless on_local_kraken?
 

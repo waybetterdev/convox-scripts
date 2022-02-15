@@ -55,7 +55,7 @@ class KCopy
 
     info "Copying file '#{file}'"
     # cmd = build_convox_command("cat '#{file}'") + " | tr -d '\r' > '#{file}'"
-    cmd = build_convox_command('cat "' + file + '"') + " | tr -d '\r' > '#{file}.tmp'"
+    cmd = build_convox_command("cat \"#{file}\"") + " | tr -d '\r' > '#{file}.tmp'"
     info 'Success. ' if exec_command(cmd)
   end
 
@@ -68,7 +68,7 @@ class KCopy
 
   def build_convox_command(command)
     # Fire it up
-    "#{CONVOX_BIN} exec --rack #{rack} --app #{app} #{instance_id} '" + command.gsub("'", "\\\\'") + "'"
+    "#{CONVOX_BIN} exec --rack #{rack} --app #{app} #{instance_id} '#{command.gsub("'", "\\\\'")}'"
   end
 
   def parse_opts

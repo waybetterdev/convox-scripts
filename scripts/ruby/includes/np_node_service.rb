@@ -3,10 +3,6 @@
 require_relative 'np_service'
 
 class NpNodeService < NpService
-  def initialize(**args)
-    super(**args)
-  end
-
   def prepare_service
     return unless on_local_kraken?
 

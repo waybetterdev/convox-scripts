@@ -20,7 +20,7 @@ rescue LoadError
   exit(1)
 end
 
-require File.expand_path(__dir__) + '/includes/op_base.rb'
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
 
 # CLI script which will start tmux
 class BuildAndroidApp < OpBase

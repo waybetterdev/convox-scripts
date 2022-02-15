@@ -93,7 +93,7 @@ class Kenv
     white = '\[\033[00m\]'
     blue = '\[\033[01;34m\]'
 
-    'PS1="\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}' + red + app_name.upcase + white + ':' + blue + '\w' + white + '\$ "'
+    "PS1=\"\\[\\e]0;\\u@\\h: \\w\\a\\]${debian_chroot:+($debian_chroot)}#{red}#{app_name.upcase}#{white}:#{blue}\\w#{white}\\$ \""
   end
 
   def cmd_change_path(cwd_path)

@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-
+# frozen_string_literal: true
 
 public
 
@@ -60,7 +60,7 @@ class KRubocop
     exec_command(cmd)
 
     info "Reading file #{temp_file}"
-    pattern = %r{([\w^ ]+(/[\w^ ]+)+\.rb)\:[\d]+\:[\d]+}
+    pattern = %r{([\w^ ]+(/[\w^ ]+)+\.rb):\d+:\d+}
     all_matches = []
     File.foreach(temp_file) do |line|
       if matches = line.match(pattern)
@@ -163,10 +163,9 @@ class KRubocop
     lines = stdout.lines[1..-1]
 
     # Create a map of instance id to instance name
-    id_to_name_map = Hash[lines.map do |line|
+    Hash[lines.map do |line|
       line.split(/\s{2,}/).first(2)
     end]
-    id_to_name_map
   end
 
   def filtered_id_to_name_map
