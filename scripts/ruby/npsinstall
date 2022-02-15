@@ -51,6 +51,8 @@ class NpsInstall < OpBase
   def prepare_app
     opts_np_app.prepare_service
 
+    app_path = opts_np_app.path
+
     exec_command "npsenv -w -a #{opts_np_app.name}"
     if opts_np_app.type_is_node?
       exec_command "cd #{app_path} && npsrun -c 'cd #{app_path} && nvm install && nvm ls && npm install'"
