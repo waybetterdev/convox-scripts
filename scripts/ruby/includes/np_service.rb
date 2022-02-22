@@ -84,4 +84,9 @@ class NpService < NpPaths
   def env_dst_path
     "#{path_local_settings}/convox-env/generated/#{name}.env.local"
   end
+
+  def exit_with_error(msg)
+    puts "Error: #{msg}".red
+    exit(1)
+  end
 end

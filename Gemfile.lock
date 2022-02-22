@@ -1,4 +1,7 @@
 GEM
+  specs:
+
+GEM
   remote: https://gem.fury.io/waybetter/
   specs:
     ast (2.4.2)

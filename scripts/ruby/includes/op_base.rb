@@ -24,6 +24,7 @@ require_relative 'np_rails_service'
 require_relative 'np_node_service'
 require_relative 'np_convox_service'
 require_relative 'np_docker_service'
+require_relative 'np_remote_service'
 require_relative 'convox_util'
 
 class OpBase < NpPaths
@@ -421,6 +422,8 @@ class OpBase < NpPaths
       when 'node'
         NpNodeService.new(**service_data)
       end
+    when LOCATION_OFFICE_CONVOX
+      NpRemoteService.new(**service_data)
     else
       NpService.new(**service_data)
     end
