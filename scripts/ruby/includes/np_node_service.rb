@@ -28,6 +28,6 @@ class NpNodeService < NpService
   end
 
   def run_connect_command(environment: 'development')
-    Kenv.exec_with_env(nil, path: path, env_path: env_dst_path, override_envs: override_envs(environment), app_name: name)
+    Kenv.exec_with_env("nvm use", path: path, env_path: env_dst_path, override_envs: override_envs(environment), app_name: name)
   end
 end
