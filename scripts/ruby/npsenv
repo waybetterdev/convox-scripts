@@ -54,7 +54,7 @@ class NpsEnv < OpBase
   end
 
   def read_src_env_file
-    env_values = env_from_convox_yml.merge(default_empty_env_values)
+    env_values = add_default_empty_env_values(env_from_convox_yml)
 
     if opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
       files = [opts_np_app.env_src_path]
@@ -153,18 +153,18 @@ class NpsEnv < OpBase
     opts_np_app.on_local_convox?
   end
 
-  def default_empty_env_values
-    defaults = %w[
+  def add_default_empty_env_values(env_values)
+    default_keys = %w[
       PORT VERIFY_CERTS WB_INTERNAL_URL_SCHEME WB_ENFORCE_HTTPS
       WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2
     ]
 
     if opts_np_app.type_is_ruby?
-      defaults.concat(
+      default_keys.concat(
         %w[USE_STANDARD_LOGGING RBENV_VERSION]
       )
     elsif opts_np_app.type_is_node?
-      defaults.concat(
+      default_keys.concat(
         %w[
           NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
           NPM_GEMFURY_REGISTRY GEMFURY_NPM_REGISTRY NPM_GEMFURY_TOKEN
@@ -172,7 +172,13 @@ class NpsEnv < OpBase
       )
     end
 
-    defaults.each_with_object({}) { |v, hash| hash[v] = '' }
+    env_values.keys.each do |key|
+      next if (base = key.gsub(/_SERVICE_(HOST|PORT|SCHEME)$/, '_SERVICE')).eql?(key)
+
+      %w[HOST PORT SCHEME].each { |s| default_keys.push("#{base}_#{s}") }
+    end
+
+    default_keys.uniq.each_with_object({}) { |v, h| h[v] = '' }.merge(env_values)
   end
 
   def env_from_convox_yml
@@ -223,7 +229,7 @@ class NpsEnv < OpBase
       value = val_procs[url_key].call
       case key
       when /_PORT$/
-        URI.parse(value).port
+        URI.parse(value).port || (443 if URI.parse(value).scheme.eql?('https'))
       when /_HOST$/
         URI.parse(value).hostname
       when /_SCHEME$/
