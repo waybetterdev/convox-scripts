@@ -124,8 +124,7 @@ class NpsEnv < OpBase
       end
       "https://#{url}#{":#{port}" if port}"
     elsif np_service.on_local_kraken?
-      port = np_service.port
-      "http://#{url}#{":#{port}" if port}"
+      "https://#{url}#{":#{port}" if port}"
     elsif np_service.on_local_apache?
       "https://#{url}"
     end
@@ -251,7 +250,7 @@ class NpsEnv < OpBase
       'WB_ADMIN_JWT_COOKIE' => -> { 'wb-jwt-admin-office' },
       'WB_JWT_COOKIE' => -> { 'wb-jwt-office' },
       'NODE_TLS_REJECT_UNAUTHORIZED' => -> { '0' },
-      'WB_INTERNAL_URL_SCHEME' => -> { 'http' },
+      'WB_INTERNAL_URL_SCHEME' => -> { opts_np_app.on_local_kraken? ? 'https' : 'http' },
       'WB_ENFORCE_HTTPS' => -> { 'false' },
       'PORT' => -> { opts_np_app.port },
       'RBENV_VERSION' => -> { File.read("#{opts_np_app.path}/.ruby-version") },
