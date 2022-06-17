@@ -4,13 +4,15 @@
 require "#{File.expand_path(__dir__)}/includes/op_base.rb"
 
 class NpsRun < OpBase
-  attr_accessor :opts_command, :opts_environment
+  attr_accessor :opts_command, :opts_start_app, :opts_environment
 
   def go
     parse_opts
     opts_np_app.prepare_service
 
-    if opts_command
+    if opts_start_app
+      opts_np_app.run_command(opts_np_app.start_command, environment: 'development')
+    elsif opts_command
       opts_np_app.run_command(opts_command, environment: opts_environment)
     else
       opts_np_app.run_connect_command(environment: opts_environment)
@@ -35,6 +37,7 @@ class NpsRun < OpBase
       add_env_option(opts)
 
       add_np_app_option(opts)
+      add_start_option(opts)
 
       add_help_option(opts)
     end
@@ -52,6 +55,12 @@ class NpsRun < OpBase
   def add_env_option(opts)
     opts.on('-e', '--env=e', 'Environment name') do |x|
       self.opts_environment = x
+    end
+  end
+
+  def add_start_option(opts)
+    opts.on('-s', '--start', 'Start app') do |x|
+      self.opts_start_app = x
     end
   end
 end
