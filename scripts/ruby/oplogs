@@ -57,7 +57,7 @@ class OpDeploy < OpBase
 
   A deploy script for old platform websites
   Ex:
-    opdeploy -a stepbet-dev
+    oplogs -a stepbet-prod -j -o -f database/db-errors.txt
   BAN
 
   def parse_opts
