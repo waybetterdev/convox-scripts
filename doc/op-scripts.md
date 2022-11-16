@@ -44,7 +44,7 @@ Builds a zip file from `/var/www/stepbet_prod` or `/var/www/stepbet_dev` and dep
 
 Usage:
 1. Switch your `/var/www/stepbet_prod` repository to `master` and find the hash for the last deployed commit to production. E.g. `137474ce2fcadaa88ece528a5d3122059ad13557`
-2. Run the ceploy script
+2. Run the deploy script
 ```
 opdeploy -a stepbet-prod -c 137474ce2fcadaa88ece528a5d3122059ad13557
 ```

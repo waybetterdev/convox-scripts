@@ -1,15 +1,14 @@
 # convox-scripts
 
 # OP Scripts and their usage
-1. `opdeploy` - builds a zip file from `/var/www/stepbet_prod` or `/var/www/stepbet_dev` and deploys and extracts it on either PROD or DEV Stepbet servers.
+1. `opdeploy` - deployment script for deploying on either of the three servers `api.stepbet.com`, `images.stepbet.com`, `dev.stepbet.com` 
+[Docs](/doc/op-scripts.md#op-deploy)
 
-Usage:
-1. Switch your `/var/www/stepbet_prod` repository to `master` and find the hash for the last deployed commit to production. E.g. `137474ce2fcadaa88ece528a5d3122059ad13557`
-2. Run the ceploy script
-```
-opdeploy -a stepbet-prod -c 137474ce2fcadaa88ece528a5d3122059ad13557
-```
+2. `opkonnect` - opens an SSH connection to a server
+[Docs](/doc/op-scripts.md#op-konnect)
 
+3. `oplogs` - downloads file logs from servers
+[Docs](/doc/op-scripts.md#op-logs)
 
 
 # NP Scripts and their usage
