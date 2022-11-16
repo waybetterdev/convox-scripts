@@ -1,6 +1,14 @@
 
 # NP Scripts and their usage
 
+## NPS Config
+
+Script that links services in between them. Run this when you switch location for services. e.g. switch from using an external user service to running a local user service.
+
+### TODO: Add documentation
+
+
+
 ## NPS Env
 
 Ruby script that builds environment variables for each service. It reads the config file from `./local-settings/np-services-config.rb` and automatically generates domain names for each service so that the services can talk to each other. 
@@ -11,7 +19,7 @@ LOCAL_CONVOX_SERVICES = %i[graphql]
 ```
 then all services that talk to `user-service` will access it as `wb-user-service.convox.local`. This route will pass through our apache proxy, which will provide the self-signed certificates needed for SSL.
 
-**Usage:**
+### Usage:
 
 You can use `npenv` for editing or writing config files:
 `npenv -w -a user` will generate the ENV variables for user service
@@ -41,3 +49,13 @@ Specific options:
 
 
  
+## NPS Install
+
+### TODO: Add documentation
+
+
+
+
+## NPS Run
+
+### TODO: Add documentation
