@@ -1,41 +1,34 @@
-# convox-scripts
+# Convox Scripts
 
-# OP Scripts and their usage
-1. `opdeploy` - deployment script for deploying on either of the three servers `api.stepbet.com`, `images.stepbet.com`, `dev.stepbet.com` 
-[Docs](/doc/op-scripts.md#op-deploy)
+This repository initially started as a tool for linking NP microservices between them but then ended up containing everthing we use for local development and deployment.
 
-2. `opkonnect` - opens an SSH connection to a server
-[Docs](/doc/op-scripts.md#op-konnect)
-
-3. `oplogs` - downloads file logs from servers
-[Docs](/doc/op-scripts.md#op-logs)
-
-
-# NP Scripts and their usage
-1. `npenv` - ruby script that builds environment variables for each service. It reads the config file from `./local-settings/np-services-config.rb` and automatically generates domain names for each service so that the services can talk to each other. 
-
-For example, if you mark `user-service` as running locally inside a convox container with 
-```
-LOCAL_CONVOX_SERVICES = %i[graphql]
-```
-then all services that talk to `user-service` will access it as `wb-user-service.convox.local`. This route will pass through our apache proxy, which will provide the self-signed certificates needed for SSL.
-
-Usage
-You can use `npenv` for editing or writing config files:
-`npenv -w -a user` will generate the ENV variables for user service
-`npenv -e -a user` will open a text editor and you will be able to change ENV variables for user srevice.
+## Contents
+1. Scripts for installing all the necesarry programs and utilities (based on Ubuntu LTS 20.04 packages). You can find them in `/scripts/installs` 
+2. Scripts for deploying to OP services [Docs](/doc/op-scripts.md)
+3. Scripts for setting up your linux user bash aliases and profiles. You can find them in  `/configs/linux-user/bash/` [TODO Add Docs](/)
+4. Scripts for starting and configuring NP service. [TODO Add Docs](/)
+5. Scripts for running an apache server as a proxy for linking NP and OP services in between then and having HTTPS work via self signed certificates that you can find in `/certs/apache`.
+6. Configuration templates needed when creating a new development environment. You can find these in `/configs/templates/` 
 
 
+## OP Scripts and their usage
+1. [opdeploy](/doc/op-scripts.md#op-deploy) - deployment script for deploying on either of the three servers `api.stepbet.com`, `images.stepbet.com`, `dev.stepbet.com`  
 
-# File structure
-1. `/certs/apache` self signed apache certificates used when running a local apache server for proxying requests from OP and NP services
-2. `/configs/linux-user/bash/` contains `bash_profile.sh` and `bash_profile.sh` that need to placed in your home folder
-3. `/configs/templates/` contains example configuration files
-4. `/local-settings/` contains convox yml and env configuration files
-5. `/scripts/` contains various ruby, bash scripts
+2. [opkonnect](/doc/op-scripts.md#op-konnect) - opens an SSH connection to a server
 
-# Installation
-Note: Our local development envoronment is Ubuntu LTS 20.04 so all installation scripts are based on it. If you have an Ubuntu or other compatible Debian based ditros, you can use our install scripts. Or otherwise your will need to open the install scripts and run the installation commands that are specific to your Linux.
+3. [oplogs](/doc/op-scripts.md#op-logs) - downloads file logs from servers
+
+
+## NP scripts and their usage
+TODO: add docs here
+1. `npsconfig`
+2. `npsenv`
+3. `npsinstall`
+4. `npsrun`
+
+
+## Installation
+**Note:** Our local development envoronment is Ubuntu LTS 20.04 so all installation scripts are based on it. If you have an Ubuntu or other compatible Debian based ditros, you can use our install scripts. Or otherwise your will need to open the install scripts and run the installation commands that are specific to your Linux.
 
 1. Create a `~/Work/` folder in your home folder and clone this repository as `docs`. Having the exact path `~/Work/docs` is very important because a lof our scripts and configuration files are hardocded to use this path (we plan on fixing this soon).
 ```
@@ -54,7 +47,6 @@ Copy npmrc and bash secrets to your home folder
 cp ~/Work/docs/secrets/.npmrc ~/.npmrc
 cp ~/Work/docs/secrets/bash-secrets.sh ~/bash-secrets.sh
 ```
-
 
 2. Create a `~/Work/wb-services` folder and all repositories for NP microservices.
 ```
@@ -85,4 +77,3 @@ scripts/installs/install-docker.sh
 scripts/installs/install-kubernetes.sh
 scripts/installs/install-convox-dev-rack.sh
 ```
-

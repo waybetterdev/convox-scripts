@@ -82,7 +82,7 @@ Connecting to centos@dev.stepbet.com
 
 ```
 
-# OP Connect
+# OP Konnect
 Connects via SSH to OP servers. Use it if you don't like entering private key and dommain into the SSH command each time.
 
 Usage:
