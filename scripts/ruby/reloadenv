@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+# CLI script which will start tmux
+class ReloadEnv < OpBase
+  def go
+    app = File.basename(Dir.getwd)
+
+    unless np_service_is_on_local_convox?(app)
+      warn "Error: app '".red + app.to_s.green + "' is not on local convox".red
+      exit 1
+    end
+
+    exec_ic_command "npsenv -w -a #{app}"
+    exec_ic_command "kmd-local refresh-env -- local #{app} no-confirm"
+  end
+end
+
+ReloadEnv.new.go

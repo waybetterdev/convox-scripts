@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: false
 
 public
 
@@ -9,17 +10,17 @@ begin
   require 'highline'
   require 'colored'
   require 'terminfo'
-rescue LoadError => x
-  puts <<-XXX
-To run this utility:
-  gem install 'highline'
-  gem install 'colored'
-  gem install 'ruby-terminfo'
-XXX
+rescue LoadError
+  puts <<~XXX
+    To run this utility:
+      gem install 'highline'
+      gem install 'colored'
+      gem install 'ruby-terminfo'
+  XXX
   exit(1)
 end
 
-class KRubocop
+class KCopy
   attr_accessor :app, :rack, :file, :service_filter, :op, :any, :instance_id
 
   CONVOX_BIN = `which convox`.strip
@@ -38,122 +39,109 @@ class KRubocop
   end
 
   def go
-    self.parse_opts
+    parse_opts
 
-    self.check_for_convox
+    check_for_convox
 
-    ids_to_names = self.filtered_id_to_name_map
+    ids_to_names = filtered_id_to_name_map
 
     all_names_the_same = ids_to_names.values.uniq.size.eql?(1)
 
-    if all_names_the_same && self.any
-      self.instance_id = ids_to_names.keys.sample
-    else
-      self.instance_id = choose_service(ids_to_names)
-    end
+    self.instance_id = if all_names_the_same && any
+                         ids_to_names.keys.sample
+                       else
+                         choose_service(ids_to_names)
+                       end
 
     info "Copying file '#{file}'"
-    #cmd = build_convox_command("cat '#{file}'") + " | tr -d '\r' > '#{file}'"
-    cmd = build_convox_command('cat "' + file + '"') + " | tr -d '\r' > '#{file}'"
-    if exec_command(cmd)
-      info "Success. "
-    end
+    # cmd = build_convox_command("cat '#{file}'") + " | tr -d '\r' > '#{file}'"
+    cmd = build_convox_command("cat \"#{file}\"") + " | tr -d '\r' > '#{file}.tmp'"
+    info 'Success. ' if exec_command(cmd)
   end
 
   def exec_command(cmd)
-    info "Running command: "
+    info 'Running command: '
     info "'#{cmd}'"
     cmd.gsub("'", "\\\\'")
-    %x[ #{cmd} ]
+    `#{cmd}`
   end
 
   def build_convox_command(command)
     # Fire it up
-    cmd = "#{CONVOX_BIN} exec --rack #{self.rack} --app #{self.app} #{self.instance_id} '" + command.gsub("'", "\\\\'") + "'"
+    "#{CONVOX_BIN} exec --rack #{rack} --app #{app} #{instance_id} '#{command.gsub("'", "\\\\'")}'"
   end
 
   def parse_opts
     self.op = OptionParser.new do |opts|
+      opts.banner = <<~BAN
 
-      opts.banner = <<-BAN
+        A wrapper around convox exec copies a given file fron convox container.
 
-A wrapper around convox exec copies a given file fron convox container.
+        If you provide no command to run, it runs 'bash'.
 
-If you provide no command to run, it runs 'bash'.
+        Ex:
+              kcopy -r local/convox -a falkor-game-service -f vendor/gems/dev/wb-game/spec/dummy/db/schema.rb
 
-Ex:
-      kcopy -r local/convox -a falkor-game-service -f vendor/gems/dev/wb-game/spec/dummy/db/schema.rb
+      BAN
 
-BAN
+      opts.separator ''
+      opts.separator 'Specific options:'
 
-      opts.separator ""
-      opts.separator "Specific options:"
-
-      opts.on("-z", "--debug", "Optional: load pry") do |x|
+      opts.on('-z', '--debug', 'Optional: load pry') do |_x|
         require 'pry'
       end
 
-      opts.on("-r", "--rack=R", "Optional, the convox rack") do |x|
-          self.rack = x
+      opts.on('-r', '--rack=R', 'Optional, the convox rack') do |x|
+        self.rack = x
       end
 
-      opts.on("-a", "--app=A", "Optional, the convox app.") do |x|
+      opts.on('-a', '--app=A', 'Optional, the convox app.') do |x|
         self.app = x
       end
 
-      opts.on("-s", "--service=S", "Required: which service (a regex)") do |x|
-        regexes = x.split(',').map(&:strip)
+      opts.on('-s', '--service=S', 'Required: which service (a regex)') do |x|
         self.service_filter = /#{x}/
       end
-      
-      opts.on("-f", "--rack=R", "Required, the file to download from the convox container") do |x|
-          self.file = x
+
+      opts.on('-f', '--rack=R', 'Required, the file to download from the convox container') do |x|
+        self.file = x
       end
 
-      opts.on("-n", "--any", "Optional, connect to any matching instance.") do |x|
+      opts.on('-n', '--any', 'Optional, connect to any matching instance.') do |x|
         self.any = x
       end
-
     end
 
     op.parse!(ARGV)
 
-    if self.app.nil?
+    if app.nil?
       info "--app not provided, using 'kraken'"
       self.app = 'kraken'
     end
-
   end
 
   def check_for_convox
-    if CONVOX_BIN.to_s.empty?
-      konnect_error "Command 'convox' was not found in your PATH"
-    end
+    konnect_error "Command 'convox' was not found in your PATH" if CONVOX_BIN.to_s.empty?
   end
 
   def id_name_map
-    cmd = "#{CONVOX_BIN} ps --rack #{self.rack} --app #{self.app}"
+    cmd = "#{CONVOX_BIN} ps --rack #{rack} --app #{app}"
     info cmd
     stdout, stderr, status = Open3.capture3(cmd)
-    if status.exitstatus.eql?(1)
-      konnect_error(stderr)
-    end
+    konnect_error(stderr) if status.exitstatus.eql?(1)
 
     lines = stdout.lines[1..-1]
 
     # Create a map of instance id to instance name
-    id_to_name_map = Hash[lines.map do |line|
+    Hash[lines.map do |line|
       line.split(/\s{2,}/).first(2)
     end]
-    id_to_name_map
   end
 
   def filtered_id_to_name_map
-    services_map = self.id_name_map
-    services_map.delete_if{|k,v| "#{k}-#{v}" !~ self.service_filter}
-    if services_map.empty?
-      konnect_error "No services matched #{self.service_filter}"
-    end
+    services_map = id_name_map
+    services_map.delete_if { |k, v| "#{k}-#{v}" !~ service_filter }
+    konnect_error "No services matched #{service_filter}" if services_map.empty?
     services_map
   end
 
@@ -172,8 +160,8 @@ BAN
     choice
   end
 
-  def info msg
-    $stderr.puts msg.blue
+  def info(msg)
+    warn msg.blue
   end
 
   def screen_rows
@@ -189,4 +177,4 @@ BAN
   end
 end
 
-KRubocop.new.go
+KCopy.new.go

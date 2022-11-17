@@ -1,13 +1,34 @@
 #!/bin/bash
 
 
+
 # exit when any command fails
 set -e
 
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
-trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
+trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
+
+
+
+if ! [ -x "$(command -v ruby)" ]; then
+	sudo ~/Work/docs/scripts/installs/install-ruby.sh
+	reloadaliases
+else
+  echo 'Ruby 2.6.2 is already installed. Skipping.'
+fi
+
+# TODO: why is the alias not working?
+kk='/home/dev/Work/docs/scripts/ruby/kmd-local'
+
+# TODO : why is this setting always off?
+eval "$(rbenv init -)"
+rbenv shell 2.6.2
+
+
+sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'
+convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)
 
 
 if test -d "${HOME}/Work/wb-services/falkor-game-service"; then
@@ -16,8 +37,14 @@ if test -d "${HOME}/Work/wb-services/falkor-game-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/falkor-game-service
+		cd "${HOME}/Work/wb-services/falkor-game-service"
 		convox apps create falkor-game-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local falkor
+		$kk refresh-env -- local falkor no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'falkor-game-service app already exists. Skipping.'
 	fi
@@ -29,8 +56,14 @@ if test -d "${HOME}/Work/wb-services/wb-membership-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-membership-service
+		cd "${HOME}/Work/wb-services/wb-membership-service"
 		convox apps create wb-membership-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local membership
+		$kk refresh-env -- local membership no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-membership-service app already exists. Skipping.'
 	fi
@@ -42,8 +75,15 @@ if test -d "${HOME}/Work/wb-services/wb-user-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-user-service
+		cd "${HOME}/Work/wb-services/wb-user-service"
 		convox apps create wb-user-service
+
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local user
+		$kk refresh-env -- local user no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-user-service app already exists. Skipping.'
 	fi
@@ -55,8 +95,15 @@ if test -d "${HOME}/Work/wb-services/wb-auth-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-auth-service
+		cd "${HOME}/Work/wb-services/wb-auth-service"
 		convox apps create wb-auth-service
+		git reset --hard
+		git clean -f
+		git pull
+
+		$kk refresh-yml -- local auth
+		$kk refresh-env -- local auth no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-auth-service app already exists. Skipping.'
 	fi
@@ -68,8 +115,15 @@ if test -d "${HOME}/Work/wb-services/wb-admin-auth-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-admin-auth-service
+		cd "${HOME}/Work/wb-services/wb-admin-auth-service"
 		convox apps create wb-admin-auth-service
+		git reset --hard
+		git clean -f
+		git pull
+
+		$kk refresh-yml -- local admin-auth
+		$kk refresh-env -- local admin-auth no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-admin-auth-service app already exists. Skipping.'
 	fi
@@ -81,8 +135,15 @@ if test -d "${HOME}/Work/wb-services/wb-billing-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-billing-service
+		cd  "${HOME}/Work/wb-services/wb-billing-service"
 		convox apps create wb-billing-service
+		git reset --hard
+		git clean -f
+		git pull
+
+		$kk refresh-yml -- local billing
+		$kk refresh-env -- local billing no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-billing-service app already exists. Skipping.'
 	fi
@@ -94,9 +155,15 @@ if test -d "${HOME}/Work/wb-services/wb-notify-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-notify-service
+		cd "${HOME}/Work/wb-services/wb-notify-service"
 		convox apps create wb-notify-service
-	else
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local notify
+		$kk refresh-env -- local notify no-confirm
+		convox build -m convox.local.yml
+	else 
 	  echo 'wb-notify-service app already exists. Skipping.'
 	fi
 fi
@@ -107,8 +174,14 @@ if test -d "${HOME}/Work/wb-services/wb-social-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-social-service
+		cd "${HOME}/Work/wb-services/wb-social-service"
 		convox apps create wb-social-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local social
+		$kk refresh-env -- local social no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-social-service app already exists. Skipping.'
 	fi
@@ -120,8 +193,14 @@ if test -d "${HOME}/Work/wb-services/wb-metric-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-metric-service
+		cd "${HOME}/Work/wb-services/wb-metric-service"
 		convox apps create wb-metric-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local metric
+		$kk refresh-env -- local metric no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-metric-service app already exists. Skipping.'
 	fi
@@ -133,8 +212,14 @@ if test -d "${HOME}/Work/wb-services/wb-admin-web"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-admin-web
+		cd "${HOME}/Work/wb-services/wb-admin-web"
 		convox apps create wb-admin-web
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local ninja
+		$kk refresh-env -- local ninja no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-admin-web app already exists. Skipping.'
 	fi
@@ -146,8 +231,14 @@ if test -d "${HOME}/Work/wb-services/wb-graphql-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-graphql-service
+		cd "${HOME}/Work/wb-services/wb-graphql-service"
 		convox apps create wb-graphql-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local graphql
+		$kk refresh-env -- local graphql no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'wb-graphql-service app already exists. Skipping.'
 	fi
@@ -160,27 +251,38 @@ if test -d "${HOME}/Work/wb-services/runbet-game-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/runbet-game-service
+		cd "${HOME}/Work/wb-services/runbet-game-service"
 		convox apps create runbet-game-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local runbet
+		$kk refresh-env -- local runbet no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'runbet-game-service app already exists. Skipping.'
 	fi
 fi
 
 
-if test -d "${HOME}/Work/wb-services/wb-hub"; then
-	if ! [[ $(convox apps) =~ 'wb-hub' ]]; then
-		echo "Creating wb-hub app"
+if test -d "${HOME}/Work/wb-services/quitbet-game-service"; then
+	if ! [[ $(convox apps) =~ 'quitbet-game-service' ]]; then
+		echo "Creating quitbet-game-service app"
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/wb-hub
-		convox apps create wb-hub
+		cd "${HOME}/Work/wb-services/quitbet-game-service"
+		convox apps create quitbet-game-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local quitbet
+		$kk refresh-env -- local quitbet no-confirm
+		convox build -m convox.local.yml
 	else
-	  echo 'wb-hub app already exists. Skipping.'
+	  echo 'quitbet-game-service app already exists. Skipping.'
 	fi
 fi
-
 
 if test -d "${HOME}/Work/wb-services/dietbet-game-service"; then
 	if ! [[ $(convox apps) =~ 'dietbet-game-service' ]]; then
@@ -188,8 +290,14 @@ if test -d "${HOME}/Work/wb-services/dietbet-game-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/dietbet-game-service
+		cd "${HOME}/Work/wb-services/dietbet-game-service"
 		convox apps create dietbet-game-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local dietbet-game-service
+		$kk refresh-env -- local dietbet-game-service no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'dietbet-game-service app already exists. Skipping.'
 	fi
@@ -202,8 +310,14 @@ if test -d "${HOME}/Work/wb-services/stepbet-game-service"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/stepbet-game-service
+		cd "${HOME}/Work/wb-services/stepbet-game-service"
 		convox apps create stepbet-game-service
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local stepbet-game-service
+		$kk refresh-env -- local stepbet-game-service no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'stepbet-game-service app already exists. Skipping.'
 	fi
@@ -216,8 +330,14 @@ if test -d "${HOME}/Work/wb-services/stepbet"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/stepbet
+		cd "${HOME}/Work/wb-services/stepbet"
 		convox apps create stepbet
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local stepbet
+		$kk refresh-env -- local stepbet no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'stepbet app already exists. Skipping.'
 	fi
@@ -230,8 +350,14 @@ if test -d "${HOME}/Work/wb-services/dietbet"; then
 		echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
 		sleep 3s
 
-		cd ~/Work/wb-services/dietbet
+		cd "${HOME}/Work/wb-services/dietbet"
 		convox apps create dietbet
+		git reset --hard
+		git clean -f
+		git pull
+		$kk refresh-yml -- local dietbet 
+		$kk refresh-env -- local dietbet no-confirm
+		convox build -m convox.local.yml
 	else
 	  echo 'dietbet app already exists. Skipping.'
 	fi

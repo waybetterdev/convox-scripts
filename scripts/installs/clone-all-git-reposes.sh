@@ -7,7 +7,7 @@ set -e
 # keep track of the last executed command
 trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
-trap 'echo "\"${last_command}\" command filed with exit code $?."' EXIT
+trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
 
 if ! test -d "${HOME}/Work/wb-services"; then
@@ -162,6 +162,19 @@ else
   echo 'runbet-game-service folder already exists. Skipping.'
 fi
 
+
+if ! test -d "${HOME}/Work/wb-services/quitbet-game-service"; then
+	echo "Cloning quitbet-game-service from git"
+	echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
+	sleep 3s
+
+	cd ~/Work/wb-services
+	git clone git@github.com:wbetterdev/quitbet-game-service.git quitbet-game-service
+	cd ~/Work/wb-services/quitbet-game-service
+else
+  echo 'quitbet-game-service folder already exists. Skipping.'
+fi
+
 if ! test -d "${HOME}/Work/wb-services/falkor-game-service"; then
 	echo "Cloning falkor-game-service from git"
 	echo "Sleeping for 3 seconds. Click ctrl+C to abort script." 
@@ -260,3 +273,7 @@ if ! test -d "${HOME}/Work/wb-services/dietbet/wb-game"; then
 else
   echo 'wb-game folder already exists. Skipping.'
 fi
+
+
+
+

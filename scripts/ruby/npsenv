@@ -1,0 +1,364 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+require 'fileutils'
+require 'yaml'
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+class NpsEnv < OpBase
+  attr_accessor :opts_write, :opts_print, :opts_edit
+
+  def initialize; end
+
+  def go
+    parse_opts
+
+    opts_np_app.prepare_service
+
+    if opts_write
+      str_env = generate_env
+      write_env_to_file(str_env)
+    elsif opts_print
+      puts generate_env
+    elsif opts_edit
+      exec_command("gedit '#{src_env_file}'")
+
+      str_env = generate_env
+      write_env_to_file(str_env)
+    end
+  end
+
+  HELP = <<-BAN.freeze
+  Env builder script for local NP services
+  Ex:
+    npsenv -w -a user
+  BAN
+
+  private
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+      opts.banner = HELP
+
+      opts.separator ''
+      opts.separator 'Specific options:'
+
+      add_debug_option(opts)
+
+      add_write_option(opts, 'Write the env to kraken or convox')
+      add_print_option(opts, 'Print the env to kraken or convox')
+      add_edit_option(opts, 'Edit the env on kraken or convox')
+
+      add_np_app_option(opts)
+
+      add_help_option(opts)
+    end
+    option_parser.parse!(ARGV)
+
+    exit_with_error('app parameter is required') if opts_np_app_name.nil?
+  end
+
+  def add_edit_option(opts, message)
+    opts.on('-e', '--edit', message) do |_x|
+      self.opts_edit = true
+    end
+  end
+
+  def src_env_file
+    unless opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
+      exit_with_error "App `#{opts_np_app.name}` location `#{opts_np_apps.location}` not supported"
+    end
+  
+    opts_np_app.env_src_path
+  end
+
+  def read_src_env_file
+    env_values = add_default_empty_env_values(env_from_convox_yml)
+
+    files = [src_env_file]
+
+    files.each do |env_path|
+      exit_with_error "No env path found for app `#{opts_np_app.name}`" unless env_path
+      exit_with_error "Env file '#{env_path}' not found" unless File.exist?(env_path)
+
+      puts "Reading env from #{env_path.green}"
+      File.foreach(env_path) do |line|
+        key, value = line.gsub(/\n|\r/, '').split('=', 2)
+
+        next unless key
+        next if value.nil? || value == ''
+        next if /^(_|#)/ =~ key
+
+        env_values[key] = value
+      end
+    end
+    exit_with_error "No env variables found in file '#{env_path}'" unless env_values
+
+    env_values.sort.to_h
+  end
+
+  def generate_env
+    env_values = read_src_env_file.each_with_object({}) do |(key, value), hash|
+      if (proc_val = call_val_proc(key, value))
+        value = proc_val
+      end
+      value = '_not_needed_locally_' if value == '_set_me_'
+      hash[key] = value
+    end
+
+    required_convox_yml_fields.each do |key|
+      exit_with_error("#{key} is required to have a value by #{opts_np_app.path}/convox.yml") if env_values[key].to_s.eql?('')
+    end
+
+    env_values.map { |key, value| "#{key}=#{value}" }.join("\n")
+  end
+
+  def write_env_to_file(str_env)
+    env_path = opts_np_app.env_dst_path
+
+    dirname = File.dirname(env_path)
+    FileUtils.mkdir_p(dirname) unless File.directory?(dirname)
+
+    puts "Writing env file to #{env_path.green}"
+    File.open(env_path, 'w') { |file| file.write(str_env) }
+  end
+
+  def np_service_internal_url(name)
+    np_service = np_service_config(name, true)
+
+    url = np_service_domain(name)
+    return '' unless url
+
+    if np_service.on_convox_office?
+      "https://#{url}"
+    elsif np_service.on_local_convox?
+      if use_convox_rack_internal_urls
+        url = np_service_convox_domain(name)
+        port = np_service.port
+        return "http://#{url}:#{port}" if convox_local_dev_rack? && opts_np_app.on_local_convox? && port
+      end
+      "https://#{url}#{":#{port}" if port}"
+    elsif np_service.on_local_kraken?
+      "https://#{url}#{":#{port}" if port}"
+    elsif np_service.on_local_apache?
+      "https://#{url}"
+    end
+  end
+
+  def np_service_internal_domain(name)
+    if np_service_is_on_local_convox?(name)
+      np_service_convox_domain(name)
+    else
+      np_service_domain(name)
+    end
+  end
+
+  def np_service_external_url(name, domain_only: false, variant: nil)
+    np_service = np_service_config(name, true)
+
+    url = get_service_external_domain(np_service.name, variant: variant)
+    return url if domain_only
+    return '' unless url
+
+    "https://#{url}"
+  end
+
+  def use_convox_rack_internal_urls
+    opts_np_app.on_local_convox?
+  end
+
+  def add_default_empty_env_values(env_values)
+    default_keys = %w[
+      PORT VERIFY_CERTS WB_INTERNAL_URL_SCHEME WB_ENFORCE_HTTPS
+      WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2
+    ]
+
+    if opts_np_app.type_is_ruby?
+      default_keys.concat(
+        %w[USE_STANDARD_LOGGING RBENV_VERSION]
+      )
+    elsif opts_np_app.type_is_node?
+      default_keys.concat(
+        %w[
+          NODE_TLS_REJECT_UNAUTHORIZED NODE_ENV NPM_CONFIG_REGISTRY
+          NPM_GEMFURY_REGISTRY GEMFURY_NPM_REGISTRY NPM_GEMFURY_TOKEN
+        ]
+      )
+    end
+
+    env_values.keys.each do |key|
+      next if (base = key.gsub(/_SERVICE_(HOST|PORT|SCHEME)$/, '_SERVICE')).eql?(key)
+
+      %w[HOST PORT SCHEME].each { |s| default_keys.push("#{base}_#{s}") }
+    end
+
+    default_keys.uniq.each_with_object({}) { |v, h| h[v] = '' }.merge(env_values)
+  end
+
+  def env_from_convox_yml
+    @_env_from_convox_yml ||= begin
+      yml = YAML.safe_load(File.read(opts_np_app.convox_yml_path))
+
+      self.class.parse_environment_section(yml['environment']).merge!(
+        self.class.parse_environment_section(yml.dig('services', 'web', 'environment'))
+      )
+    end
+  end
+
+  def optional_env_fields
+    %w[
+      DD_APM_IGNORE_RESOURCES
+      BS_WB_RUBOCOP
+      BS_WEBSPRAY
+      GAME_SERVICE_DB_HOST
+      GAME_SERVICE_DB_USER
+      GAME_SERVICE_DB_PASS
+      GAME_SERVICE_DB_PORT
+      WB_GAME_DB_HOST
+      WB_GAME_DB_PORT
+      WB_GAME_DB_USERNAME
+      WB_GAME_DB_PASSWORD
+      WB_USER_SERVICE_NODEMON_EXEC
+    ]
+  end
+
+  def required_convox_yml_fields
+    env_from_convox_yml.keys.reject { |key| key =~ /GEM_PATH$/ } - optional_env_fields
+  end
+
+  def self.parse_environment_section(environment = [])
+    pairs = (environment || []).map do |entry|
+      pair = entry.split('=', 2)
+      pair[1] = pair[1].nil? || pair[1].empty? ? nil : pair[1]
+      pair
+    end
+    Hash[pairs]
+  end
+
+  def call_val_proc(key, value)
+    url_key = key.gsub(/_(HOST|PORT|SCHEME)$/, '_URL')
+    if val_procs[key]
+      val_procs[key].call
+    elsif val_procs[url_key]
+      value = val_procs[url_key].call
+      case key
+      when /_PORT$/
+        URI.parse(value).port || (443 if URI.parse(value).scheme.eql?('https'))
+      when /_HOST$/
+        URI.parse(value).hostname
+      when /_SCHEME$/
+        URI.parse(value).scheme
+      end
+    elsif /_DB_HOST$/ =~ key && /^192/ =~ value
+      find_local_ip
+    end
+  end
+
+  def val_procs
+    @_val_procs ||= {
+      'GEN2' => -> { 'false' },
+      'REDIS_HOST' => -> { find_local_ip },
+      'REDIS_QUEUE_HOST' => -> { find_local_ip },
+      'NODE_ENV' => -> { 'development' },
+      'WB_ENV' => -> { 'local' },
+      'VERIFY_CERTS' => -> { 'false' },
+      'WB_ADMIN_JWT_COOKIE' => -> { 'wb-jwt-admin-office' },
+      'WB_JWT_COOKIE' => -> { 'wb-jwt-office' },
+      'NODE_TLS_REJECT_UNAUTHORIZED' => -> { '0' },
+      'WB_INTERNAL_URL_SCHEME' => -> { opts_np_app.on_local_kraken? ? 'https' : 'http' },
+      'WB_ENFORCE_HTTPS' => -> { 'false' },
+      'PORT' => -> { opts_np_app.port },
+      'RBENV_VERSION' => -> { File.read("#{opts_np_app.path}/.ruby-version") },
+      'USE_STANDARD_LOGGING' => -> { '' },
+      'DISABLE_SPRING' => -> { '1' },
+      'RAILS_ENV' => -> { '' },
+      'ALLOW_UNCONFIGURED_SERVICES' => -> { 'true' },
+
+      'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
+      'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },
+      'QUITBET_GAME_SERVICE_URL' => -> { np_service_internal_url('quitbet-game-service') },
+      'RUNBET_GAME_SERVICE_URL' => -> { np_service_internal_url('runbet-game-service') },
+      'WB_BILLING_SERVICE_URL' => -> { np_service_internal_url('wb-billing-service') },
+      'WB_MEMBERSHIP_SERVICE_URL' => -> { np_service_internal_url('wb-membership-service') },
+      # falkor needs MEMBERSHIP_SERVICE_HOST instead of WB_MEMBERSHIP_SERVICE_HOST
+      'MEMBERSHIP_SERVICE_URL' => -> { np_service_internal_url('wb-membership-service') },
+      'WB_METRIC_SERVICE_URL' => -> { np_service_internal_url('wb-metric-service') },
+      'WB_SOCIAL_SERVICE_URL' => -> { np_service_internal_url('wb-social-service') },
+      'WB_USER_SERVICE_URL' => -> { np_service_internal_url('wb-user-service') },
+
+      'WB_AUTH_SERVICE_URL' => -> { np_service_internal_url('wb-auth-service') },
+      'WB_AUTH_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-auth-service') },
+      'WB_AUTH_SERVICE_BASE_URL' => -> { np_service_external_url('wb-auth-service') }, # https://accounts-office.waybetterdev.com
+      'WB_AUTH_SERVICE_DOMAIN' => -> { np_service_external_url('wb-auth-service', domain_only: true) }, # https://accounts-office.waybetterdev.com
+      'WB_AUTH_SERVICE_CORS_WHITELIST' => lambda {
+        [
+          'https://wb-auth-service.convox.office',
+          'https://accounts-office.waybetterdev.com',
+          'https://graphql-office.waybetterdev.com',
+          'https://hub-office.waybetterdev.com',
+          'https://www-office.waybetter.ninja'
+        ].map { |u| [u, u.gsub(/office/, 'local')] }.flatten.join(',')
+      },
+
+      'WB_ADMIN_AUTH_SERVICE_EXTERNAL_URI' => -> { np_service_external_url('wb-admin-auth-service') },
+      'WB_ADMIN_AUTH_SERVICE_DOMAIN' => -> { np_service_external_url('wb-admin-auth-service', domain_only: true) },
+      'WB_ADMIN_AUTH_SERVICE_HOST' => -> { np_service_external_url('wb-admin-auth-service', domain_only: true) },
+      'WB_ADMIN_AUTH_SERVICE_BASE_URL' => -> { "#{np_service_external_url('wb-admin-auth-service')}/auth" },
+
+      'WB_ADMIN_WEB_URL' => -> { np_service_internal_url('wb-admin-web') },
+      'WB_ADMIN_WEB_DOMAIN' => lambda {
+        [
+          np_service_internal_domain('wb-admin-web'),
+          np_service_external_url('wb-admin-web', domain_only: true)
+        ].join(',')
+      },
+      'WB_ADMIN_WEB_EXTERNAL_URL' => -> { np_service_external_url('wb-admin-web') },
+
+      'WB_GRAPHQL_SERVICE_URL' => -> { np_service_internal_url('wb-graphql-service') },
+      'WB_GRAPHQL_SERVICE_DOMAIN' => lambda {
+        [
+          np_service_internal_domain('wb-graphql-service'),
+          np_service_external_url('wb-graphql-service', domain_only: true),
+          np_service_external_url('wb-graphql-service', domain_only: true, variant: 'ninja')
+        ].join(',')
+      },
+      'WB_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service') },
+      'GRAPHQL_URL' => -> { "#{np_service_external_url('wb-graphql-service')}/graphql" }, # https://graphql-office.waybetterdev.com/graphql
+
+      'WB_HUB_URL' => -> { np_service_external_url('wb-hub') },
+      'WB_HUB_EXTERNAL_URL' => -> { np_service_external_url('wb-hub') },
+      'WB_HUB_DOMAIN' => -> { np_service_external_url('wb-hub', domain_only: true) },
+
+      'STEPBET_GAME_SERVICE_URL' => -> { "#{np_service_internal_url('stepbet-game-service')}/api/game-service" },
+      'WB_STEPBET_ADMIN_URL' => -> { "#{np_service_internal_url('stepbet-game-service')}/admin" },
+
+      'DIETBET_GAME_SERVICE_URL' => -> { "#{np_service_internal_url('dietbet-game-service')}/api/game-service" },
+      'WB_DIETBET_ADMIN_URL' => -> { "#{np_service_internal_url('dietbet-game-service')}/admin" },
+
+      # TODO: this is a hack. Needs to be fixed properly
+      'WB_ADMIN_GRAPHQL_SERVICE_EXTERNAL_URL' => -> { np_service_external_url('wb-graphql-service', variant: 'ninja') },
+
+      # loads global secrets from env varibles on the host machine
+      'REDSHIFT_URL' => -> { get_system_env('REDSHIFT_URL') },
+      'GEMFURY_SECRET' => -> { get_system_env('GEMFURY_SECRET') },
+      'NPM_CONFIG_REGISTRY' => -> { "https://npm-proxy.fury.io/#{get_system_env('GEMFURY_SECRET')}/waybetter" },
+      'NPM_GEMFURY_REGISTRY' => -> { '//npm.fury.io/waybetter/' },
+      'GEMFURY_NPM_REGISTRY' => -> { '//npm.fury.io/waybetter/' },
+      'NPM_GEMFURY_TOKEN' => -> { get_system_env('GEMFURY_SECRET') },
+
+      # set convox scale to minimum
+      'CONVOX_SCALE_WEB_COUNT' => -> { '1' },
+      'CONVOX_SCALE_WEB_MEMORY' => -> { '128' },
+      'CONVOX_SCALE_WEB_CPU' => -> { '1' }
+    }
+  end
+
+  def get_system_env(name)
+    val = ENV[name.to_s]
+    exit_with_error "System environment variable #{name} not set" unless val
+    val
+  end
+end
+
+NpsEnv.new.go

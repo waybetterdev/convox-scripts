@@ -1,0 +1,94 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+class NpsConfig < OpBase
+  attr_accessor :opts_write, :opts_print
+
+  def initialize; end
+
+  def go
+    parse_opts
+
+    prepare_local_convox_services
+    prepare_local_kraken_services
+
+    if opts_write
+      puts 'Rebuilding apache proxy config'
+      exec_ic_command '~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh'
+    end
+  end
+
+  HELP = <<-BAN.freeze
+  Script that creates, installs or deletes local convox/node apps based on np-services.config.rb
+  Ex:
+    npsconfig -w
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+      opts.banner = HELP
+
+      opts.separator ''
+      opts.separator 'Specific options:'
+
+      add_debug_option(opts)
+      add_print_option(opts, 'Print config to screen')
+      add_write_option(opts, 'Apply config')
+      add_delete_option(opts, 'Delete unnecessary convox apps')
+
+      add_help_option(opts)
+    end
+    option_parser.parse!(ARGV)
+  end
+
+  def prepare_local_convox_services
+    new_apps = local_convox_np_services.map(&:name)
+    return unless new_apps || opts_delete
+
+    old_apps = ConvoxUtil.list_convox_apps
+
+    puts "Local convox apps: #{new_apps.inspect.green}"
+    apps_to_delete = old_apps - new_apps
+    if opts_print
+      puts "Old convox apps that need to be deleted: #{apps_to_delete.inspect.green}"
+    elsif opts_write && opts_delete && apps_to_delete
+      apps_to_delete.each do |s|
+        puts "Deleting convox app '#{s.green}'. This may take a while to complete."
+        delete_convox_app(s)
+      end
+    end
+
+    apps_to_create = new_apps - old_apps
+    if opts_print
+      puts "Convox apps that need to be created: #{apps_to_create.inspect.green}"
+    elsif opts_write && apps_to_create
+      apps_to_create.each do |s|
+        puts "Creating convox app '#{s.green}'. This may take a while to complete."
+        create_convox_app(s)
+      end
+    end
+
+    if opts_write
+      unchanged_apps = new_apps - apps_to_create
+      unchanged_apps.each do |app|
+        puts "Rebuilding env for #{app.green}"
+        exec_ic_command "npsenv -w -a #{app}"
+        exec_ic_command "#{path_ruby_bin}/kmd-local refresh-env -- local #{app} no-confirm"
+        exec_ic_command "#{path_ruby_bin}/kmd-local refresh-yml -- local #{app} no-confirm"
+      end
+    end
+  end
+
+  def prepare_local_kraken_services
+    puts "Local apps: #{local_kraken_np_services.map(&:name).inspect.green}"
+
+    local_kraken_np_services.each do |np_service|
+      np_service.prepare_service
+      exec_ic_command("npsenv -w -a #{np_service.name}") if opts_write
+    end
+  end
+end
+
+NpsConfig.new.go

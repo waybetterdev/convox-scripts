@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+class NpsInstall < OpBase
+  def initialize; end
+
+  def go
+    parse_opts
+
+    prepare_kraken
+    prepare_app
+  end
+
+  HELP = <<-BAN.freeze
+  A ssh connect script for old platform websites
+  Ex:
+    prepare-node-app -a wb-user-service
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+      opts.banner = HELP
+
+      opts.separator ''
+      opts.separator 'Specific options:'
+
+      add_debug_option(opts)
+
+      add_np_app_option(opts)
+
+      add_help_option(opts)
+    end
+    option_parser.parse!(ARGV)
+
+    exit_with_error('app parameter is required') if opts_np_app_name.nil?
+  end
+
+  def prepare_kraken
+    return if Dir.exist?(path_kraken)
+
+    checkout_app(name: 'kraken', path: path_wb_services)
+
+    exec_bash_command "cd #{path_kraken} && nvm install --lts && npm install",
+                      message: 'Installing kraken node modules', exit_on_fail: false
+    exec_bash_command "cd #{path_kraken} && bundle config --global gem.fury.io $GEMFURY_SECRET && gem install bundler && bundle install",
+                      message: 'Installing kraken ruby gems', exit_on_fail: false
+  end
+
+  def prepare_app
+    opts_np_app.prepare_service
+
+    app_path = opts_np_app.path
+
+    exec_command "npsenv -w -a #{opts_np_app.name}"
+    if opts_np_app.type_is_node?
+      exec_command "cd #{app_path} && npsrun -c 'cd #{app_path} && nvm install && nvm ls && npm install'"
+    elsif opts_np_app.type_is_ruby?
+      exec_command "cd #{app_path} && npsrun -c 'cd #{app_path} && gem install bundler && bundle install && be rails db:migrate'"
+    else
+      throw "Could not detect whether '#{opts_np_app.name}' is a ruby or node app."
+    end
+  end
+
+  def ruby_version; end
+end
+
+NpsInstall.new.go

@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+class NpsRun < OpBase
+  attr_accessor :opts_command, :opts_start_app, :opts_environment
+
+  def go
+    parse_opts
+    opts_np_app.prepare_service
+
+    if opts_start_app
+      opts_np_app.run_command(opts_np_app.start_command, environment: 'development')
+    elsif opts_command
+      opts_np_app.run_command(opts_command, environment: opts_environment)
+    else
+      opts_np_app.run_connect_command(environment: opts_environment)
+    end
+  end
+
+  HELP = <<-BAN.freeze
+  Execute commands either on local rails and node apps with all ENV variables preloaded.
+  Ex:
+    npsrun -a wb-user-service
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+      opts.banner = HELP
+
+      opts.separator ''
+      opts.separator 'Specific options:'
+
+      add_debug_option(opts)
+      add_command_option(opts)
+      add_env_option(opts)
+
+      add_np_app_option(opts)
+      add_start_option(opts)
+
+      add_help_option(opts)
+    end
+    option_parser.parse!(ARGV)
+
+    exit_with_error('app parameter is required') if opts_np_app_name.nil?
+  end
+
+  def add_command_option(opts)
+    opts.on('-c', '--command=c', 'Command to execute') do |x|
+      self.opts_command = x
+    end
+  end
+
+  def add_env_option(opts)
+    opts.on('-e', '--env=e', 'Environment name') do |x|
+      self.opts_environment = x
+    end
+  end
+
+  def add_start_option(opts)
+    opts.on('-s', '--start', 'Start app') do |x|
+      self.opts_start_app = x
+    end
+  end
+end
+
+NpsRun.new.go

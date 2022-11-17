@@ -1,0 +1,123 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+public
+
+require 'optparse'
+require 'open3'
+
+begin
+  require 'highline'
+  require 'colored'
+  require 'terminfo'
+rescue LoadError
+  puts <<~XXX
+    To run this utility:
+      gem install 'highline'
+      gem install 'colored'
+      gem install 'ruby-terminfo'
+  XXX
+  exit(1)
+end
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+# CLI script which will start tmux
+class BuildAndroidApp < OpBase
+  attr_accessor :android_app_path, :opts_environment
+
+  def go
+    parse_opts
+    build_android_app
+  end
+
+  HELP = <<-BAN.freeze
+  Builds android app for either staging or production environments
+  Ex:
+    buildandroidapp -e staging
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+      opts.banner = HELP
+
+      opts.separator ''
+      opts.separator 'Specific options:'
+
+      add_env_option(opts)
+      add_help_option(opts)
+    end
+    option_parser.parse!(ARGV)
+
+    unless ["staging", "production"].include?(self.opts_environment)
+      exit_with_error "Invalid environment #{self.opts_environment}. Only 'staging' and 'production' are supported."
+    end
+  end
+
+  def build_android_app
+    self.android_app_path = Dir.getwd
+
+    unless File.directory?('./android')
+      puts 'Android directory not found.'.red
+      exit
+    end
+
+    prepare_secret_file('keystore.properties')
+    prepare_secret_file('app/DietbetterApp.keystore')
+    prepare_secret_file('app/upload-keystore.jks')
+
+    # exec_command_in_path("nvm use && npm install",
+    #   path: "#{android_app_path}",
+    #   message: "Running gradle"
+    # )
+
+    if self.opts_environment.eql?('production')
+      gradle_param = 'assembleProductionDebug'
+      apk_param = 'production'
+    elsif self.opts_environment.eql?('staging')
+      gradle_param = 'assembleStagingDebug'
+      apk_param = 'staging'
+    else 
+      exit_with_error "Invalid environment"
+    end
+
+    exec_command_in_path("./gradlew clean #{gradle_param} -Pcredentialssource=properties",
+                         path: "#{android_app_path}/android",
+                         message: 'Running gradle')
+
+    exec_command_in_path("adb install app-#{apk_param}-debug.apk",
+                         path: "#{android_app_path}/android/app/build/outputs/apk/#{apk_param}/debug",
+                         message: 'Sending the APK file to the phone')
+
+    cleanup_secret_file('keystore.properties')
+    cleanup_secret_file('app/DietbetterApp.keystore')
+    cleanup_secret_file('app/upload-keystore.jks')
+  end
+
+  def cleanup_secret_file(file)
+    exec_ic_command("rm -f #{android_app_path}/android/#{file}",
+                    exit_on_fail: false,
+                    message: "Deleting #{file}".green)
+  end
+
+  def prepare_secret_file(file)
+    exec_ic_command("cp -f #{path_secrets}/mobile-app/android/#{file} #{android_app_path}/android/#{file}",
+                    exit_on_fail: true,
+                    message: "Copying #{file}".green)
+  end
+
+  def exec_command_in_path(cmd, path:, message:)
+    exec_ic_command("cd #{path} && #{cmd}",
+                    exit_on_fail: true,
+                    message: message.green)
+  end
+
+  def add_env_option(opts)
+    self.opts_environment = 'staging'
+    opts.on('-e', '--env=e', 'Environment name') do |x|
+      self.opts_environment = x
+    end
+  end
+end
+
+BuildAndroidApp.new.go

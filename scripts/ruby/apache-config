@@ -1,0 +1,240 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+require "#{File.expand_path(__dir__)}/includes/op_base.rb"
+
+class ApacheConfig < OpBase
+  attr_accessor :opts_print, :opts_write, :silent_option, :etc_hosts_conf
+
+  def initialize
+    self.etc_hosts_conf = []
+  end
+
+  def go
+    parse_opts
+
+    if opts_write
+      write_config
+    elsif opts_print
+      print_config
+    end
+  end
+
+  HELP = <<-BAN.freeze
+  Script for generating apache proxy config
+  Ex:
+    apache-config -p
+  BAN
+
+  def parse_opts
+    self.option_parser = OptionParser.new do |opts|
+      opts.banner = HELP
+
+      opts.separator ''
+      opts.separator 'Specific options:'
+
+      add_debug_option(opts)
+
+      opts.on('-s', '--silent', 'Required, the app to clone') do |_x|
+        self.silent_option = true
+      end
+
+      add_print_option(opts, 'Print the apache config to screen')
+      add_write_option(opts, 'Write apache config')
+
+      add_help_option(opts)
+    end
+    option_parser.parse!(ARGV)
+  end
+
+  def write_config
+    conf = generate_config
+
+    file_path = "#{path_local_settings}/wb-proxy-ssl.conf"
+    puts "Saving config to #{file_path}"
+    File.open(file_path, 'w+') { |file| file.write(conf) }
+
+    puts "\n\n Content for #{'/etc/hosts'.green}:"
+    puts build_etc_hosts_conf
+    puts "\n\nPlease run '#{'sudo gedit /etc/hosts'.green}' and paste the content from above into your hosts file."
+  end
+
+  def print_config
+    conf = generate_config
+
+    puts conf unless silent_option
+
+    puts build_etc_hosts_conf
+  end
+
+  def np_service_domains_conf
+    np_services
+      .reject { |_k, v| v.name.eql?('mysql') }
+      .values.map { |s| { name: s.name, external: false } }
+      .concat([
+                { name: 'wb-auth-service', external: true },
+                { name: 'wb-graphql-service',       external: true },
+                { name: 'wb-graphql-service',       external: true, variant: 'ninja' },
+                { name: 'wb-hub',                   external: true },
+                { name: 'wb-admin-auth-service',    external: true },
+                { name: 'wb-admin-web',             external: true }
+              ])
+  end
+
+  def generate_config
+    np_service_domains_conf.map do |data|
+      name = data[:name]
+      np_service = np_service_config(name, true)
+
+      next if np_service.on_convox_office?
+
+      domain = get_proxy_from_url(name, external: data[:external], variant: data[:variant])
+
+      is_proxy = !np_service.on_local_apache?
+      path = is_proxy ? "/var/www/#{name}" : np_service_path(name)
+      www_directory = is_proxy ? nil : path
+
+      proxy_conf = get_np_service_vhost_config(domain, name, path, is_proxy: is_proxy, use_ssl: true)
+
+      build_apache_virtual_host_conf(domain, 443, proxy_conf, www_directory)
+    end.compact.join("\n\n")
+  end
+
+  private
+
+  def get_service_certificate(domain)
+    res = NpServices::CERTIFICATES.find { |_, pattern| Regexp.new(pattern.gsub(/\./, '\.')) =~ domain }
+
+    res[0] if res
+  end
+
+  def get_np_service_vhost_config(domain, name, path, is_proxy:, use_ssl:)
+    service = get_proxy_to_url(name)
+
+    conf = {
+      'ServerAdmin' => 'mihai@waybetter.com',
+      'ServerName' => domain,
+      'DocumentRoot' => path,
+      'ErrorLog' => "/var/www/wb-proxy/logs/https-#{domain}.error.log",
+      'CustomLog' => "/var/www/wb-proxy/logs/https-#{domain}.access.log combined"
+    }
+
+    if use_ssl
+      cert = get_service_certificate(domain)
+      exit_with_error "No certificate for #{domain} found" unless cert
+
+      conf.merge!(
+        'SSLEngine' => 'on',
+        'SSLCertificateFile' => "/etc/ssl/certs/#{cert}.crt",
+        'SSLCertificateKeyFile' => "/etc/ssl/private/#{cert}.key"
+      )
+    end
+
+    if is_proxy
+      conf.merge!(
+        'ProxyPass' => "/ #{service}/",
+        'ProxyPassReverse' => "/ #{service}/",
+        'DocumentRoot' => '/var/www/wb-proxy'
+      )
+
+      if /^https:/ =~ service
+        conf.merge!(
+          'SSLProxyEngine' => 'On',
+          'SSLProxyCheckPeerCN' => 'On',
+          'SSLProxyCheckPeerExpire' => 'On'
+        )
+      else
+        conf.merge!(
+          'SSLProxyEngine' => 'Off',
+          'SSLProxyVerify' => 'none',
+          'SSLProxyCheckPeerCN' => 'Off',
+          'SSLProxyCheckPeerExpire' => 'Off'
+        )
+      end
+      puts "#{"https://#{domain}".green} redirects to #{service.to_s.blue} with cert #{cert.red}\n"
+    else
+      puts "#{"https://#{domain}".green} is on #{(conf['DocumentRoot']).to_s.blue} with cert #{cert.red}\n"
+    end
+    conf
+  end
+
+  def build_apache_virtual_host_conf(domain, port, vhost_conf = {}, www_directory = '')
+    str_directory = ''
+    if www_directory
+      str_directory = '
+    <Directory "' + www_directory + '">
+      Options Indexes FollowSymLinks Includes
+      Order deny,allow
+      Deny from all
+      Allow from all
+      AllowOverride All
+    </Directory>
+    '
+    end
+
+    '
+#' + domain + '
+<IfModule mod_ssl.c>
+  <VirtualHost _default_:' + port.to_s + '>
+' + vhost_conf.map { |k, v| "    #{k} #{v}" }.join("\n") + '
+
+    <FilesMatch "\.(cgi|shtml|phtml|php)$">
+                    SSLOptions +StdEnvVars
+    </FilesMatch>
+    <Directory /usr/lib/cgi-bin>
+                    SSLOptions +StdEnvVars
+    </Directory>
+    ' + str_directory + '
+  </VirtualHost>
+</IfModule>
+    '
+  end
+
+  def etc_hosts_conf_ips
+    if convox_office_server?
+      [{ ip: NpServices::SERVER_IPS[:localhost], overwrite_location: 'convox-local' }]
+    else
+      [
+        { ip: NpServices::SERVER_IPS[:localhost], overwrite_location: 'convox-local' },
+        { ip: NpServices::SERVER_IPS[:convox_office_external], overwrite_location: 'remote-convox-office' }
+      ]
+    end
+  end
+
+  def build_etc_hosts_conf
+    etc_hosts_conf_ips.map do |ip_data|
+      ip = ip_data[:ip]
+      np_service_domains_conf.map do |data|
+        name = data[:name]
+        domain = get_proxy_from_url(name, external: data[:external], variant: data[:variant], location: ip_data[:overwrite_location])
+
+        "#{ip} #{domain}"
+      end
+    end.flatten
+  end
+
+  def get_proxy_from_url(name, external: false, variant: nil, location: nil)
+    if external
+      get_service_external_domain(name, variant: variant, location: location)
+    else
+      np_service_domain(name, location: location)
+    end
+  end
+
+  def get_proxy_to_url(name)
+    np_service = np_service_config(name, true)
+
+    domain = np_service_domain(name)
+    if np_service.on_local_kraken?
+      port = np_service.port
+      "http://#{domain}#{":#{port}" if port}"
+    elsif np_service.on_local_convox?
+      domain = np_service_convox_domain(name)
+      "https://#{domain}"
+    elsif np_service.on_convox_office?
+      "https://#{domain}"
+    end
+  end
+end
+
+ApacheConfig.new.go
