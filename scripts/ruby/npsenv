@@ -17,15 +17,18 @@ class NpsEnv < OpBase
     opts_np_app.prepare_service
 
     if opts_write
-      str_env = generate_env
-      write_env_to_file(str_env)
-    elsif opts_print
-      puts generate_env
-    elsif opts_edit
-      exec_command("gedit '#{src_env_file}'")
+      # create source file if it does not exist
+      create_new_src_env_file unless File.exist?(src_env_file)
 
-      str_env = generate_env
-      write_env_to_file(str_env)
+      generate_and_save_env
+    elsif opts_print
+      generate_and_print_env
+    elsif opts_edit
+      # create source file if it does not exist
+      create_new_src_env_file unless File.exist?(src_env_file)
+
+      exec_command("gedit '#{src_env_file}'")
+      generate_and_save_env
     end
   end
 
@@ -65,6 +68,24 @@ class NpsEnv < OpBase
     end
   end
 
+  def generate_and_save_env
+    env_values = generate_env
+
+    write_env_to_file(dst_env_file, env_values)
+
+    # throw validation errors after saving to file
+    validate_env(env_values)
+  end
+
+  def create_new_src_env_file
+    env_values = generate_env
+    write_env_to_file(src_env_file, env_values)
+  end
+
+  def generate_and_print_env
+    puts generate_env.map { |k, v| "#{k.to_s.cyan}=#{v.to_s.green}" }.join("\n")
+  end
+
   def src_env_file
     unless opts_np_app.on_local_convox? || opts_np_app.on_local_kraken?
       exit_with_error "App `#{opts_np_app.name}` location `#{opts_np_apps.location}` not supported"
@@ -73,49 +94,57 @@ class NpsEnv < OpBase
     opts_np_app.env_src_path
   end
 
+  def dst_env_file
+    opts_np_app.env_dst_path
+  end
+
   def read_src_env_file
-    env_values = add_default_empty_env_values(env_from_convox_yml)
+    env_path = src_env_file
+    exit_with_error "No env path found for app `#{opts_np_app.name}`" unless env_path
+    return {} unless File.exist?(env_path)
 
-    files = [src_env_file]
+    puts "Reading env from #{env_path.green}"
+    env_values = {}
+    File.foreach(env_path) do |line|
+      key, value = line.gsub(/\n|\r/, '').split('=', 2)
 
-    files.each do |env_path|
-      exit_with_error "No env path found for app `#{opts_np_app.name}`" unless env_path
-      exit_with_error "Env file '#{env_path}' not found" unless File.exist?(env_path)
+      next if !key || /^(_|#)/ =~ key
+      next if value.nil? || value == '' 
 
-      puts "Reading env from #{env_path.green}"
-      File.foreach(env_path) do |line|
-        key, value = line.gsub(/\n|\r/, '').split('=', 2)
-
-        next unless key
-        next if value.nil? || value == ''
-        next if /^(_|#)/ =~ key
-
-        env_values[key] = value
-      end
+      env_values[key] = value
     end
-    exit_with_error "No env variables found in file '#{env_path}'" unless env_values
 
     env_values.sort.to_h
   end
 
   def generate_env
-    env_values = read_src_env_file.each_with_object({}) do |(key, value), hash|
+    env_values = env_from_convox_yml.merge(read_src_env_file)
+
+    env_values = insert_missing_env_keys(env_values)
+
+    populate_env_values(env_values)
+  end
+
+  def populate_env_values(env_values)
+    env_values.each_with_object({}) do |(key, value), hash|
       if (proc_val = call_val_proc(key, value))
         value = proc_val
       end
       value = '_not_needed_locally_' if value == '_set_me_'
       hash[key] = value
     end
-
-    required_convox_yml_fields.each do |key|
-      exit_with_error("#{key} is required to have a value by #{opts_np_app.path}/convox.yml") if env_values[key].to_s.eql?('')
-    end
-
-    env_values.map { |key, value| "#{key}=#{value}" }.join("\n")
   end
 
-  def write_env_to_file(str_env)
-    env_path = opts_np_app.env_dst_path
+  def validate_env(env_values)
+    required_convox_yml_fields.each do |key|
+      next unless env_values[key].to_s.eql?('')
+
+      exit_with_error("#{key} is required to have a value by #{opts_np_app.path}/convox.yml")
+    end
+  end
+
+  def write_env_to_file(env_path, env_values)
+    str_env = env_values.map { |key, value| "#{key}=#{value}" }.join("\n")
 
     dirname = File.dirname(env_path)
     FileUtils.mkdir_p(dirname) unless File.directory?(dirname)
@@ -168,7 +197,7 @@ class NpsEnv < OpBase
     opts_np_app.on_local_convox?
   end
 
-  def add_default_empty_env_values(env_values)
+  def insert_missing_env_keys(env_values)
     default_keys = %w[
       PORT VERIFY_CERTS WB_INTERNAL_URL_SCHEME WB_ENFORCE_HTTPS
       WB_JWT_COOKIE WB_ENV GEMFURY_SECRET GEN2
