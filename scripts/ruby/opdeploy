@@ -153,17 +153,17 @@ class OpDeploy < OpBase
     key = config[:key]
     dst_path = config[:dst]
 
-    backup_path = config[:backup_path]
-    upload_path = backup_path || config[:dst]
+    deploy_path = config[:deploy_path]
+    upload_path = deploy_path || config[:dst]
     hostnames.each do |hostname|
       upload_file_via_scp(user, hostname, key, zip_path, upload_path)
 
       if make_backup
-        unless backup_path
-          exit_with_error "Cannot use backup option, path :backup_path needs to be defined."
+        unless deploy_path
+          exit_with_error "Cannot use backup option, path :deploy_path needs to be defined."
         end
 
-        run_ssh_command(user, hostname, key, "#{backup_path}/run_deploy.sh")
+        run_ssh_command(user, hostname, key, "#{deploy_path}/run_deploy.sh")
       else
         run_ssh_command(user, hostname, key, "unzip -o #{upload_path}/#{zip_name} -d #{dst_path}")
         run_ssh_command(user, hostname, key, "rm -f #{upload_path}/#{zip_name}")

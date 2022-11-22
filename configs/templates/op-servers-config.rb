@@ -46,7 +46,8 @@ class OpServers < OpBase
       key: '~/Work/docs/secrets/keys/stepbet-prod-aws-php7/stepbet-prod-2019.pem',
       hostnames: %i[stepbet_prod_1 stepbet_prod_2],
       src: '/var/www/stepbet-prod',
-      dst: '/srv/stepbet/current'
+      dst: '/srv/stepbet/current',
+      deploy_path: '/srv/stepbet/deploy'
     },
 
     dietbet_prod: {
@@ -54,7 +55,8 @@ class OpServers < OpBase
       key: '~/Work/docs/secrets/keys/dietbet-prod-aws-php7/dietbet-prod-2019.pem',
       hostnames: %i[dietbet_prod_1 dietbet_prod_2 dietbet_prod_3],
       src: '/var/www/dietbet-prod',
-      dst: '/srv/dietbet/current'
+      dst: '/srv/dietbet/current',
+      deploy_path: '/srv/dietbet/deploy'
     },
     dietbet_imageserver_prod: {
       user: 'centos',

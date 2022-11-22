@@ -18,7 +18,7 @@ We run the following config on them:
     hostnames: %i[stepbet_prod_1 stepbet_prod_2],
     src: '/var/www/stepbet-prod',
     dst: '/srv/stepbet/current',
-    backup_path: '/srv/stepbet'
+    deploy_path: '/srv/stepbet/deploy'
   },
   stepbet_imageserver_prod: {
     user: 'centos',
