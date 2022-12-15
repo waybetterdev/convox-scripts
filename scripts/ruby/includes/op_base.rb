@@ -53,6 +53,8 @@ class OpBase < NpPaths
   end
 
   def hostnames
+    load_op_severs_config unless defined?(OpServers) == 'constant'
+
     OpServers::HOSTNAMES
   end
   ################ OP SERVERS ###################
@@ -152,6 +154,12 @@ class OpBase < NpPaths
     @_op_deploy_config[name]
   end
 
+  def server_name_from_hostname(hostname)
+    @__hostname_inverse ||= hostnames.invert
+
+    @__hostname_inverse[hostname]
+  end
+
   def ssh_config(name)
     name = dashed_app_name(name).to_sym
     @_ssh_config ||= {}
@@ -163,10 +171,6 @@ class OpBase < NpPaths
           .slice(:user, :key, :hostname, :dst, :port, :deploy_path, :zip_name)
     end
     @_ssh_config[name]
-  end
-
-  def server_names
-    hostnames.keys
   end
   ################ OP SERVERS ###################
 

@@ -11,7 +11,7 @@ class OpServers < OpBase
     dietbet_prod_1: 'ec2-34-217-21-240.us-west-2.compute.amazonaws.com',
     dietbet_prod_2: 'ec2-34-220-15-62.us-west-2.compute.amazonaws.com',
     dietbet_prod_3: 'ec2-54-184-246-120.us-west-2.compute.amazonaws.com',
-    dietbet_prod_4: 'ec2-34-217-21-240.us-west-2.compute.amazonaws.com',
+    dietbet_prod_4: 'ec2-35-89-185-152.us-west-2.compute.amazonaws.com',
 
     stepbet_prod_1: 'ec2-34-219-250-250.us-west-2.compute.amazonaws.com',
     stepbet_prod_2: 'ec2-54-187-75-231.us-west-2.compute.amazonaws.com',

@@ -27,7 +27,6 @@ class OpDeploy < OpBase
     zip_path = "#{source_path}/archive.zip"
     files = exec_command(cmd)
 
-    puts "You are about to deploy to #{opts_op_app.red}"
     puts 'Files modified:'
     puts files.green
     puts 'Continue? y/n'
@@ -42,7 +41,6 @@ class OpDeploy < OpBase
   end
 
   def export_all_from_git(source_path, export_path)
-    puts "You are about to deploy to #{opts_op_app.red}"
     puts 'Files modified: All'
     puts 'Continue? y/n'
     exit unless $stdin.getc == 'y'
@@ -135,6 +133,10 @@ class OpDeploy < OpBase
     zip_path = "#{temp_path}/#{zip_name}"
     src_path = config[:src]
 
+    hostnames = config[:hostnames]
+    hostnames = [hostnames] unless hostnames.is_a?(Array)
+
+    print_header "You are about to deploy to #{opts_op_app.red} \nhostnames: \n  #{hostnames.join("\n  ").red}"
     if commit
       export_since_commit_from_git(commit, src_path, temp_path)
     else
@@ -147,9 +149,6 @@ class OpDeploy < OpBase
     zip(temp_path, zip_path)
 
     user = config[:user]
-    hostnames = config[:hostnames]
-    hostnames = [hostnames] unless hostnames.is_a?(Array)
-
     key = config[:key]
     dst_path = config[:dst]
 
@@ -158,6 +157,8 @@ class OpDeploy < OpBase
     hostnames.each do |hostname|
       upload_file_via_scp(user, hostname, key, zip_path, upload_path)
 
+      server_name = server_name_from_hostname(hostname)
+      print_header "Processing uploaded files on #{server_name.to_s.red} (#{hostname})"
       if make_backup
         unless deploy_path
           exit_with_error "Cannot use backup option, path :deploy_path needs to be defined."
@@ -172,8 +173,17 @@ class OpDeploy < OpBase
   end
 
   def upload_file_via_scp(user, host, key, src_path, dst_path)
+    server_name = server_name_from_hostname(host)
+    print_header "Uploading files to #{server_name.to_s.red} (#{host})"
+
     response = exec_command("scp -v -i #{key} #{src_path} #{user}@#{host}:#{dst_path}")
     print response.green
+  end
+
+  def print_header(msg)
+    puts "################################################################".blue
+    puts "#{msg.to_s.blue}"
+    puts "################################################################".blue
   end
 
   HELP = <<-BAN.freeze
