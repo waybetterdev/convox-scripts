@@ -136,7 +136,9 @@ class OpDeploy < OpBase
     hostnames = config[:hostnames]
     hostnames = [hostnames] unless hostnames.is_a?(Array)
 
-    print_header "You are about to deploy to #{opts_op_app.red} \nhostnames: \n  #{hostnames.join("\n  ").red}"
+    str_hostnames = hostnames.map {|h| "#{server_name_from_hostname(h).to_s.red}: #{h}" }
+    print_header "You are about to deploy to #{opts_op_app.red} \n" \
+                 "Servers: \n  #{str_hostnames.join("\n  ").red}"
     if commit
       export_since_commit_from_git(commit, src_path, temp_path)
     else

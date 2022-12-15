@@ -15,6 +15,7 @@ class OpServers < OpBase
 
     stepbet_prod_1: 'ec2-34-219-250-250.us-west-2.compute.amazonaws.com',
     stepbet_prod_2: 'ec2-54-187-75-231.us-west-2.compute.amazonaws.com',
+    stepbet_prod_3: 'ec2-54-189-81-66.us-west-2.compute.amazonaws.com',
 
     convox_office_external: '188.244.27.49',
     convox_office: '192.168.100.28'
@@ -45,7 +46,7 @@ class OpServers < OpBase
     stepbet_prod: {
       user: 'centos',
       key: '~/Work/docs/secrets/keys/stepbet-prod-aws-php7/stepbet-prod-2019.pem',
-      hostnames: %i[stepbet_prod_1 stepbet_prod_2],
+      hostnames: %i[stepbet_prod_1 stepbet_prod_2 stepbet_prod_3],
       src: '/var/www/stepbet-prod',
       dst: '/srv/stepbet/current',
       deploy_path: '/srv/stepbet/deploy'
