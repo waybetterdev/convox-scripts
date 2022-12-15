@@ -11,6 +11,7 @@ class OpServers < OpBase
     dietbet_prod_1: 'ec2-34-217-21-240.us-west-2.compute.amazonaws.com',
     dietbet_prod_2: 'ec2-34-220-15-62.us-west-2.compute.amazonaws.com',
     dietbet_prod_3: 'ec2-54-184-246-120.us-west-2.compute.amazonaws.com',
+    dietbet_prod_4: 'ec2-34-217-21-240.us-west-2.compute.amazonaws.com',
 
     stepbet_prod_1: 'ec2-34-219-250-250.us-west-2.compute.amazonaws.com',
     stepbet_prod_2: 'ec2-54-187-75-231.us-west-2.compute.amazonaws.com',
@@ -53,7 +54,7 @@ class OpServers < OpBase
     dietbet_prod: {
       user: 'centos',
       key: '~/Work/docs/secrets/keys/dietbet-prod-aws-php7/dietbet-prod-2019.pem',
-      hostnames: %i[dietbet_prod_1 dietbet_prod_2 dietbet_prod_3],
+      hostnames: %i[dietbet_prod_1 dietbet_prod_2 dietbet_prod_3 dietbet_prod_4],
       src: '/var/www/dietbet-prod',
       dst: '/srv/dietbet/current',
       deploy_path: '/srv/dietbet/deploy'

@@ -303,6 +303,12 @@ class NpsEnv < OpBase
       'DISABLE_SPRING' => -> { '1' },
       'RAILS_ENV' => -> { '' },
       'ALLOW_UNCONFIGURED_SERVICES' => -> { 'true' },
+      'WB_ADMIN_AUTH_CALLBACK_ROUTE' => -> { '/auth/google/callback' },
+      'WB_ADMIN_AUTH_LOGIN_ROUTE' => -> { '/auth/google' },
+      'WB_ADMIN_AUTH_LOGOUT_ROUTE' => -> { '/auth/logout' },
+      'WB_ADMIN_AUTH_PING_ROUTE' => -> { '/auth/ping' },
+      'WB_ADMIN_DOMAIN' => -> { 'waybetter.ninja' },
+      'WB_ADMIN_AUTH_SERVICE_GOOGLE_DOMAIN' => -> { np_service_external_url('wb-admin-web', domain_only: true) },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },
