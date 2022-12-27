@@ -75,7 +75,7 @@ if ! [ -x "$(command -v php)" ]; then
 
 	
 	sudo apt-get install -y libapache2-mod-php7.4 
-	sudo apt-get install -y php-mbstring php7.4-curl
+	sudo apt-get install -y php7.4-mbstring php7.4-curl
 	sudo a2enmod php7.4 
 	sudo apt-get install -y php7.4-mysqli
 	sudo apt-get install -y php7.4-pgsql
