@@ -74,19 +74,16 @@ class OpBase < NpPaths
 
   def np_services
     load_np_services_config unless defined?(NpServices) == 'constant'
-    @_np_services ||= [
-      NpServices::NP_SERVICES[:local_kraken].map { |s| s.merge(location: LOCATION_KRAKEN_LOCAL) },
-      NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: LOCATION_CONVOX_LOCAL) },
-      NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: LOCATION_OFFICE_CONVOX) },
-      NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) }
-    ]
-                      .flatten
-                      .each_with_object({}) do |service_data, hash|
-      name = dashed_app_name(service_data[:name]).to_sym
-      exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}" if hash[name]
+    @_np_services ||= NpService::APP_LOCATIONS \
+      .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } } 
+      .flatten
+      .each_with_object({}) do |service_data, hash|
+        name = dashed_app_name(service_data[:name]).to_sym
+        exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}" if hash[name]
 
-      hash[name] = build_service_from_config(service_data)
-    end.merge(mysql: local_mysql_app)
+        hash[name] = build_service_from_config(service_data)
+      end
+      .merge(mysql: local_mysql_app)
 
     @_np_services
   end
@@ -196,10 +193,6 @@ class OpBase < NpPaths
 
   def np_service_port(name)
     np_service_config(name).port
-  end
-
-  def np_service_is_on_local_kraken?(name)
-    np_service_config(name).on_local_kraken?
   end
 
   def np_service_is_on_local_convox?(name)
@@ -349,10 +342,19 @@ class OpBase < NpPaths
     urls = {
       'wb-auth-service' => { 'default' => 'accounts-local.waybetterdev.com' },
       'wb-graphql-service' => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja' },
-      'wb-hub' => { 'default' => 'hub-local.waybetterdev.com' },
+      'wb-hub' => { 'default' => 'hub-local.waybetterdev.com'},
       'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
       'wb-admin-web' => { 'default' => 'www-local.waybetter.ninja' }
     }
+
+    # ## run this to simulate staging locally
+    # urls = {
+    #   'wb-auth-service'       => { 'default' => 'accounts-staging.waybetter.com' },
+    #   'wb-graphql-service'    => { 'default' => 'graphql-staging.waybetter.com', 'ninja' => 'graphql-local.waybetter.ninja' },
+    #   'wb-hub'                => { 'default' => 'hub-staging.waybetter.com'},
+    #   'wb-admin-auth-service' => { 'default' => 'admin-auth-staging.waybetter.ninja' },
+    #   'wb-admin-web'          => { 'default' => 'www-staging.waybetter.ninja' }
+    # }
     variant ||= 'default'
     url = urls[name][variant]
     return unless url

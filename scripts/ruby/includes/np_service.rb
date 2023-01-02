@@ -7,6 +7,15 @@ class NpService < NpPaths
   LOCATION_CONVOX_LOCAL = 'convox-local'.freeze
   LOCATION_OFFICE_CONVOX = 'remote-convox-office'.freeze
   LOCATION_APACHE_LOCAL = 'apache-local'.freeze
+  LOCATION_STAGING_REMOTE = 'staging-remote'.freeze
+
+  APP_LOCATIONS = {
+    local_kraken: LOCATION_KRAKEN_LOCAL,
+    local_convox: LOCATION_CONVOX_LOCAL,
+    remote_convox_office: LOCATION_OFFICE_CONVOX,
+    local_apache: LOCATION_APACHE_LOCAL,
+    remote_staging: LOCATION_STAGING_REMOTE,
+  }
 
   def initialize(name:, path:, location:, type: nil, port: nil, gitname: nil, domain: nil)
     @name = name
@@ -32,6 +41,10 @@ class NpService < NpPaths
 
   def on_local_apache?
     @location.eql?(LOCATION_APACHE_LOCAL)
+  end
+
+  def on_remote_staging?
+    @location.eql?(LOCATION_STAGING_REMOTE)
   end
 
   def type_is_ruby?

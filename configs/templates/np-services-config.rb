@@ -13,6 +13,7 @@ class NpServices < OpBase
     'apache-local-selfsigned' => '.convox.local',
     'apache-office-selfsigned' => '.convox.office',
     'apache-waybetterdev-selfsigned' => '.waybetterdev.com',
+    'apache-waybetter-selfsigned' => '.waybetter.com',
     'apache-ninja-selfsigned' => '.waybetter.ninja',
     'apache-dietbet-selfsigned' => 'local.dietbet.com', 
   }
