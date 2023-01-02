@@ -333,7 +333,14 @@ class NpsEnv < OpBase
           'https://graphql-office.waybetterdev.com',
           'https://hub-office.waybetterdev.com',
           'https://www-office.waybetter.ninja'
-        ].map { |u| [u, u.gsub(/office/, 'local')] }.flatten.join(',')
+        ].map { |u| [u, u.gsub(/office/, 'local')] }
+        .push(
+          'https://accounts-staging.waybetter.com',
+          'https://graphql-staging.waybetter.com',
+          'https://hub-staging.waybetter.com',
+          'https://www-staging.waybetter.ninja'
+        )
+        .flatten.join(',')
       },
 
       'WB_ADMIN_AUTH_SERVICE_EXTERNAL_URI' => -> { np_service_external_url('wb-admin-auth-service') },
