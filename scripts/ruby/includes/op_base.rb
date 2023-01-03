@@ -339,22 +339,24 @@ class OpBase < NpPaths
 
   def get_service_external_domain(name, variant: nil, location: nil)
     name = hyphenated_app_name(name)
-    urls = {
-      'wb-auth-service' => { 'default' => 'accounts-local.waybetterdev.com' },
-      'wb-graphql-service' => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja' },
-      'wb-hub' => { 'default' => 'hub-local.waybetterdev.com'},
-      'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
-      'wb-admin-web' => { 'default' => 'www-local.waybetter.ninja' }
-    }
-
-    # ## run this to simulate staging locally
-    # urls = {
-    #   'wb-auth-service'       => { 'default' => 'accounts-staging.waybetter.com' },
-    #   'wb-graphql-service'    => { 'default' => 'graphql-staging.waybetter.com', 'ninja' => 'graphql-local.waybetter.ninja' },
-    #   'wb-hub'                => { 'default' => 'hub-staging.waybetter.com'},
-    #   'wb-admin-auth-service' => { 'default' => 'admin-auth-staging.waybetter.ninja' },
-    #   'wb-admin-web'          => { 'default' => 'www-staging.waybetter.ninja' }
-    # }
+    urls = \
+      if NpServices::USE_STAGING_DOMAIN_LOCALLY
+        {
+          'wb-auth-service'       => { 'default' => 'accounts-staging.waybetter.com' },
+          'wb-graphql-service'    => { 'default' => 'graphql-staging.waybetter.com', 'ninja' => 'graphql-staging.waybetter.ninja' },
+          'wb-hub'                => { 'default' => 'hub-staging.waybetter.com'},
+          'wb-admin-auth-service' => { 'default' => 'admin-auth-staging.waybetter.ninja' },
+          'wb-admin-web'          => { 'default' => 'www-staging.waybetter.ninja' }
+        }
+      else
+        {
+          'wb-auth-service'       => { 'default' => 'accounts-local.waybetterdev.com' },
+          'wb-graphql-service'    => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja' },
+          'wb-hub'                => { 'default' => 'hub-local.waybetterdev.com'},
+          'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
+          'wb-admin-web'          => { 'default' => 'www-local.waybetter.ninja' }
+        }
+      end
     variant ||= 'default'
     url = urls[name][variant]
     return unless url

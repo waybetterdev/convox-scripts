@@ -59,6 +59,9 @@ class NpServices < OpBase
     :user, :billing, :social, :metric, :falkor
   ]
 
+  # when true, this will use hub-staging.waybetter.com instead of hub-local.waybetterder.com
+  USE_STAGING_DOMAIN_LOCALLY = false
+
   NP_SERVICES = {
     local_kraken:         LOCAL_KRAKEN_SERVICES.map {|s| NP_SERVICE_DICT.fetch(s)},
     local_convox:         LOCAL_CONVOX_SERVICES.map {|s| NP_SERVICE_DICT.fetch(s)},
