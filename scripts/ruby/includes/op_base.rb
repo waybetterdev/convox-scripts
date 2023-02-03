@@ -376,7 +376,7 @@ class OpBase < NpPaths
   end
 
   def find_local_ip
-    @_find_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').gsub("\n", '')
+    @_find_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').split("\n").first
   end
 
   ################ CONVOX ###################
