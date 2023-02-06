@@ -13,6 +13,7 @@ class NpServices < OpBase
     'apache-local-selfsigned' => '.convox.local',
     'apache-office-selfsigned' => '.convox.office',
     'apache-waybetterdev-selfsigned' => '.waybetterdev.com',
+    'apache-waybetter-selfsigned' => '.waybetter.com',
     'apache-ninja-selfsigned' => '.waybetter.ninja',
     'apache-dietbet-selfsigned' => 'local.dietbet.com', 
   }
@@ -57,6 +58,9 @@ class NpServices < OpBase
     :quitbet, :dietbet, :runbet, :stepbet, :notify,
     :user, :billing, :social, :metric, :falkor
   ]
+
+  # when true, this will use hub-staging.waybetter.com instead of hub-local.waybetterder.com
+  USE_STAGING_DOMAIN_LOCALLY = false
 
   NP_SERVICES = {
     local_kraken:         LOCAL_KRAKEN_SERVICES.map {|s| NP_SERVICE_DICT.fetch(s)},

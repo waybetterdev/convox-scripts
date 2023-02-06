@@ -35,6 +35,8 @@ if ! test -f "/etc/ssl/certs/apache-office-selfsigned.crt"; then
 	sudo cp -v ~/Work/docs/certs/apache/office-selfsigned/office-selfsigned.key /etc/ssl/private/apache-office-selfsigned.key
 	sudo cp -v ~/Work/docs/certs/apache/waybetterdev-selfsigned/waybetterdev-selfsigned.crt /etc/ssl/certs/apache-waybetterdev-selfsigned.crt
 	sudo cp -v ~/Work/docs/certs/apache/waybetterdev-selfsigned/waybetterdev-selfsigned.key /etc/ssl/private/apache-waybetterdev-selfsigned.key
+	sudo cp -v ~/Work/docs/certs/apache/waybetter-selfsigned/waybetter-selfsigned.crt /etc/ssl/certs/apache-waybetter-selfsigned.crt
+	sudo cp -v ~/Work/docs/certs/apache/waybetter-selfsigned/waybetter-selfsigned.key /etc/ssl/private/apache-waybetter-selfsigned.key
 	sudo cp -v ~/Work/docs/certs/apache/ninja-selfsigned/ninja-selfsigned.crt /etc/ssl/certs/apache-ninja-selfsigned.crt
 	sudo cp -v ~/Work/docs/certs/apache/ninja-selfsigned/ninja-selfsigned.key /etc/ssl/private/apache-ninja-selfsigned.key
 	sudo cp -v ~/Work/docs/certs/apache/dietbet-selfsigned/dietbet-selfsigned.crt /etc/ssl/certs/apache-dietbet-selfsigned.crt
@@ -54,11 +56,13 @@ if ! test -f "/usr/share/ca-certificates/waybetterdev-selfsigned-rootCA.crt"; th
 	
 	
 	sudo cp -v ~/Work/docs/certs/apache/waybetterdev-selfsigned/waybetterdev-selfsigned-rootCA.crt /usr/share/ca-certificates/waybetterdev-selfsigned-rootCA.crt
+	sudo cp -v ~/Work/docs/certs/apache/waybetter-selfsigned/waybetter-selfsigned-rootCA.crt /usr/share/ca-certificates/waybetter-selfsigned-rootCA.crt
 	sudo cp -v ~/Work/docs/certs/apache/ninja-selfsigned/ninja-selfsigned-rootCA.crt /usr/share/ca-certificates/ninja-selfsigned-rootCA.crt
 	sudo cp -v ~/Work/docs/certs/apache/dietbet-selfsigned/dietbet-selfsigned-rootCA.crt /usr/share/ca-certificates/dietbet-selfsigned-rootCA.crt
 	sudo cp -v ~/Work/docs/certs/apache/office-selfsigned/office-selfsigned-rootCA.crt /usr/share/ca-certificates/office-selfsigned-rootCA.crt
 	sudo cp -v ~/Work/docs/certs/apache/local-selfsigned/local-selfsigned-rootCA.crt /usr/share/ca-certificates/local-selfsigned-rootCA.crt
-	sudo bash -c 'echo "waybetterdev-selfsigned-rootCA.crt" >> /etc/ca-certificates.conf'
+	sudo bash -c 'echo "waybetterdev-selfsigned-rootCA.crt" >> /etc/ca-certificates.conf'	
+	sudo bash -c 'echo "waybetter-selfsigned-rootCA.crt" >> /etc/ca-certificates.conf'
 	sudo bash -c 'echo "ninja-selfsigned-rootCA.crt" >> /etc/ca-certificates.conf'
 	sudo bash -c 'echo "dietbet-selfsigned-rootCA.crt" >> /etc/ca-certificates.conf'
 	sudo bash -c 'echo "office-selfsigned-rootCA.crt" >> /etc/ca-certificates.conf'

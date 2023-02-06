@@ -11,8 +11,8 @@ cp /srv/stepbet/current/.* $folder_path
 
 echo Copy Completed.
 
-unzip -o /srv/stepbet/deploy/stepbet.zip -d $folder_path
-rm /srv/stepbet/deploy/stepbet.zip
+unzip -o /srv/stepbet/deploy/stepbet-prod.zip -d $folder_path
+rm /srv/stepbet/deploy/stepbet-prod.zip
 
 rm -f /srv/stepbet/prev
 cp -P /srv/stepbet/current /srv/stepbet/prev

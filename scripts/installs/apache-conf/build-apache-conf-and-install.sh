@@ -8,10 +8,6 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo an error message before exiting
 trap 'echo "\"${last_command}\" command failed with exit code $?."' EXIT
 
-#echo "`dirname "$0"`/generate-wbproxy-ssl-config.php"
-
-#php "`dirname "$0"`/generate-wbproxy-ssl-config.php"
-
 apache-config -w
 
 echo "Installing apache conf files"

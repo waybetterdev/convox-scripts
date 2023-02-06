@@ -53,6 +53,8 @@ class OpBase < NpPaths
   end
 
   def hostnames
+    load_op_severs_config unless defined?(OpServers) == 'constant'
+
     OpServers::HOSTNAMES
   end
   ################ OP SERVERS ###################
@@ -72,19 +74,16 @@ class OpBase < NpPaths
 
   def np_services
     load_np_services_config unless defined?(NpServices) == 'constant'
-    @_np_services ||= [
-      NpServices::NP_SERVICES[:local_kraken].map { |s| s.merge(location: LOCATION_KRAKEN_LOCAL) },
-      NpServices::NP_SERVICES[:local_convox].map          { |s| s.merge(location: LOCATION_CONVOX_LOCAL) },
-      NpServices::NP_SERVICES[:remote_convox_office].map  { |s| s.merge(location: LOCATION_OFFICE_CONVOX) },
-      NpServices::NP_SERVICES[:local_apache].map          { |s| s.merge(location: LOCATION_APACHE_LOCAL) }
-    ]
-                      .flatten
-                      .each_with_object({}) do |service_data, hash|
-      name = dashed_app_name(service_data[:name]).to_sym
-      exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}" if hash[name]
+    @_np_services ||= NpService::APP_LOCATIONS \
+      .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } } 
+      .flatten
+      .each_with_object({}) do |service_data, hash|
+        name = dashed_app_name(service_data[:name]).to_sym
+        exit_with_error "App #{name} can't have two locations: #{hash[name].location.green}#{' and '.red}#{service_data[:location].green}" if hash[name]
 
-      hash[name] = build_service_from_config(service_data)
-    end.merge(mysql: local_mysql_app)
+        hash[name] = build_service_from_config(service_data)
+      end
+      .merge(mysql: local_mysql_app)
 
     @_np_services
   end
@@ -152,6 +151,12 @@ class OpBase < NpPaths
     @_op_deploy_config[name]
   end
 
+  def server_name_from_hostname(hostname)
+    @__hostname_inverse ||= hostnames.invert
+
+    @__hostname_inverse[hostname]
+  end
+
   def ssh_config(name)
     name = dashed_app_name(name).to_sym
     @_ssh_config ||= {}
@@ -163,10 +168,6 @@ class OpBase < NpPaths
           .slice(:user, :key, :hostname, :dst, :port, :deploy_path, :zip_name)
     end
     @_ssh_config[name]
-  end
-
-  def server_names
-    hostnames.keys
   end
   ################ OP SERVERS ###################
 
@@ -192,10 +193,6 @@ class OpBase < NpPaths
 
   def np_service_port(name)
     np_service_config(name).port
-  end
-
-  def np_service_is_on_local_kraken?(name)
-    np_service_config(name).on_local_kraken?
   end
 
   def np_service_is_on_local_convox?(name)
@@ -342,13 +339,24 @@ class OpBase < NpPaths
 
   def get_service_external_domain(name, variant: nil, location: nil)
     name = hyphenated_app_name(name)
-    urls = {
-      'wb-auth-service' => { 'default' => 'accounts-local.waybetterdev.com' },
-      'wb-graphql-service' => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja' },
-      'wb-hub' => { 'default' => 'hub-local.waybetterdev.com' },
-      'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
-      'wb-admin-web' => { 'default' => 'www-local.waybetter.ninja' }
-    }
+    urls = \
+      if NpServices::USE_STAGING_DOMAIN_LOCALLY
+        {
+          'wb-auth-service'       => { 'default' => 'accounts-staging.waybetter.com' },
+          'wb-graphql-service'    => { 'default' => 'graphql-staging.waybetter.com', 'ninja' => 'graphql-staging.waybetter.ninja' },
+          'wb-hub'                => { 'default' => 'hub-staging.waybetter.com'},
+          'wb-admin-auth-service' => { 'default' => 'admin-auth-staging.waybetter.ninja' },
+          'wb-admin-web'          => { 'default' => 'www-staging.waybetter.ninja' }
+        }
+      else
+        {
+          'wb-auth-service'       => { 'default' => 'accounts-local.waybetterdev.com' },
+          'wb-graphql-service'    => { 'default' => 'graphql-local.waybetterdev.com', 'ninja' => 'graphql-local.waybetter.ninja' },
+          'wb-hub'                => { 'default' => 'hub-local.waybetterdev.com'},
+          'wb-admin-auth-service' => { 'default' => 'admin-auth-local.waybetter.ninja' },
+          'wb-admin-web'          => { 'default' => 'www-local.waybetter.ninja' }
+        }
+      end
     variant ||= 'default'
     url = urls[name][variant]
     return unless url
@@ -368,7 +376,7 @@ class OpBase < NpPaths
   end
 
   def find_local_ip
-    @_find_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').gsub("\n", '')
+    @_find_local_ip ||= exec_command('hostname -I | egrep -oh 192.168.[0-9]+.[0-9]+').split("\n").first
   end
 
   ################ CONVOX ###################
