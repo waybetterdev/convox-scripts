@@ -15,6 +15,10 @@ PATH="${PATH}:$HOME/Work/docs/scripts/ruby"
 export PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
 PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
 
+#wb-service paths
+export PATH="${PATH}:$HOME/Work/wb-services/stepbet-deploy/bin"
+PATH="${PATH}:$HOME/Work/wb-services/stepbet-deploy/bin"
+
 #mikrok8s
 # export PATH="${PATH}:/snap/bin"
 # PATH="${PATH}:/snap/bin"
@@ -91,3 +95,6 @@ alias 7zmaxcompression="sudo 7z a -t7z -m0=lzma2 -mx=9 -aoa"
 
 alias printnodeapps="netstat -tulpn | grep node"
 alias printrailsapps="netstat -tulpn | grep puma"
+
+
+alias sshappexdev="ssh -t wbdev@appex-dev"
