@@ -298,7 +298,7 @@ class NpsEnv < OpBase
       'WB_INTERNAL_URL_SCHEME' => -> { opts_np_app.on_local_kraken? ? 'https' : 'http' },
       'WB_ENFORCE_HTTPS' => -> { 'false' },
       'PORT' => -> { opts_np_app.port },
-      'RBENV_VERSION' => -> { File.read("#{opts_np_app.path}/.ruby-version") },
+      'RBENV_VERSION' => -> { find_ruby_version },
       'USE_STANDARD_LOGGING' => -> { '' },
       'DISABLE_SPRING' => -> { '1' },
       'RAILS_ENV' => -> { '' },
@@ -400,6 +400,21 @@ class NpsEnv < OpBase
     val = ENV[name.to_s]
     exit_with_error "System environment variable #{name} not set" unless val
     val
+  end
+
+  def find_ruby_version
+    @_find_ruby_version ||= (rbenv_ruby_version || gemfile_ruby_version)
+  end
+
+  def rbenv_ruby_version
+    File.read("#{opts_np_app.path}/.ruby-version")
+  end
+
+  def gemfile_ruby_version
+    return unless (content = File.read("#{opts_np_app.path}/Gemfile"))
+    return unless (match = content.match(/ruby "(\d+\.\d+.\d+)"/))
+
+    match.captures.first
   end
 end
 
