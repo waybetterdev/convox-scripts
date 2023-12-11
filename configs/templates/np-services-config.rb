@@ -37,9 +37,7 @@ class NpServices < OpBase
     :falkor     => { name: 'falkor-game-service',    gitname: 'falkor-game-service',     type: 'ruby',        port: 3004 },
     :quitbet    => { name: 'quitbet-game-service',   gitname: 'quitbet-game-service',    type: 'ruby',        port: 3005 },
     :notify     => { name: 'wb-notify-service',      gitname: 'wb-notify-service',       type: 'ruby',        port: 3007 },
-    :dietbet    => { name: 'dietbet-game-service',   gitname: 'dietbet-game-service',    type: 'ruby' },
     :runbet     => { name: 'runbet-game-service',    gitname: 'runbet-game-service',     type: 'ruby',        port: 3010 },
-    :stepbet    => { name: 'stepbet-game-service',   gitname: 'stepbet-game-service',    type: 'ruby' },
     :metric     => { name: 'wb-metric-service',      gitname: 'wb-metric-service',       type: 'ruby',        port: 3002 },
     :auth       => { name: 'wb-auth-service',        gitname: 'wb-auth-service',         type: 'node',        port: 8000 },
     :user       => { name: 'wb-user-service',        gitname: 'wb-user-service',         type: 'node',        port: 4000 },
@@ -55,7 +53,7 @@ class NpServices < OpBase
   LOCAL_CONVOX_SERVICES = []
   REMOTE_SERVICES = [
     :hub, :member, :admin_auth, :auth, :admin_web, :graphql,
-    :quitbet, :dietbet, :runbet, :stepbet, :notify,
+    :quitbet, :runbet, :notify,
     :user, :billing, :social, :metric, :falkor
   ]
 
@@ -67,14 +65,14 @@ class NpServices < OpBase
     local_convox:         LOCAL_CONVOX_SERVICES.map {|s| NP_SERVICE_DICT.fetch(s)},
     remote_convox_office: REMOTE_SERVICES.map {|s| NP_SERVICE_DICT.fetch(s)},
     local_apache: [
-      { name: 'stepbet',                path: '/var/www/stepbet',           type: 'php'},
-      { name: 'dev-stepbet',            path: '/var/www/stepbet',           type: 'php'},
-      { name: 'prod-stepbet',           path: '/var/www/stepbet',           type: 'php'},
-      { name: 'dietbet',                path: '/var/www/dietbet',           type: 'php'},
-      { name: 'dev-dietbet',            path: '/var/www/dietbet',           type: 'php'},
-      { name: 'prod-dietbet',           path: '/var/www/dietbet',           type: 'php'},
+      { name: 'stepbet-game-service',   path: '/var/www/stepbet',             type: 'php'},
+      { name: 'dev-stepbet',            path: '/var/www/stepbet',             type: 'php'},
+      { name: 'prod-stepbet',           path: '/var/www/stepbet',             type: 'php'},
+      { name: 'dietbet-game-service',   path: '/var/www/dietbet',             type: 'php'},
+      { name: 'dev-dietbet',            path: '/var/www/dietbet',             type: 'php'},
+      { name: 'prod-dietbet',           path: '/var/www/dietbet',             type: 'php'},
       { name: 'dietbet-imageserver',    path: '/var/www/dietbet-imageserver', type: 'php'},
-      { name: 'phpmyadmin',             path: '/var/www/phpmyadmin',        type: 'php'},
+      { name: 'phpmyadmin',             path: '/var/www/phpmyadmin',          type: 'php'},
     ]
   }
 

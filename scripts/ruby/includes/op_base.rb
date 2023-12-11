@@ -25,6 +25,7 @@ require_relative 'np_node_service'
 require_relative 'np_convox_service'
 require_relative 'np_docker_service'
 require_relative 'np_remote_service'
+require_relative 'op_php_service'
 require_relative 'convox_util'
 
 class OpBase < NpPaths
@@ -74,6 +75,7 @@ class OpBase < NpPaths
 
   def np_services
     load_np_services_config unless defined?(NpServices) == 'constant'
+
     @_np_services ||= NpService::APP_LOCATIONS \
       .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } } 
       .flatten
@@ -432,6 +434,8 @@ class OpBase < NpPaths
       end
     when LOCATION_OFFICE_CONVOX
       NpRemoteService.new(**service_data)
+    when LOCATION_APACHE_LOCAL
+      OpPhpService.new(**service_data)
     else
       NpService.new(**service_data)
     end
