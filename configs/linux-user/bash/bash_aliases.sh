@@ -86,8 +86,8 @@ alias restartwbtmuxservice='systemctl --user restart wbtmux'
 alias rebuildapacheproxy='~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh'
 
 
-alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
-alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
+#alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
+#alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
 alias convoxenvreloadall="~/Work/docs/scripts/bash/convox-reload-all-envs.sh"
 alias convoxymlreloadall="~/Work/docs/scripts/bash/convox-reload-all-local-ymls.sh"
 
