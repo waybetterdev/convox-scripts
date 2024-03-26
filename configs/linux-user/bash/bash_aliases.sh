@@ -15,6 +15,10 @@ PATH="${PATH}:$HOME/Work/docs/scripts/ruby"
 export PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
 PATH="${PATH}:$HOME/Work/wb-services/kraken/bin"
 
+#wb-service paths
+export PATH="${PATH}:$HOME/Work/wb-services/stepbet-deploy/bin"
+PATH="${PATH}:$HOME/Work/wb-services/stepbet-deploy/bin"
+
 #mikrok8s
 # export PATH="${PATH}:/snap/bin"
 # PATH="${PATH}:/snap/bin"
@@ -82,8 +86,8 @@ alias restartwbtmuxservice='systemctl --user restart wbtmux'
 alias rebuildapacheproxy='~/Work/docs/scripts/installs/apache-conf/build-apache-conf-and-install.sh'
 
 
-alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
-alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
+#alias convoxdnsfix="sudo echo 'fixing iptables' && sudo iptables -P FORWARD ACCEPT && echo 'done'"
+#alias convoxawsfix="convox registries add 247028141071.dkr.ecr.us-west-2.amazonaws.com AWS $(aws ecr get-login-password --region us-west-2 --profile prod)"
 alias convoxenvreloadall="~/Work/docs/scripts/bash/convox-reload-all-envs.sh"
 alias convoxymlreloadall="~/Work/docs/scripts/bash/convox-reload-all-local-ymls.sh"
 
@@ -91,3 +95,6 @@ alias 7zmaxcompression="sudo 7z a -t7z -m0=lzma2 -mx=9 -aoa"
 
 alias printnodeapps="netstat -tulpn | grep node"
 alias printrailsapps="netstat -tulpn | grep puma"
+
+
+alias sshappexdev="ssh -t wbdev@appex-dev"

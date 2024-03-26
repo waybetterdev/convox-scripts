@@ -223,6 +223,9 @@ class Wbtmux < OpBase
   end
 
   def fix_dns_and_aws
+    puts "convox local dev rack disabled"
+    return
+
     puts 'Fixing iptables'
     exec_command('sudo iptables -P FORWARD ACCEPT')
 
