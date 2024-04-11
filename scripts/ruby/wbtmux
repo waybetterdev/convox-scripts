@@ -206,6 +206,7 @@ class Wbtmux < OpBase
     puts 'Running Command:'
     puts cmd.blue
     cmd.gsub("'", "\\\\'")
+    sleep 0.3
     `#{cmd}`
   end
 
@@ -288,6 +289,7 @@ class Wbtmux < OpBase
       puts 'Running Command:'
       puts cmd.blue
       cmd.gsub("'", "\\\\'")
+      sleep 0.3
       `#{cmd}`
     end
 
