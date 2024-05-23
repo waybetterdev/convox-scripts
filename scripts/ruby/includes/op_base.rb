@@ -77,7 +77,7 @@ class OpBase < NpPaths
     load_np_services_config unless defined?(NpServices) == 'constant'
 
     @_np_services ||= NpService::APP_LOCATIONS \
-      .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } } 
+      .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } }
       .flatten
       .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym
