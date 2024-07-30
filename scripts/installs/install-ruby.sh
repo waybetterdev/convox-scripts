@@ -61,7 +61,7 @@ rbenv install -v 2.7.2
 rbenv global 2.6.2
 
 gem install bundler
-gem install 'pry' 'highline' 'colored' 'colored' 'ruby-terminfo' 'tty-prompt' 'pry-byebug'
+gem install 'pry' 'highline' 'colored' 'colored' 'tty-prompt' 'pry-byebug'
 rbenv rehash
 
 

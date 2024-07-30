@@ -7,13 +7,11 @@ require 'uri/http'
 begin
   require 'highline'
   require 'colored'
-  require 'terminfo'
 rescue LoadError
   puts <<~XXX
     To run this utility:
       gem install 'highline'
       gem install 'colored'
-      gem install 'ruby-terminfo'
   XXX
   exit(1)
 end
