@@ -176,7 +176,7 @@ class NpsEnv < OpBase
 
     if opts_np_app.type_is_ruby?
       default_keys.concat(
-        %w[USE_STANDARD_LOGGING RBENV_VERSION]
+        %w[USE_STANDARD_LOGGING RBENV_VERSION TEST_DB_SSL_MODE]
       )
     elsif opts_np_app.type_is_node?
       default_keys.concat(
@@ -274,6 +274,7 @@ class NpsEnv < OpBase
       'DISABLE_SPRING' => -> { '1' },
       'RAILS_ENV' => -> { '' },
       'ALLOW_UNCONFIGURED_SERVICES' => -> { 'true' },
+      'TEST_DB_SSL_MODE' => -> { 'disabled' },
 
       'WB_NOTIFY_SERVICE_URL' => -> { np_service_internal_url('wb-notify-service') },
       'FALKOR_GAME_SERVICE_URL' => -> { np_service_internal_url('falkor-game-service') },
