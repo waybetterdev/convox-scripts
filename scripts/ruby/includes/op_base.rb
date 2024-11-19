@@ -7,13 +7,11 @@ require 'uri/http'
 begin
   require 'highline'
   require 'colored'
-  require 'terminfo'
 rescue LoadError
   puts <<~XXX
     To run this utility:
       gem install 'highline'
       gem install 'colored'
-      gem install 'ruby-terminfo'
   XXX
   exit(1)
 end
@@ -77,7 +75,7 @@ class OpBase < NpPaths
     load_np_services_config unless defined?(NpServices) == 'constant'
 
     @_np_services ||= NpService::APP_LOCATIONS \
-      .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } } 
+      .map { |type, location| NpServices::NP_SERVICES[type].map  { |s| s.merge(location: location) } }
       .flatten
       .each_with_object({}) do |service_data, hash|
         name = dashed_app_name(service_data[:name]).to_sym

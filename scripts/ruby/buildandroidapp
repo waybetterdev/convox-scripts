@@ -9,13 +9,11 @@ require 'open3'
 begin
   require 'highline'
   require 'colored'
-  require 'terminfo'
 rescue LoadError
   puts <<~XXX
     To run this utility:
       gem install 'highline'
       gem install 'colored'
-      gem install 'ruby-terminfo'
   XXX
   exit(1)
 end
@@ -77,7 +75,7 @@ class BuildAndroidApp < OpBase
     elsif self.opts_environment.eql?('staging')
       gradle_param = 'assembleStagingDebug'
       apk_param = 'staging'
-    else 
+    else
       exit_with_error "Invalid environment"
     end
 

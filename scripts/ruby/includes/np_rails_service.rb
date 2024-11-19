@@ -18,7 +18,8 @@ class NpRailsService < NpService
   def prepare_local_service; end
 
   def start_command
-    "npsrun -a #{name} -e development -c bin/start_web_server.sh"
+    # "npsrun -a #{name} -e development -c bin/start_web_server.sh"
+    "railsstartservice"
   end
 
   def run_command(cmd, environment: 'development')
